@@ -18,21 +18,22 @@
 </head>
 <body>
 
-    <!-- Header (Clean Layout with Settings Icon) -->
+    <!-- Header (Clean Layout with Settings Icon on Right) -->
     <header>
         <div class="header-left">
-            <!-- Settings Toggle Button at Left Corner -->
-            <button id="btnOpenSettings" class="btn-settings" title="Open Settings">
-                <i class="fa-solid fa-gear"></i>
-            </button>
-            
             <div class="hr-custom-logo">
                 <span class="hr-text">HR</span>
                 <div class="wave wave1"></div>
                 <div class="wave wave2"></div>
             </div>
-            
             <div class="header-static-title">HARYANA ROADWAYS TIME TABLE</div>
+        </div>
+        
+        <div class="header-right">
+            <!-- Settings Toggle Button at Right Corner -->
+            <button id="btnOpenSettings" class="btn-settings" title="Open Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
         </div>
     </header>
 
@@ -68,7 +69,7 @@
                         <input type="text" id="source" placeholder="From" required>
                     </div>
 
-                    <!-- TO -->
+                    <!-- TO (Fixed for Mobile) -->
                     <div class="search-field-premium">
                         <i class="fa-solid fa-location-crosshairs"></i>
                         <input type="text" id="destination" placeholder="To" required>
@@ -127,14 +128,20 @@
     </footer>
 
     <!-- =========================================================
-         SETTINGS MODAL (Replaced Home Buttons)
+         SETTINGS PAGE (Full Screen Overlay instead of Modal)
          ========================================================= -->
-    <div id="settingsModal" class="glass-modal-overlay">
-        <div class="glass-modal-box settings-card" style="max-width: 600px;">
-            <span class="glass-close" id="closeSettingsBtn">&times;</span>
-            <h2 class="glass-title"><i class="fa-solid fa-sliders"></i> Settings & Options</h2>
-            
-            <div class="glass-content">
+    <div id="settingsPage" class="settings-page">
+        <!-- Settings Header with Back Button -->
+        <header class="settings-page-header">
+            <div class="settings-header-left">
+                <button id="closeSettingsBtn" class="btn-back"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2>Settings & Options</h2>
+            </div>
+        </header>
+
+        <div class="settings-body container">
+            <div class="settings-card glass-modal-box" style="width: 100%; max-width: 100%; box-shadow: none; border: none; background: transparent; padding: 0;">
+                
                 <!-- Navigation Tabs -->
                 <div class="settings-nav-grid">
                     <button class="setting-nav-item active" data-tab="tab-theme"><i class="fa-solid fa-circle-half-stroke"></i> Theme</button>
@@ -203,7 +210,7 @@
 
                     <!-- 2. Mobile Update with OTP -->
                     <div class="update-block">
-                        <label><strong>Update Phone Number</strong> (Requires Email OTP)</label>
+                        <label><strong>Update Phone Number</strong> (Limit: 2 Edits / Month)</label>
                         <div class="flex-row" style="margin-top: 5px;">
                             <input type="tel" id="updatePhoneInput" class="custom-input" placeholder="New Mobile Number" maxlength="10">
                             <button id="btnSendPhoneOtp" class="btn-side">Send OTP</button>
@@ -218,7 +225,7 @@
 
                     <!-- 3. Email Update with OTP -->
                     <div class="update-block">
-                        <label><strong>Update Email Address</strong> (Requires Email OTP)</label>
+                        <label><strong>Update Email Address</strong> (Limit: 2 Edits / Month)</label>
                         <div class="flex-row" style="margin-top: 5px;">
                             <input type="email" id="updateEmailInput" class="custom-input" placeholder="New Email Address">
                             <button id="btnSendEmailOtp" class="btn-side">Send OTP</button>
@@ -231,8 +238,8 @@
                 </div>
 
                 <!-- LOGOUT ACTION AT BOTTOM OF SETTINGS -->
-                <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1); text-align: center;">
-                    <button id="btnLogout" class="btn-logout" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 12px;">
+                <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(0,0,0,0.1); text-align: center;">
+                    <button id="btnLogout" class="btn-logout" style="width: 100%; max-width: 350px; padding: 14px; font-size: 1.1rem; border-radius: 12px;">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout Securely
                     </button>
                 </div>
