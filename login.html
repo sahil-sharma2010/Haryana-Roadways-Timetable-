@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HR LOGIN | Haryana Roadways</title>
+    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Supabase & EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- External CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="auth-body">
@@ -16,6 +21,7 @@
     <div class="login-wrapper auth-container">
         <div class="login-card auth-card">
             
+            <!-- Pending State View -->
             <div id="pendingStateSection" class="hidden" style="text-align: center; padding: 20px 0;">
                 <div class="hr-custom-logo auth-logo" style="margin: 0 auto 20px auto;">
                     <span class="hr-text">HR</span>
@@ -38,13 +44,14 @@
                 </button>
             </div>
 
+            <!-- Headers for Register/Login/Forgot -->
             <div id="authHeaderBlock" class="brand-header">
                 <div class="hr-custom-logo auth-logo" style="margin: 0 auto 15px auto;">
                     <span class="hr-text">HR</span>
                     <div class="wave wave1"></div>
                     <div class="wave wave2"></div>
                 </div>
-                <h2 class="auth-title" id="mainAuthTitle">HR REGISTER</h2>
+                <h2 class="auth-title" id="mainAuthTitle">HR LOGIN</h2>
                 <p class="auth-subtitle" id="mainAuthSubtitle">Welcome to Haryana Roadways Premium Portal</p>
             </div>
 
@@ -53,7 +60,8 @@
                 <span>Account blocked for 24 hours due to multiple failed OTP attempts.</span>
             </div>
 
-            <div id="registerSection">
+            <!-- REGISTER SECTION -->
+            <div id="registerSection" class="hidden">
                 <form id="authForm" class="auth-form" novalidate>
                     <div class="input-group">
                         <i class="fa-solid fa-user"></i>
@@ -112,7 +120,7 @@
             </div>
 
             <!-- LOGIN SECTION -->
-            <div id="loginSection" class="hidden">
+            <div id="loginSection">
                 <form id="loginForm" class="auth-form" novalidate>
                     <div class="input-group mobile-group">
                         <i class="fa-solid fa-phone"></i>
