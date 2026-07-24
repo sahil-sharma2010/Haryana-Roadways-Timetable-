@@ -131,7 +131,6 @@
          SETTINGS PAGE (Full Screen Overlay instead of Modal)
          ========================================================= -->
     <div id="settingsPage" class="settings-page">
-        <!-- Settings Header with Back Button -->
         <header class="settings-page-header">
             <div class="settings-header-left">
                 <button id="closeSettingsBtn" class="btn-back"><i class="fa-solid fa-arrow-left"></i></button>
@@ -142,7 +141,6 @@
         <div class="settings-body container">
             <div class="settings-card glass-modal-box" style="width: 100%; max-width: 100%; box-shadow: none; border: none; background: transparent; padding: 0;">
                 
-                <!-- Navigation Tabs -->
                 <div class="settings-nav-grid">
                     <button class="setting-nav-item active" data-tab="tab-theme"><i class="fa-solid fa-circle-half-stroke"></i> Theme</button>
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
@@ -150,7 +148,6 @@
                     <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update Info</button>
                 </div>
 
-                <!-- TAB 1: THEME -->
                 <div id="tab-theme" class="settings-tab-content active">
                     <h3 style="color: var(--primary-blue); margin-bottom: 10px;">App Theme Preference</h3>
                     <div class="theme-switch-wrapper" id="theme-toggle">
@@ -162,7 +159,6 @@
                     </div>
                 </div>
 
-                <!-- TAB 2: ROUTES -->
                 <div id="tab-routes" class="settings-tab-content">
                     <h3 style="color: var(--primary-blue); margin-bottom: 5px;">Select Origin City</h3>
                     <p style="margin-bottom: 15px; font-size: 0.9rem;">Choose a city to explore available bus departures:</p>
@@ -171,7 +167,6 @@
                         <button class="city-btn" data-city="Jind">Jind</button>
                         <button class="city-btn" data-city="Bhiwani">Bhiwani</button>
                     </div>
-
                     <div id="hisarRoutesList" class="hidden" style="margin-top: 15px;">
                         <h4 style="color: var(--primary-blue); margin-bottom: 8px;">Available Routes from Hisar:</h4>
                         <ul class="route-list-ul">
@@ -182,7 +177,6 @@
                     </div>
                 </div>
 
-                <!-- TAB 3: SEE YOUR DETAILS -->
                 <div id="tab-details" class="settings-tab-content">
                     <h3 style="color: var(--primary-blue); margin-bottom: 10px;">Account Information</h3>
                     <div class="user-details-card">
@@ -193,11 +187,9 @@
                     </div>
                 </div>
 
-                <!-- TAB 4: UPDATE INFORMATION -->
                 <div id="tab-update" class="settings-tab-content">
                     <h3 style="color: var(--primary-blue); margin-bottom: 15px;">Update Profile Data</h3>
                     
-                    <!-- 1. Name Update -->
                     <div class="update-block">
                         <label><strong>Update Full Name</strong> (1 edit limit per month)</label>
                         <div class="flex-row" style="margin-top: 5px;">
@@ -208,7 +200,6 @@
 
                     <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
 
-                    <!-- 2. Mobile Update with OTP -->
                     <div class="update-block">
                         <label><strong>Update Phone Number</strong> (Limit: 2 Edits / Month)</label>
                         <div class="flex-row" style="margin-top: 5px;">
@@ -223,7 +214,6 @@
 
                     <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
 
-                    <!-- 3. Email Update with OTP -->
                     <div class="update-block">
                         <label><strong>Update Email Address</strong> (Limit: 2 Edits / Month)</label>
                         <div class="flex-row" style="margin-top: 5px;">
@@ -237,7 +227,6 @@
                     </div>
                 </div>
 
-                <!-- LOGOUT ACTION AT BOTTOM OF SETTINGS -->
                 <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(0,0,0,0.1); text-align: center;">
                     <button id="btnLogout" class="btn-logout" style="width: 100%; max-width: 350px; padding: 14px; font-size: 1.1rem; border-radius: 12px;">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout Securely
@@ -247,18 +236,86 @@
         </div>
     </div>
 
-    <!-- T&C Modal -->
+    <!-- FULL TEXT MODALS (T&C, Privacy, Disclaimer) -->
     <div id="tncModal" class="glass-modal-overlay">
         <div class="glass-modal-box">
             <span class="glass-close" id="closeTncBtn">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-file-contract"></i> Terms & Conditions</h2>
             <div class="glass-content">
-                <p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully.</p>
+                <p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully before using this website. By accessing or using this website, you acknowledge that you have read, understood, and agreed to the following terms.</p>
                 <h3>1. Educational Study Project</h3>
-                <p>This website is an independent, unofficial educational study project developed by the developer for learning.</p>
-                <div class="modal-action">
-                    <button id="acceptTncBtn" class="btn-accept">Close</button>
-                </div>
+                <p>This website is an independent, unofficial educational study project developed by the developer for learning, portfolio, research, and software development practice. It has been created to improve programming skills and demonstrate web development concepts.</p>
+                <h3>2. Demonstration Purpose Only</h3>
+                <p>The bus routes, timetable, fare details, and other information available on this website are demo/sample data created only for project demonstration. Only a limited number of routes have been added by the developer for testing and educational purposes. This website does not provide the complete or official Haryana Roadways timetable.</p>
+                <h3>3. Not an Official Website</h3>
+                <p>This website is not affiliated with, authorized by, sponsored by, endorsed by, or operated by Haryana Roadways, the Government of Haryana, or any government department. Any references to Haryana Roadways are used only for educational and demonstration purposes.</p>
+                <h3>4. Do Not Use for Real Travel Planning</h3>
+                <p>The information displayed on this website must not be used for actual travel planning or real-time bus schedules. Before travelling, users should always verify bus timings, routes, and fare information from official Haryana Roadways sources.</p>
+                <h3>5. Limited Project Data</h3>
+                <p>The developer has added only selected routes and timetable entries required for demonstrating the project. Missing routes, incorrect timings, or unavailable services do not indicate official Haryana Roadways information.</p>
+                <h3>6. User Responsibility</h3>
+                <p>Users are responsible for using this website responsibly. Any misuse, unauthorized activity, hacking attempts, data manipulation, automated scraping, or illegal use of this website is strictly prohibited.</p>
+                <h3>7. Accuracy of Information</h3>
+                <p>Although reasonable efforts have been made to organize the information correctly, no guarantee is provided regarding the accuracy, completeness, reliability, or availability of the displayed data. The developer reserves the right to modify or remove any content without prior notice.</p>
+                <h3>8. Limitation of Liability</h3>
+                <p>The developer shall not be held responsible for any loss, inconvenience, travel delay, financial damage, or any direct or indirect consequences resulting from the use of this website or its information. Users use this website entirely at their own risk.</p>
+                <h3>9. Personal Learning Project</h3>
+                <p>This website has been developed solely for educational learning, portfolio presentation, software development practice, and personal convenience. It is not intended for commercial use or official public transport services.</p>
+                <h3>10. Changes to These Terms</h3>
+                <p>The developer reserves the right to update or modify these Terms & Conditions at any time without prior notice. Continued use of the website after changes constitutes acceptance of the updated terms.</p>
+                <h3>11. Acceptance</h3>
+                <p>By using this website, you confirm that you have read, understood, and agreed to these Terms & Conditions.</p>
+            </div>
+            <div class="modal-action" style="margin-top: 15px; text-align: right;">
+                <button class="btn-premium-blue close-tnc-action">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="privacyModal" class="glass-modal-overlay">
+        <div class="glass-modal-box">
+            <span class="glass-close" id="closePrivacyBtn">&times;</span>
+            <h2 class="glass-title"><i class="fa-solid fa-user-shield"></i> Privacy Policy</h2>
+            <div class="glass-content">
+                <p>Welcome to Haryana Roadways Timetable. Your privacy is important to us. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use this website.</p>
+                <h3>1. Information We Collect</h3>
+                <p>When you create an account or use our services, we may collect the following information: Full Name, Mobile Number, Email Address, Secure Password (stored securely), Login History, Device & Browser Information.</p>
+                <h3>2. Why We Collect Your Information</h3>
+                <p>Your information is collected only for legitimate website functionality, including: User registration and account verification, Secure login authentication, Account approval and management, Website security and fraud prevention, Responding to user support requests.</p>
+                <h3>3. Data Security</h3>
+                <p>We take reasonable technical and organizational measures to protect your personal information. Your account credentials are stored securely, and we continuously work to prevent unauthorized access.</p>
+                <h3>4. Data Sharing</h3>
+                <p>We do not intentionally sell, rent, trade, or share your personal information with third parties for marketing or commercial purposes.</p>
+                <h3>5. Cookies & Local Storage</h3>
+                <p>This website may use browser cookies or local storage to maintain your login session, improve website functionality, and increase website security.</p>
+                <h3>6. Educational Project Notice</h3>
+                <p>This website is an independent, unofficial educational study project. It is not affiliated with Haryana Roadways or any government authority.</p>
+            </div>
+            <div class="modal-action" style="margin-top: 15px; text-align: right;">
+                <button class="btn-premium-blue close-privacy-action">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="disclaimerModal" class="glass-modal-overlay">
+        <div class="glass-modal-box">
+            <span class="glass-close" id="closeDisclaimerBtn">&times;</span>
+            <h2 class="glass-title"><i class="fa-solid fa-triangle-exclamation"></i> Disclaimer</h2>
+            <div class="glass-content">
+                <p>Please read this Disclaimer carefully before using Haryana Roadways Timetable.</p>
+                <h3>1. Educational Study Project</h3>
+                <p>This website is an independent, unofficial educational study project developed solely for learning, software development practice, portfolio demonstration, research, and personal convenience.</p>
+                <h3>2. Unofficial Website</h3>
+                <p>Haryana Roadways Timetable is NOT the official website of Haryana Roadways, the Government of Haryana, or any government authority. This project is not affiliated with, authorized by, endorsed by, sponsored by, or operated by Haryana Roadways.</p>
+                <h3>3. Demonstration Data Only</h3>
+                <p>The routes, bus timings, fare details, and other information displayed on this website are sample/demo data and limited route information added by the developer only for project demonstration. This website does not contain the complete Haryana Roadways timetable.</p>
+                <h3>4. Verify Before Travelling</h3>
+                <p>Bus schedules, routes, and fares may change at any time without prior notice. Passengers are strongly advised to verify all travel information through official Haryana Roadways enquiry counters or authorized sources before planning any journey.</p>
+                <h3>5. No Responsibility</h3>
+                <p>The developer shall not be responsible or liable for any bus delays, route modifications, financial loss, missed buses, travel inconvenience, or incorrect information.</p>
+            </div>
+            <div class="modal-action" style="margin-top: 15px; text-align: right;">
+                <button class="btn-premium-blue close-disclaimer-action">I Understand</button>
             </div>
         </div>
     </div>
