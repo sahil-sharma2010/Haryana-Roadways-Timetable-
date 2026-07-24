@@ -16,7 +16,6 @@
     <div class="login-wrapper auth-container">
         <div class="login-card auth-card">
             
-            <!-- PERSISTENT PENDING STATE SECTION -->
             <div id="pendingStateSection" class="hidden" style="text-align: center; padding: 20px 0;">
                 <div class="hr-custom-logo auth-logo" style="margin: 0 auto 20px auto;">
                     <span class="hr-text">HR</span>
@@ -39,7 +38,6 @@
                 </button>
             </div>
 
-            <!-- NORMAL AUTH HEADER -->
             <div id="authHeaderBlock" class="brand-header">
                 <div class="hr-custom-logo auth-logo" style="margin: 0 auto 15px auto;">
                     <span class="hr-text">HR</span>
@@ -55,7 +53,6 @@
                 <span>Account blocked for 24 hours due to multiple failed OTP attempts.</span>
             </div>
 
-            <!-- REGISTER SECTION -->
             <div id="registerSection">
                 <form id="authForm" class="auth-form" novalidate>
                     <div class="input-group">
@@ -178,115 +175,30 @@
                 </div>
             </div>
             
-            <!-- NEW FOOTER TEXT BELOW LOGIN HERE AS REQUESTED -->
             <div style="text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; font-size: 0.85rem; color: #777; line-height: 1.5;">
                 <span style="font-weight: 700; color: var(--primary-blue);">Developed by Sahil</span><br>
                 Unofficial Educational Study Project<br>
-                &copy; 2026 Haryana Roadways Timetable
+                &copy; 2026 HR Haryana Roadways
             </div>
 
         </div>
     </div>
 
-    <!-- T&C Modal with Language Toggle -->
+    <!-- T&C Modal -->
     <div id="tncModal" class="glass-modal-overlay">
         <div class="glass-modal-box">
-            <button class="lang-toggle-btn" id="tnc-btn" onclick="toggleLang('tnc')">हिंदी</button>
             <span class="glass-close" id="closeTncBtn">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-file-contract"></i> Terms & Conditions</h2>
-            
-            <div class="glass-content" id="tnc-en">
-                <p class="last-updated">Last Updated: July 2026</p>
-                <p>Welcome to Haryana Roadways Timetable.</p>
-                <p>Please read these Terms & Conditions carefully before using this website. By accessing or using this website, you acknowledge that you have read, understood, and agreed to the following terms.</p>
-                
+            <div class="glass-content">
+                <p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully before using this website. By accessing or using this website, you acknowledge that you have read, understood, and agreed to the following terms.</p>
                 <h3>1. Educational Study Project</h3>
                 <p>This website is an independent, unofficial educational study project developed by the developer for learning, portfolio, research, and software development practice. It has been created to improve programming skills and demonstrate web development concepts.</p>
-                
                 <h3>2. Demonstration Purpose Only</h3>
                 <p>The bus routes, timetable, fare details, and other information available on this website are demo/sample data created only for project demonstration. Only a limited number of routes have been added by the developer for testing and educational purposes. This website does not provide the complete or official Haryana Roadways timetable.</p>
                 
-                <h3>3. Not an Official Website</h3>
-                <p>This website is not affiliated with, authorized by, sponsored by, endorsed by, or operated by Haryana Roadways, the Government of Haryana, or any government department. Any references to Haryana Roadways are used only for educational and demonstration purposes.</p>
-                
-                <h3>4. Do Not Use for Real Travel Planning</h3>
-                <p>The information displayed on this website must not be used for actual travel planning or real-time bus schedules. Before travelling, users should always verify bus timings, routes, and fare information from official Haryana Roadways sources.</p>
-                
-                <h3>5. Limited Project Data</h3>
-                <p>The developer has added only selected routes and timetable entries required for demonstrating the project. Missing routes, incorrect timings, or unavailable services do not indicate official Haryana Roadways information.</p>
-                
-                <h3>6. User Responsibility</h3>
-                <p>Users are responsible for using this website responsibly. Any misuse, unauthorized activity, hacking attempts, data manipulation, automated scraping, or illegal use of this website is strictly prohibited.</p>
-                
-                <h3>7. Accuracy of Information</h3>
-                <p>Although reasonable efforts have been made to organize the information correctly, no guarantee is provided regarding the accuracy, completeness, reliability, or availability of the displayed data. The developer reserves the right to modify or remove any content without prior notice.</p>
-                
-                <h3>8. Limitation of Liability</h3>
-                <p>The developer shall not be held responsible for any loss, inconvenience, travel delay, financial damage, or any direct or indirect consequences resulting from the use of this website or its information. Users use this website entirely at their own risk.</p>
-                
-                <h3>9. Personal Learning Project</h3>
-                <p>This website has been developed solely for educational learning, portfolio presentation, software development practice, and personal convenience. It is not intended for commercial use or official public transport services.</p>
-                
-                <h3>10. Changes to These Terms</h3>
-                <p>The developer reserves the right to update or modify these Terms & Conditions at any time without prior notice. Continued use of the website after changes constitutes acceptance of the updated terms.</p>
-                
-                <h3>11. Acceptance</h3>
-                <p>By using this website, you confirm that you have read, understood, and agreed to these Terms & Conditions.</p>
-                
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ccc;">
-                <p><strong>© 2026 Haryana Roadways Timetable</strong><br>Unofficial Educational Study Project</p>
-                <p>This website is an independent educational project developed for learning, portfolio, research, and demonstration purposes only. It is not affiliated with Haryana Roadways, the Government of Haryana, or any government authority.</p>
-            </div>
-            
-            <div class="glass-content" id="tnc-hi" style="display:none;">
-                <p class="last-updated">अंतिम अपडेट: जुलाई 2026</p>
-                <p>हरियाणा रोडवेज टाइमटेबल में आपका स्वागत है।</p>
-                <p>इस वेबसाइट का उपयोग करने से पहले कृपया इन नियमों और शर्तों को ध्यान से पढ़ें। इस वेबसाइट का उपयोग करके, आप यह स्वीकार करते हैं कि आपने निम्नलिखित शर्तों को पढ़, समझ और सहमत हो गए हैं।</p>
-                
-                <h3>1. शैक्षिक अध्ययन परियोजना</h3>
-                <p>यह वेबसाइट सीखने, पोर्टफोलियो, अनुसंधान और सॉफ्टवेयर विकास अभ्यास के लिए डेवलपर द्वारा विकसित एक स्वतंत्र, अनौपचारिक शैक्षिक अध्ययन परियोजना है। इसे प्रोग्रामिंग कौशल में सुधार करने और वेब विकास अवधारणाओं को प्रदर्शित करने के लिए बनाया गया है।</p>
-                
-                <h3>2. केवल प्रदर्शन उद्देश्य</h3>
-                <p>इस वेबसाइट पर उपलब्ध बस मार्ग, समय सारिणी, किराया विवरण और अन्य जानकारी केवल परियोजना प्रदर्शन के लिए बनाए गए डेमो/नमूना डेटा हैं। परीक्षण और शैक्षिक उद्देश्यों के लिए डेवलपर द्वारा केवल सीमित संख्या में मार्ग जोड़े गए हैं। यह वेबसाइट पूरी या आधिकारिक हरियाणा रोडवेज समय सारिणी प्रदान नहीं करती है।</p>
-                
-                <h3>3. आधिकारिक वेबसाइट नहीं</h3>
-                <p>यह वेबसाइट हरियाणा रोडवेज, हरियाणा सरकार या किसी भी सरकारी विभाग से संबद्ध, अधिकृत, प्रायोजित, समर्थित या संचालित नहीं है। हरियाणा रोडवेज का कोई भी संदर्भ केवल शैक्षिक और प्रदर्शन उद्देश्यों के लिए उपयोग किया जाता है।</p>
-                
-                <h3>4. वास्तविक यात्रा योजना के लिए उपयोग न करें</h3>
-                <p>इस वेबसाइट पर प्रदर्शित जानकारी का उपयोग वास्तविक यात्रा योजना या वास्तविक समय बस कार्यक्रम के लिए नहीं किया जाना चाहिए। यात्रा करने से पहले, उपयोगकर्ताओं को हमेशा आधिकारिक हरियाणा रोडवेज स्रोतों से बस के समय, मार्ग और किराए की जानकारी की पुष्टि करनी चाहिए।</p>
-                
-                <h3>5. सीमित परियोजना डेटा</h3>
-                <p>डेवलपर ने केवल परियोजना को प्रदर्शित करने के लिए आवश्यक चयनित मार्ग और समय सारिणी प्रविष्टियां जोड़ी हैं। लापता मार्ग, गलत समय, या अनुपलब्ध सेवाएं आधिकारिक हरियाणा रोडवेज जानकारी का संकेत नहीं देती हैं.</p>
-                
-                <h3>6. उपयोगकर्ता की जिम्मेदारी</h3>
-                <p>उपयोगकर्ता इस वेबसाइट का जिम्मेदारी से उपयोग करने के लिए जिम्मेदार हैं। इस वेबसाइट का कोई भी दुरुपयोग, अनधिकृत गतिविधि, हैकिंग का प्रयास, डेटा हेरफेर, स्वचालित स्क्रैपिंग, या अवैध उपयोग सख्त वर्जित है।</p>
-                
-                <h3>7. जानकारी की सटीकता</h3>
-                <p>यद्यपि जानकारी को सही ढंग से व्यवस्थित करने के लिए उचित प्रयास किए गए हैं, लेकिन प्रदर्शित डेटा की सटीकता, पूर्णता, विश्वसनीयता या उपलब्धता के संबंध में कोई गारंटी प्रदान नहीं की जाती है। डेवलपर बिना किसी पूर्व सूचना के किसी भी सामग्री को संशोधित करने या हटाने का अधिकार सुरक्षित रखता है।</p>
-                
-                <h3>8. दायित्व की सीमा</h3>
-                <p>डेवलपर इस वेबसाइट या इसकी जानकारी के उपयोग से होने वाले किसी भी नुकसान, असुविधा, यात्रा में देरी, वित्तीय क्षति, या किसी भी प्रत्यक्ष या अप्रत्यक्ष परिणाम के लिए जिम्मेदार नहीं होगा। उपयोगकर्ता पूरी तरह से अपने जोखिम पर इस वेबसाइट का उपयोग करते हैं।</p>
-                
-                <h3>9. व्यक्तिगत सीखने की परियोजना</h3>
-                <p>इस वेबसाइट को पूरी तरह से शैक्षिक सीखने, पोर्टफोलियो प्रस्तुति, सॉफ्टवेयर विकास अभ्यास और व्यक्तिगत सुविधा के लिए विकसित किया गया है। यह व्यावसायिक उपयोग या आधिकारिक सार्वजनिक परिवहन सेवाओं के लिए नहीं है।</p>
-                
-                <h3>10. इन शर्तों में परिवर्तन</h3>
-                <p>डेवलपर बिना किसी पूर्व सूचना के किसी भी समय इन नियमों और शर्तों को अपडेट या संशोधित करने का अधिकार सुरक्षित रखता है। परिवर्तनों के बाद वेबसाइट का निरंतर उपयोग अद्यतन शर्तों की स्वीकृति माना जाता है।</p>
-                
-                <h3>11. स्वीकृति</h3>
-                <p>इस वेबसाइट का उपयोग करके, आप पुष्टि करते हैं कि आपने इन नियमों और शर्तों को पढ़, समझ और सहमत हो गए हैं।</p>
-
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ccc;">
-                <p><strong>© 2026 हरियाणा रोडवेज टाइमटेबल</strong><br>अनौपचारिक शैक्षिक अध्ययन परियोजना</p>
-                <p>यह वेबसाइट केवल सीखने, पोर्टफोलियो, अनुसंधान और प्रदर्शन उद्देश्यों के लिए विकसित एक स्वतंत्र शैक्षिक परियोजना है। यह हरियाणा रोडवेज, हरियाणा सरकार या किसी भी सरकारी प्राधिकरण से संबद्ध नहीं है।</p>
-            </div>
-
-            <div class="modal-action">
-                <div class="tnc-checkbox-group">
-                    <input type="checkbox" id="agreeTncModal">
-                    <label for="agreeTncModal"><strong>I have read and agree to these terms.</strong></label>
+                <div class="modal-action">
+                    <button id="acceptTncBtn" class="btn-accept">Accept & Close</button>
                 </div>
-                <button id="acceptTncBtn" class="btn-accept">Accept & Close</button>
             </div>
         </div>
     </div>
