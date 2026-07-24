@@ -37,10 +37,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // =========================================================
-    // SETTINGS MODAL & TABS LOGIC
+    // SETTINGS PAGE (FULL SCREEN) & TABS LOGIC
     // =========================================================
     const btnOpenSettings = document.getElementById('btnOpenSettings');
-    const settingsModal = document.getElementById('settingsModal');
+    const settingsPage = document.getElementById('settingsPage');
     const closeSettingsBtn = document.getElementById('closeSettingsBtn');
     const navItems = document.querySelectorAll('.setting-nav-item');
     const tabContents = document.querySelectorAll('.settings-tab-content');
@@ -50,10 +50,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Open Settings & Fetch Details
     if (btnOpenSettings) {
         btnOpenSettings.addEventListener('click', async () => {
-            settingsModal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+            settingsPage.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Stop background scrolling
             
-            // Fetch User Details logic using logged-in username
+            // Fetch User Details logic
             if (supabase && !currentUserData) {
                 const userName = localStorage.getItem('hr_user_name');
                 if (userName) {
@@ -69,10 +69,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // Close Settings
     if (closeSettingsBtn) {
         closeSettingsBtn.addEventListener('click', () => {
-            settingsModal.classList.remove('active');
-            document.body.style.overflow = 'auto';
+            settingsPage.classList.remove('active');
+            document.body.style.overflow = 'auto'; // Restore background scrolling
         });
     }
 
@@ -127,9 +128,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // =========================================================
-    // UPDATE INFORMATION LOGIC (Name, Phone, Email)
+    // UPDATE INFORMATION LOGIC (With 2x/Month Limits)
     // =========================================================
     
+    // Limits Utility
+    function checkUpdateLimit(storageKey) {
+        const limitData = JSON.parse(localStorage.getItem(storageKey)) || [];
+        const now = Date.now();
+        const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+        const validData = limitData.filter(time => (now - time) < thirtyDays);
+        localStorage.setItem(storageKey, JSON.stringify(validData));
+        return validData.length < 2; // Returns true if less than 2 updates in last 30 days
+    }
+
+    function addUpdateRecord(storageKey) {
+        const limitData = JSON.parse(localStorage.getItem(storageKey)) || [];
+        limitData.push(Date.now());
+        localStorage.setItem(storageKey, JSON.stringify(limitData));
+    }
+
     // 1. Update Name (1 time per month limit without OTP)
     const btnUpdateName = document.getElementById('btnUpdateName');
     if (btnUpdateName) {
@@ -154,6 +171,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 currentUserData.name = newName;
                 document.getElementById('dispName').innerText = newName;
                 Swal.fire('Success', 'Name updated successfully!', 'success');
+                document.getElementById('updateNameInput').value = "";
             } else {
                 Swal.fire('Error', 'Failed to update name.', 'error');
             }
@@ -161,7 +179,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // 2. Update Phone (OTP Required)
+    // 2. Update Phone (OTP Required, Limit 2x/Month)
     const btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
     const btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
     let phoneUpdateOTP = null;
@@ -169,6 +187,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnSendPhoneOtp) {
         btnSendPhoneOtp.addEventListener('click', async () => {
             if (!currentUserData) return;
+            
+            if (!checkUpdateLimit('hr_phone_update_history')) {
+                return Swal.fire('Limit Reached', 'You can only update your Mobile Number 2 times in a month.', 'error');
+            }
+
             const newPhone = document.getElementById('updatePhoneInput').value.trim();
             if (newPhone.length !== 10) return Swal.fire('Invalid', 'Enter valid 10-digit mobile.', 'warning');
 
@@ -197,10 +220,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 btnVerifyPhoneUpdate.innerText = "Saving...";
                 const { error } = await supabase.from('users').update({ mobile: newPhone }).eq('email', currentUserData.email);
                 if (!error) {
+                    addUpdateRecord('hr_phone_update_history'); // Record the update timestamp
                     currentUserData.mobile = newPhone;
                     document.getElementById('dispMobile').innerText = "+91 " + newPhone;
                     Swal.fire('Success', 'Phone number updated securely!', 'success');
                     document.getElementById('phoneOtpBox').classList.add('hidden');
+                    document.getElementById('updatePhoneInput').value = "";
                 } else {
                     Swal.fire('Error', 'Update failed.', 'error');
                 }
@@ -211,7 +236,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // 3. Update Email (OTP Required)
+    // 3. Update Email (OTP Required, Limit 2x/Month)
     const btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
     const btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
     let emailUpdateOTP = null;
@@ -219,6 +244,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnSendEmailOtp) {
         btnSendEmailOtp.addEventListener('click', async () => {
             if (!currentUserData) return;
+
+            if (!checkUpdateLimit('hr_email_update_history')) {
+                return Swal.fire('Limit Reached', 'You can only update your Email Address 2 times in a month.', 'error');
+            }
+
             const newEmail = document.getElementById('updateEmailInput').value.trim();
             if (!newEmail.includes('@')) return Swal.fire('Invalid', 'Enter valid email.', 'warning');
 
@@ -245,12 +275,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             if (enteredOtp === emailUpdateOTP) {
                 btnVerifyEmailUpdate.innerText = "Saving...";
-                const { error } = await supabase.from('users').update({ email: newEmail }).eq('mobile', currentUserData.mobile); // Identifying by mobile now since email changes
+                const { error } = await supabase.from('users').update({ email: newEmail }).eq('mobile', currentUserData.mobile);
                 if (!error) {
+                    addUpdateRecord('hr_email_update_history'); // Record the update timestamp
                     currentUserData.email = newEmail;
                     document.getElementById('dispEmail').innerText = newEmail;
                     Swal.fire('Success', 'Email Address updated securely!', 'success');
                     document.getElementById('emailOtpBox').classList.add('hidden');
+                    document.getElementById('updateEmailInput').value = "";
                 } else {
                     Swal.fire('Error', 'Update failed.', 'error');
                 }
@@ -261,9 +293,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-
     // =========================================================
-    // SEARCH, MARQUEE & TIMETABLE LOGIC
+    // SEARCH & TIMETABLE LOGIC
     // =========================================================
     const busData = [
         { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "05:10 AM", time24: "05:10", busType: "Ordinary", arr: "HR" },
@@ -386,9 +417,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Check Persistent T&C
             const tncAccepted = localStorage.getItem('hr_tnc_accepted') === 'true';
             const errorPopup = document.getElementById('errorPopup');
-            const agreeTncModal = document.getElementById('agreeTncModal'); // For fallback check
+            const agreeTncModal = document.getElementById('agreeTncModal');
             
-            // If T&C is NOT accepted, show popup and stop
             if (!tncAccepted) {
                 if(errorPopup) {
                     errorPopup.classList.add('show');
@@ -460,9 +490,5 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     window.addEventListener("click", (e) => {
         if (e.target === tncModal) tncModal.classList.remove('active');
-        if (e.target === settingsModal) {
-            settingsModal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
     });
 });
