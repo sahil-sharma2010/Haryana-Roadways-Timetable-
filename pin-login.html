@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Secure PIN Login</title>
+    <link rel="stylesheet" href="login.css">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card text-center">
+            
+            <div class="brand-header">
+                <div class="hr-custom-logo" style="margin: 0 auto 15px auto;">
+                    <span class="hr-text">HR</span>
+                    <div class="wave wave1"></div>
+                    <div class="wave wave2"></div>
+                </div>
+                <h2>Enter Secure PIN</h2>
+                <p id="displayEmail" style="color: #0b4595; font-weight: bold; margin-top: 10px;">user@email.com</p>
+            </div>
+            
+            <div id="pinBlockMessage" class="hidden error-block">
+                <i class="fa-solid fa-ban"></i>
+                <span>Too many attempts. Blocked for 15 minutes.</span>
+            </div>
+
+            <form id="pinForm">
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="loginPin" placeholder="[ _ _ _ _ ]" maxlength="4" pattern="\d{4}" style="text-align: center; font-size: 24px; letter-spacing: 15px; padding-left: 15px;" required>
+                </div>
+
+                <button type="submit" id="btnPinLogin" class="btn-primary" style="margin-top: 10px;">
+                    <i class="fa-solid fa-lock-open"></i> Login Securely
+                </button>
+                
+                <div class="pin-links mt-15">
+                    <a href="#" id="forgotPinLink">Forgot PIN?</a>
+                    <a href="login.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="pin-login.js"></script>
+</body>
+</html>

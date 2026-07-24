@@ -1,0 +1,222 @@
+:root {
+    --primary-blue: #0b4595; 
+    --primary-blue-dark: #07316b;
+    --bg-color: #f0f4f8;
+    --card-bg: #ffffff;
+    --text-dark: #111;
+    --border-color: #d1d9e6;
+    --shadow: 0 10px 30px rgba(11, 69, 149, 0.15);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-dark);
+    display: flex;
+    flex-direction: column; /* Changed to allow footer to sit at bottom if needed */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.login-wrapper { width: 100%; max-width: 500px; padding: 20px; }
+
+.login-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 40px 30px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.brand-header { text-align: center; margin-bottom: 25px; }
+
+.hr-custom-logo {
+    background-color: #ffffff;
+    width: 70px; height: 70px;
+    border-radius: 12px;
+    display: flex; justify-content: center; align-items: center;
+    margin: 0 auto 15px auto;
+    position: relative; overflow: hidden;
+    box-shadow: 0 4px 15px rgba(11, 69, 149, 0.2);
+    border: 2px solid var(--primary-blue);
+}
+.hr-custom-logo .hr-text { color: var(--primary-blue-dark); font-size: 2.2rem; font-weight: 900; font-family: 'Arial Black', sans-serif; z-index: 3; }
+.hr-custom-logo .wave { position: absolute; border-radius: 50%; bottom: -20px; z-index: 1; }
+.hr-custom-logo .wave1 { width: 80px; height: 60px; background-color: #2b78e4; left: -20px; opacity: 0.8; }
+.hr-custom-logo .wave2 { width: 70px; height: 50px; background-color: #4285f4; right: -15px; z-index: 2; opacity: 0.9; }
+
+.brand-header h2 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--primary-blue-dark); }
+.brand-header p { color: #666; font-size: 0.95rem; margin-top: 5px; }
+
+/* Inputs */
+.input-group { position: relative; margin-bottom: 20px; width: 100%; }
+.input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary-blue); font-size: 1.1rem; }
+.input-group input {
+    width: 100%; padding: 15px 15px 15px 45px;
+    border: 2px solid var(--border-color); border-radius: 8px;
+    font-size: 1rem; color: var(--text-dark); background: #fafbfc;
+    transition: 0.3s; outline: none;
+}
+.input-group input:focus { border-color: var(--primary-blue); box-shadow: 0 0 8px rgba(11, 69, 149, 0.2); }
+.input-group input:disabled { background: #e9ecef; cursor: not-allowed; opacity: 0.8; }
+
+/* Mobile Prefix */
+.mobile-group input { padding-left: 80px; }
+.mobile-group .prefix {
+    position: absolute; left: 40px; top: 50%; transform: translateY(-50%);
+    font-weight: bold; color: var(--primary-blue-dark); border-right: 1px solid #ccc;
+    padding-right: 8px; font-size: 1rem; z-index: 2;
+}
+
+/* Side-by-side flex layout for Email/OTP */
+.flex-row { display: flex; gap: 10px; align-items: stretch; margin-bottom: 20px; }
+.flex-row .input-group { margin-bottom: 0; }
+.flex-grow { flex-grow: 1; }
+
+.btn-side {
+    background: var(--primary-blue); color: white; border: none;
+    padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer;
+    transition: 0.3s; white-space: nowrap; font-size: 1rem;
+}
+.btn-side:hover:not(:disabled) { background: var(--primary-blue-dark); }
+.btn-side:disabled { background: #a0b4cc; cursor: not-allowed; opacity: 0.7; }
+.btn-verify { background: #5eb063; }
+.btn-verify:hover:not(:disabled) { background: #4a914f; }
+
+/* Terms & Conditions (Form Checkbox) */
+.tnc-section { margin-bottom: 25px; }
+.link-btn { display: inline-block; color: var(--primary-blue); text-decoration: underline; font-weight: bold; margin-bottom: 15px; font-size: 1rem; }
+.link-btn:hover { color: var(--primary-blue-dark); }
+.tnc-checkbox-group { display: flex; align-items: center; gap: 10px; color: #444; font-weight: 500; font-size: 1.05rem; }
+.tnc-checkbox-group input { width: 22px; height: 22px; accent-color: var(--primary-blue); cursor: pointer; }
+
+/* Main Button */
+.btn-primary {
+    width: 100%; background: var(--primary-blue); color: white; border: none;
+    padding: 15px; font-size: 1.2rem; font-weight: bold; border-radius: 8px;
+    cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;
+}
+.btn-primary:hover:not(:disabled) { background: var(--primary-blue-dark); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(11, 69, 149, 0.4); }
+.btn-primary:disabled { background: #a0b4cc; cursor: not-allowed; }
+
+.hidden { display: none !important; }
+.error-block { background: #ffebee; color: #c62828; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; display: flex; gap: 10px; align-items: center; border: 1px solid #ef9a9a; }
+
+
+/* =================================================================
+   PREMIUM PIN SYSTEM STYLES
+   ================================================================= */
+
+.mt-15 { margin-top: 15px !important; }
+.text-center { text-align: center; }
+
+/* Title for PIN Setup */
+.pin-title { 
+    color: var(--primary-blue-dark); 
+    font-size: 1.1rem; 
+    margin-bottom: 15px; 
+    font-weight: 700; 
+    text-align: center;
+}
+
+/* Secure PIN Page Icon */
+.pin-icon {
+    font-size: 3.5rem;
+    color: var(--primary-blue);
+    margin-bottom: 15px;
+    animation: pulse 2s infinite;
+    text-align: center;
+    display: block;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Forgot PIN & Back Links */
+.pin-links { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-top: 25px;
+}
+
+.pin-links a { 
+    color: var(--primary-blue); 
+    text-decoration: none; 
+    font-size: 1rem; 
+    font-weight: 600; 
+    transition: 0.3s;
+}
+
+.pin-links a:hover { 
+    text-decoration: underline; 
+    color: var(--primary-blue-dark);
+}
+
+.back-link { 
+    color: #666 !important; 
+}
+
+.back-link:hover {
+    color: #333 !important;
+}
+
+
+/* =================================================================
+   NEW PREMIUM FOOTER STYLES (Appended Here)
+   ================================================================= */
+
+.footer-links-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-bottom: 20px;
+    width: 100%;
+}
+
+.footer-link {
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease-in-out;
+}
+
+.footer-link i {
+    font-size: 1.05rem;
+}
+
+.footer-link:hover {
+    color: var(--primary-blue-dark);
+    transform: translateY(-2px);
+    text-decoration: underline;
+}
+
+.link-separator {
+    color: var(--border-color);
+    font-weight: bold;
+    user-select: none;
+}
+
+/* Responsive Design for Mobile Footer */
+@media (max-width: 600px) {
+    .footer-links-container {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .link-separator {
+        display: none; /* Hides the pipe separator on mobile for a clean stacked layout */
+    }
+}

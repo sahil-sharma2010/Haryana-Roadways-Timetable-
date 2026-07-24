@@ -1,0 +1,47 @@
+[
+  {
+    "busNumber": "HR 39 B 1234",
+    "depotName": "Hisar Depot",
+    "source": "Hisar",
+    "destination": "Delhi",
+    "departureTime": "05:00 AM",
+    "arrivalTime": "09:30 AM",
+    "ticketFare": "₹165"
+  },
+  {
+    "busNumber": "HR 39 C 5678",
+    "depotName": "Hisar Depot",
+    "source": "Hisar",
+    "destination": "Chandigarh",
+    "departureTime": "06:30 AM",
+    "arrivalTime": "11:45 AM",
+    "ticketFare": "₹210"
+  },
+  {
+    "busNumber": "HR 39 A 9012",
+    "depotName": "Hisar Depot",
+    "source": "Hisar",
+    "destination": "Rohtak",
+    "departureTime": "08:00 AM",
+    "arrivalTime": "10:00 AM",
+    "ticketFare": "₹90"
+  },
+  {
+    "busNumber": "HR 39 D 3456",
+    "depotName": "Hisar Depot",
+    "source": "Hisar",
+    "destination": "Gurugram",
+    "departureTime": "10:15 AM",
+    "arrivalTime": "02:30 PM",
+    "ticketFare": "₹180"
+  },
+  {
+    "busNumber": "HR 39 E 7890",
+    "depotName": "Hisar Depot",
+    "source": "Delhi",
+    "destination": "Hisar",
+    "departureTime": "04:00 PM",
+    "arrivalTime": "08:45 PM",
+    "ticketFare": "₹165"
+  }
+]

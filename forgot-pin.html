@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Reset PIN</title>
+    <link rel="stylesheet" href="login.css">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            
+            <div class="brand-header">
+                <h2>Reset Secure PIN</h2>
+                <p>Verify your email to create a new PIN</p>
+            </div>
+            
+            <div class="input-group">
+                <i class="fa-solid fa-envelope"></i>
+                <input type="email" id="resetEmail" readonly style="background: #e9ecef; cursor: not-allowed; color: #555;">
+            </div>
+
+            <button type="button" id="btnSendResetOtp" class="btn-primary" style="margin-bottom: 20px;">Send Reset OTP</button>
+
+            <!-- OTP Box -->
+            <div id="resetOtpBox" class="flex-row hidden">
+                <div class="input-group flex-grow">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="text" id="resetOtpInput" placeholder="Enter 4-digit OTP" maxlength="4">
+                </div>
+                <button type="button" id="btnVerifyResetOtp" class="btn-side btn-verify">Verify</button>
+            </div>
+
+            <!-- New PIN Form -->
+            <form id="newPinForm" class="hidden mt-15">
+                <h4 class="pin-title">Create New 4-Digit PIN</h4>
+                <div class="input-group">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="newPin" placeholder="[ _ _ _ _ ]" maxlength="4" pattern="\d{4}" required>
+                </div>
+                <button type="submit" id="btnSaveNewPin" class="btn-primary">Update PIN</button>
+            </form>
+
+            <div class="text-center mt-15">
+                <a href="login.html" class="link-btn"><i class="fa-solid fa-arrow-left"></i> Back to Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="forgot-pin.js"></script>
+</body>
+</html>
