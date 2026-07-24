@@ -185,7 +185,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const authForm = document.getElementById('authForm');
     const blockMessage = document.getElementById('blockMessage');
 
-    // === PERSISTENT T&C LOGIC (1 Tick Is OK) ===
     if (termsCheck && localStorage.getItem('hr_tnc_accepted') === 'true') {
         termsCheck.checked = true;
     }
@@ -200,7 +199,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // === FORCE CHECK VALIDITY ===
     function forceCheckValidity() {
         if (!fullName || !mobile || !email || !btnSendOtp) return;
         const n = fullName.value.trim();
@@ -229,7 +227,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     setInterval(forceCheckValidity, 300);
 
-    // === REAL-TIME MOBILE DUPLICATE CHECK ===
     if (mobile) {
         mobile.addEventListener('input', async () => {
             const mVal = mobile.value.trim();
@@ -259,7 +256,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // === REAL-TIME EMAIL DUPLICATE CHECK ===
     if (email) {
         email.addEventListener('input', async () => {
             const eVal = email.value.trim();
@@ -490,7 +486,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // ==========================================
-    // T&C Modal Logic (Login Page)
+    // T&C Modal Logic (Login Page) - Full Page on Mobile
     // ==========================================
     const tncModal = document.getElementById('tncModal');
     const openTncBtn = document.getElementById('openTncBtn'); 
@@ -519,12 +515,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.body.style.overflow = 'auto'; 
             if(termsCheckModal) {
                 termsCheckModal.checked = true;
-                localStorage.setItem('hr_tnc_accepted', 'true'); // SAVE PERMANENTLY
+                localStorage.setItem('hr_tnc_accepted', 'true'); 
             }
         });
     }
 
     window.addEventListener("click", (e) => {
-        if (e.target === tncModal) tncModal.classList.remove('active');
+        if (e.target.classList.contains('glass-modal-overlay')) {
+            e.target.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
     });
 });
