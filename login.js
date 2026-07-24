@@ -3,10 +3,9 @@ let generatedOTP = null;
 let forgotGeneratedOTP = null;
 let isForgotOtpVerified = false;
 
-// ADDED BAD WORDS ARRAY TO FIX REFERENCE ERROR CRASH
 const badWords = ['admin', 'fake', 'test', 'dummy', 'abuse', 'fuck', 'shit'];
 
-// === NEW DUPLICATE TRACKING VARIABLES ===
+// DUPLICATE TRACKING VARIABLES
 let isMobileDuplicate = false;
 let isEmailDuplicate = false;
 
@@ -18,24 +17,6 @@ async function hashString(str) {
         return btoa(str + "_HR"); 
     }
 }
-
-// Multi-Language Toggle for Modals
-window.toggleLang = function(modalType) {
-    const en = document.getElementById(modalType + '-en');
-    const hi = document.getElementById(modalType + '-hi');
-    const btn = document.getElementById(modalType + '-btn');
-    if (en && hi && btn) {
-        if (en.style.display !== 'none') {
-            en.style.display = 'none';
-            hi.style.display = 'block';
-            btn.innerText = 'English';
-        } else {
-            en.style.display = 'block';
-            hi.style.display = 'none';
-            btn.innerText = 'हिंदी';
-        }
-    }
-};
 
 document.addEventListener("DOMContentLoaded", async () => {
     if (localStorage.getItem('hr_logged_in') === 'true') { window.location.href = 'index.html'; }
@@ -70,9 +51,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const pendingEmail = localStorage.getItem('hr_pending_email');
-    if (pendingEmail) { showSection('pending'); } else { showSection('login'); } // Defaults to Login!
+    if (pendingEmail) { showSection('pending'); } else { showSection('login'); }
 
-    // Bulletproof click event attachments
     const showLoginBtn = document.getElementById('showLoginBtn');
     if(showLoginBtn) showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); showSection('login'); });
 
@@ -102,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (error) { console.error("Database connection failed", error); }
 
     // ==========================================
-    // 0. ADMIN APPROVAL AUTOMATION (via URL) + EmailJS Update
+    // ADMIN APPROVAL AUTOMATION
     // ==========================================
     const urlParams = new URLSearchParams(window.location.search);
     const adminAction = urlParams.get('action');
@@ -118,7 +98,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
                 const { error } = await supabase.from('users').update({ status: 'Approved' }).eq('email', targetEmail);
                 if (!error) {
-                    // Send EmailJS Notification to User
                     const templateParams = {
                         subject: "🎉 Registration Approved – Haryana Roadways Timetable",
                         status: "Registration Approved Successfully",
@@ -128,24 +107,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                         email: targetEmail,
                         password: targetPass,
                         color: "#0b7d35",
-                        login_link: window.location.href.split('?')[0] // Base URL
+                        login_link: window.location.href.split('?')[0] 
                     };
                     
                     await emailjs.send("service_ecofefq", "template_vryvuck", templateParams);
-
                     Swal.fire("Success", "User Approved and notification sent to their email.", "success").then(()=> window.location.href = window.location.pathname);
                 } else {
                     Swal.fire("Error", error.message, "error");
                 }
-            } catch (err) {
-                Swal.fire("Error", "Failed to process approval.", "error");
-            }
+            } catch (err) { Swal.fire("Error", "Failed to process approval.", "error"); }
 
         } else if (adminAction === 'decline') {
             try {
                 const { error } = await supabase.from('users').update({ status: 'Rejected' }).eq('email', targetEmail);
                 if (!error) {
-                    // Send EmailJS Notification to User
                     const templateParams = {
                         subject: "Registration Declined – Haryana Roadways Timetable",
                         status: "Registration Request Declined",
@@ -155,24 +130,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                         email: targetEmail,
                         password: "N/A",
                         color: "#d32f2f",
-                        login_link: window.location.href.split('?')[0] // Base URL
+                        login_link: window.location.href.split('?')[0] 
                     };
                     
                     await emailjs.send("service_ecofefq", "template_vryvuck", templateParams);
-
                     Swal.fire("Declined", "User request has been declined and notification sent.", "info").then(()=> window.location.href = window.location.pathname);
                 } else {
                     Swal.fire("Error", error.message, "error");
                 }
-            } catch (err) {
-                Swal.fire("Error", "Failed to process decline.", "error");
-            }
+            } catch (err) { Swal.fire("Error", "Failed to process decline.", "error"); }
         }
     }
 
-    // ==========================================
-    // CHECK STATUS FROM PERSISTENT PAGE
-    // ==========================================
     const btnCheckStatus = document.getElementById('btnCheckStatus');
     if (btnCheckStatus) {
         btnCheckStatus.addEventListener('click', async () => {
@@ -203,9 +172,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // ==========================================
-    // 1. REGISTER LOGIC
-    // ==========================================
     const fullName = document.getElementById('fullName');
     const mobile = document.getElementById('mobile');
     const email = document.getElementById('email');
@@ -219,7 +185,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     const authForm = document.getElementById('authForm');
     const blockMessage = document.getElementById('blockMessage');
 
-    // === UPDATED forceCheckValidity FUNCTION ===
+    // === PERSISTENT T&C LOGIC (1 Tick Is OK) ===
+    if (termsCheck && localStorage.getItem('hr_tnc_accepted') === 'true') {
+        termsCheck.checked = true;
+    }
+
+    if (termsCheck) {
+        termsCheck.addEventListener('change', () => {
+            if (termsCheck.checked) {
+                localStorage.setItem('hr_tnc_accepted', 'true');
+            } else {
+                localStorage.removeItem('hr_tnc_accepted');
+            }
+        });
+    }
+
+    // === FORCE CHECK VALIDITY ===
     function forceCheckValidity() {
         if (!fullName || !mobile || !email || !btnSendOtp) return;
         const n = fullName.value.trim();
@@ -243,13 +224,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             if(blockMessage) blockMessage.classList.add('hidden');
         }
 
-        // OTP & Register Button blocked if Mobile or Email is duplicate
         btnSendOtp.disabled = !(isNameValid && isMobileValid && isEmailValid && !isBlocked && !isMobileDuplicate && !isEmailDuplicate);
         if(btnRegisterSubmit) btnRegisterSubmit.disabled = !(isNameValid && isMobileValid && isEmailValid && isOtpVerified && isChecked && !isBlocked && p !== "" && !isMobileDuplicate && !isEmailDuplicate);
     }
     setInterval(forceCheckValidity, 300);
 
-    // === NEW REAL-TIME MOBILE DUPLICATE CHECK ===
+    // === REAL-TIME MOBILE DUPLICATE CHECK ===
     if (mobile) {
         mobile.addEventListener('input', async () => {
             const mVal = mobile.value.trim();
@@ -258,14 +238,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (data) {
                     isMobileDuplicate = true;
                     Swal.fire({ title: 'Number Already Registered', text: 'This Mobile Number is already registered. Please try another Mobile Number.', icon: 'warning', confirmButtonColor: '#0b4595' });
-                    // BLOCK OTHER FIELDS
                     if(fullName) fullName.disabled = true;
                     if(email) email.disabled = true;
                     if(passwordInput) passwordInput.disabled = true;
                     if(confirmPasswordInput) confirmPasswordInput.disabled = true;
                 } else {
                     isMobileDuplicate = false;
-                    // UNBLOCK FIELDS
                     if(fullName) fullName.disabled = false;
                     if(email) email.disabled = false;
                     if(passwordInput) passwordInput.disabled = false;
@@ -281,7 +259,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // === NEW REAL-TIME EMAIL DUPLICATE CHECK ===
+    // === REAL-TIME EMAIL DUPLICATE CHECK ===
     if (email) {
         email.addEventListener('input', async () => {
             const eVal = email.value.trim();
@@ -290,14 +268,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (data) {
                     isEmailDuplicate = true;
                     Swal.fire({ title: 'Email Already Registered', text: 'This Email is already registered. Please try another Email.', icon: 'warning', confirmButtonColor: '#0b4595' });
-                    // BLOCK OTHER FIELDS
                     if(fullName) fullName.disabled = true;
                     if(mobile) mobile.disabled = true;
                     if(passwordInput) passwordInput.disabled = true;
                     if(confirmPasswordInput) confirmPasswordInput.disabled = true;
                 } else {
                     isEmailDuplicate = false;
-                    // UNBLOCK FIELDS
                     if(fullName) fullName.disabled = false;
                     if(mobile) mobile.disabled = false;
                     if(passwordInput) passwordInput.disabled = false;
@@ -330,11 +306,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             btnSendOtp.innerText = "Checking...";
             
             if (supabase) {
-                // Secondary safeguard check just in case real-time missed it
                 const { data: duplicateUsers, error: checkError } = await supabase
-                    .from('users')
-                    .select('*')
-                    .or(`email.eq.${email.value},mobile.eq.${mobile.value}`);
+                    .from('users').select('*').or(`email.eq.${email.value},mobile.eq.${mobile.value}`);
                 
                 if (duplicateUsers && duplicateUsers.length > 0) {
                     const isEmailDup = duplicateUsers.some(u => u.email === email.value);
@@ -347,9 +320,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     } else if (isMobileDup) {
                         Swal.fire({ title: 'Mobile Registered', text: 'This Mobile Number is already registered. Please try another mobile number.', icon: 'warning', confirmButtonText: 'OK', confirmButtonColor: '#0b4595' });
                     }
-                    
-                    btnSendOtp.innerText = "Send OTP";
-                    return; 
+                    btnSendOtp.innerText = "Send OTP"; return; 
                 }
             }
             
@@ -519,13 +490,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // ==========================================
-    // T&C MODAL CLICK EVENT (SAFELY WRAPPED)
+    // T&C Modal Logic (Login Page)
     // ==========================================
     const tncModal = document.getElementById('tncModal');
     const openTncBtn = document.getElementById('openTncBtn'); 
     const closeTncBtn = document.getElementById('closeTncBtn');
     const acceptTncBtn = document.getElementById('acceptTncBtn');
-    const termsCheckModal = document.getElementById('termsCheck');
+    const termsCheckModal = document.getElementById('termsCheck'); 
 
     if (openTncBtn && tncModal) {
         openTncBtn.addEventListener('click', (e) => { 
@@ -546,7 +517,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         acceptTncBtn.addEventListener('click', () => { 
             tncModal.classList.remove('active'); 
             document.body.style.overflow = 'auto'; 
-            if(termsCheckModal) termsCheckModal.checked = true;
+            if(termsCheckModal) {
+                termsCheckModal.checked = true;
+                localStorage.setItem('hr_tnc_accepted', 'true'); // SAVE PERMANENTLY
+            }
         });
     }
+
+    window.addEventListener("click", (e) => {
+        if (e.target === tncModal) tncModal.classList.remove('active');
+    });
 });
