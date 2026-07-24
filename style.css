@@ -157,7 +157,6 @@ header {
     font-size: 1.2rem;
     font-weight: 700;
     letter-spacing: 1px;
-    /* Animation adjusted to start showing text immediately */
     animation: marquee 40s linear infinite;
 }
 
@@ -167,7 +166,7 @@ header {
 }
 
 @keyframes marquee {
-    0% { transform: translateX(5%); } /* Starts instantly inside screen */
+    0% { transform: translateX(5%); }
     100% { transform: translateX(-100%); }
 }
 
@@ -527,6 +526,74 @@ div.swal2-popup.glass-swal { background: rgba(255, 255, 255, 0.95); backdrop-fil
 [data-theme="dark"] .swal2-html-container.glass-swal-text { color: #ccc !important; }
 
 /* =========================================================
+   LOGIN SPECIFIC CSS (RESTORED PERFECTLY)
+   ========================================================= */
+.auth-body { 
+    background: var(--bg-color); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 100vh; 
+    padding: 20px; 
+}
+.login-wrapper { width: 100%; max-width: 450px; }
+.login-card { 
+    background: #ffffff; 
+    border-radius: 16px; 
+    padding: 40px 30px; 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08); 
+    border: 1px solid rgba(0,0,0,0.05); 
+}
+[data-theme="dark"] .login-card { background: #1e1e1e; border: 1px solid #333; }
+.brand-header { text-align: center; margin-bottom: 25px; }
+.brand-header h2 { color: var(--primary-blue); font-family: 'Playfair Display', serif; margin: 10px 0 5px 0; font-size: 1.8rem; font-weight: 700; }
+[data-theme="dark"] .brand-header h2 { color: #6cb2eb; }
+.brand-header p { color: var(--text-light); font-size: 0.9rem; }
+.error-block { background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 500; border: 1px solid #ef9a9a; }
+.auth-form { display: flex; flex-direction: column; gap: 18px; width: 100%; }
+.auth-form .input-group { position: relative; width: 100%; }
+.auth-form .input-group input { 
+    width: 100%; 
+    padding: 14px 15px 14px 45px; 
+    border-radius: 8px; 
+    font-size: 1rem; 
+    border: 1px solid var(--primary-blue); 
+    color: #333; 
+    background-color: #ffffff; 
+    outline: none; 
+    box-sizing: border-box; 
+    transition: 0.3s;
+}
+[data-theme="dark"] .auth-form .input-group input { background-color: #242424; color: #fff; border-color: #555; }
+.auth-form .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary-blue); font-size: 1.1rem; z-index: 2; }
+[data-theme="dark"] .auth-form .input-group i { color: #6cb2eb; }
+.mobile-group .prefix { position: absolute; left: 45px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #333; z-index: 2; pointer-events: none; border-right: 1px solid #ccc; padding-right: 10px; }
+[data-theme="dark"] .mobile-group .prefix { color: #ccc; border-color: #555; }
+.mobile-group input { padding-left: 100px !important; }
+.btn-primary { 
+    width: 100%; 
+    background: var(--accent-green); 
+    color: white; 
+    border: none; 
+    padding: 14px; 
+    border-radius: 8px; 
+    font-size: 1.1rem; 
+    font-weight: bold; 
+    cursor: pointer; 
+    transition: 0.3s; 
+    box-shadow: 0 4px 10px rgba(94, 176, 99, 0.3);
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent-green-hover); box-shadow: 0 6px 15px rgba(94, 176, 99, 0.4); transform: translateY(-2px); }
+.btn-primary:disabled { background: #cdd5df; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
+.tnc-section { font-size: 0.9rem; }
+.link-btn { color: var(--primary-blue); text-decoration: none; font-weight: 600; display: inline-block; margin-bottom: 10px; }
+[data-theme="dark"] .link-btn { color: #6cb2eb; }
+.link-btn:hover { text-decoration: underline; }
+.tnc-checkbox-group { display: flex; align-items: center; gap: 8px; }
+.tnc-checkbox-group input { width: 16px; height: 16px; accent-color: var(--primary-blue); cursor: pointer; }
+
+
+/* =========================================================
    MOBILE RESPONSIVENESS
    ========================================================= */
 @media (max-width: 600px) {
@@ -550,7 +617,7 @@ div.swal2-popup.glass-swal { background: rgba(255, 255, 255, 0.95); backdrop-fil
     
     .search-form-bar { flex-direction: column; background: transparent; border: none; padding: 0; gap: 12px; }
     
-    /* FIX: Giving border explicitly to ALL fields in mobile to prevent missing "To" border */
+    /* FIX: Explicit borders for all inputs to prevent missing "To" border */
     .search-field-premium { 
         border: 2px solid var(--primary-blue) !important; 
         background: var(--white); 
