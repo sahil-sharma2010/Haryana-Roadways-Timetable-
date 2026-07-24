@@ -3,9 +3,9 @@ if (localStorage.getItem('hr_logged_in') !== 'true') {
     window.location.href = 'login.html';
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     // Welcome Popup
-    if (localStorage.getItem('hr_logged_in') === 'true' && localStorage.getItem('hr_welcome_shown') !== 'true') {
+    if (localStorage.getItem('hr_welcome_shown') !== 'true') {
         const userName = localStorage.getItem('hr_user_name') || 'USER';
         Swal.fire({
             title: `WELCOME BACK ${userName.toUpperCase()}`,
@@ -17,6 +17,16 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem('hr_welcome_shown', 'true');
     }
 
+    // Init Supabase & EmailJS
+    let supabase = null;
+    try {
+        emailjs.init("K6cs_matxXu2begVg"); 
+        const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU'; 
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (error) { console.error("Database connection failed", error); }
+
+    // Logout Logic inside Settings
     const btnLogout = document.getElementById('btnLogout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
@@ -27,10 +37,235 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================
-    // REAL LATEST BUS TIMETABLE DATA FROM IMAGES (WITH AM/PM)
+    // SETTINGS MODAL & TABS LOGIC
+    // =========================================================
+    const btnOpenSettings = document.getElementById('btnOpenSettings');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const navItems = document.querySelectorAll('.setting-nav-item');
+    const tabContents = document.querySelectorAll('.settings-tab-content');
+
+    let currentUserData = null; // Store user details
+
+    // Open Settings & Fetch Details
+    if (btnOpenSettings) {
+        btnOpenSettings.addEventListener('click', async () => {
+            settingsModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Fetch User Details logic using logged-in username
+            if (supabase && !currentUserData) {
+                const userName = localStorage.getItem('hr_user_name');
+                if (userName) {
+                    const { data } = await supabase.from('users').select('*').eq('name', userName).order('id', {ascending: false}).limit(1).maybeSingle();
+                    if (data) {
+                        currentUserData = data;
+                        document.getElementById('dispName').innerText = data.name;
+                        document.getElementById('dispMobile').innerText = "+91 " + data.mobile;
+                        document.getElementById('dispEmail').innerText = data.email;
+                    }
+                }
+            }
+        });
+    }
+
+    if (closeSettingsBtn) {
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
+    }
+
+    // Tab Switching
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            navItems.forEach(nav => nav.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            item.classList.add('active');
+            const targetTab = document.getElementById(item.getAttribute('data-tab'));
+            if(targetTab) targetTab.classList.add('active');
+        });
+    });
+
+    // Theme Toggle Logic inside Settings
+    const themeToggle = document.getElementById('theme-toggle');
+    const iconSun = document.getElementById('icon-sun');
+    const iconMoon = document.getElementById('icon-moon');
+    const themeStatusText = document.getElementById('themeStatusText');
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            if (document.body.getAttribute('data-theme') === 'dark') {
+                document.body.removeAttribute('data-theme');
+                iconSun.style.opacity = '1'; iconMoon.style.opacity = '0.5';
+                themeStatusText.innerText = "Light Mode";
+            } else {
+                document.body.setAttribute('data-theme', 'dark');
+                iconSun.style.opacity = '0.5'; iconMoon.style.opacity = '1';
+                themeStatusText.innerText = "Dark Mode";
+            }
+        });
+    }
+
+    // Routes Logic inside Settings
+    const cityBtns = document.querySelectorAll(".city-btn");
+    const hisarRoutesList = document.getElementById("hisarRoutesList");
+
+    cityBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const city = btn.getAttribute("data-city");
+            if (city === "Jind" || city === "Bhiwani") {
+                if(hisarRoutesList) hisarRoutesList.classList.add("hidden");
+                Swal.fire({
+                    icon: 'warning', title: 'Under Maintenance', text: `Sorry, routes from ${city} are currently under maintenance.`, confirmButtonColor: '#0b4595', customClass: { popup: 'glass-swal', title: 'glass-swal-title', htmlContainer: 'glass-swal-text' }
+                });
+            } else if (city === "Hisar") {
+                if(hisarRoutesList) hisarRoutesList.classList.remove("hidden");
+            }
+        });
+    });
+
+    // =========================================================
+    // UPDATE INFORMATION LOGIC (Name, Phone, Email)
+    // =========================================================
+    
+    // 1. Update Name (1 time per month limit without OTP)
+    const btnUpdateName = document.getElementById('btnUpdateName');
+    if (btnUpdateName) {
+        btnUpdateName.addEventListener('click', async () => {
+            if (!currentUserData || !supabase) return;
+            const newName = document.getElementById('updateNameInput').value.trim();
+            if (newName.length < 2) return Swal.fire('Invalid', 'Enter a valid name.', 'warning');
+
+            const lastUpdate = localStorage.getItem('hr_name_update_time');
+            const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+            
+            if (lastUpdate && (Date.now() - parseInt(lastUpdate)) < thirtyDays) {
+                const daysLeft = Math.ceil((thirtyDays - (Date.now() - parseInt(lastUpdate))) / (1000 * 60 * 60 * 24));
+                return Swal.fire('Limit Reached', `You can only change your name once a month. Try again in ${daysLeft} days.`, 'error');
+            }
+
+            btnUpdateName.innerText = "Updating...";
+            const { error } = await supabase.from('users').update({ name: newName }).eq('email', currentUserData.email);
+            if (!error) {
+                localStorage.setItem('hr_name_update_time', Date.now());
+                localStorage.setItem('hr_user_name', newName); // Update local active session
+                currentUserData.name = newName;
+                document.getElementById('dispName').innerText = newName;
+                Swal.fire('Success', 'Name updated successfully!', 'success');
+            } else {
+                Swal.fire('Error', 'Failed to update name.', 'error');
+            }
+            btnUpdateName.innerText = "Update";
+        });
+    }
+
+    // 2. Update Phone (OTP Required)
+    const btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
+    const btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
+    let phoneUpdateOTP = null;
+
+    if (btnSendPhoneOtp) {
+        btnSendPhoneOtp.addEventListener('click', async () => {
+            if (!currentUserData) return;
+            const newPhone = document.getElementById('updatePhoneInput').value.trim();
+            if (newPhone.length !== 10) return Swal.fire('Invalid', 'Enter valid 10-digit mobile.', 'warning');
+
+            // Duplicate check
+            const { data } = await supabase.from('users').select('mobile').eq('mobile', newPhone).maybeSingle();
+            if (data) return Swal.fire('Already Exists', 'This number is already registered.', 'warning');
+
+            btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Sending...";
+            phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
+
+            // Send OTP to Current Email for Authorization
+            emailjs.send("service_ecofefq", "template_grujfl8", { to_email: currentUserData.email, user_name: currentUserData.name, otp: phoneUpdateOTP }).then(() => {
+                document.getElementById('phoneOtpBox').classList.remove('hidden');
+                btnSendPhoneOtp.innerText = "Sent to Email ✓";
+                Swal.fire('OTP Sent', `OTP sent to your registered Email: ${currentUserData.email} for verification.`, 'success');
+            });
+        });
+    }
+
+    if (btnVerifyPhoneUpdate) {
+        btnVerifyPhoneUpdate.addEventListener('click', async () => {
+            const enteredOtp = document.getElementById('phoneOtpInput').value.trim();
+            const newPhone = document.getElementById('updatePhoneInput').value.trim();
+            
+            if (enteredOtp === phoneUpdateOTP) {
+                btnVerifyPhoneUpdate.innerText = "Saving...";
+                const { error } = await supabase.from('users').update({ mobile: newPhone }).eq('email', currentUserData.email);
+                if (!error) {
+                    currentUserData.mobile = newPhone;
+                    document.getElementById('dispMobile').innerText = "+91 " + newPhone;
+                    Swal.fire('Success', 'Phone number updated securely!', 'success');
+                    document.getElementById('phoneOtpBox').classList.add('hidden');
+                } else {
+                    Swal.fire('Error', 'Update failed.', 'error');
+                }
+                btnVerifyPhoneUpdate.innerText = "Verify & Save";
+            } else {
+                Swal.fire('Error', 'Incorrect OTP', 'error');
+            }
+        });
+    }
+
+    // 3. Update Email (OTP Required)
+    const btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
+    const btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
+    let emailUpdateOTP = null;
+
+    if (btnSendEmailOtp) {
+        btnSendEmailOtp.addEventListener('click', async () => {
+            if (!currentUserData) return;
+            const newEmail = document.getElementById('updateEmailInput').value.trim();
+            if (!newEmail.includes('@')) return Swal.fire('Invalid', 'Enter valid email.', 'warning');
+
+            // Duplicate check
+            const { data } = await supabase.from('users').select('email').eq('email', newEmail).maybeSingle();
+            if (data) return Swal.fire('Already Exists', 'This email is already registered.', 'warning');
+
+            btnSendEmailOtp.disabled = true; btnSendEmailOtp.innerText = "Sending...";
+            emailUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
+
+            // Send OTP to Current Email for Authorization
+            emailjs.send("service_ecofefq", "template_grujfl8", { to_email: currentUserData.email, user_name: currentUserData.name, otp: emailUpdateOTP }).then(() => {
+                document.getElementById('emailOtpBox').classList.remove('hidden');
+                btnSendEmailOtp.innerText = "Sent to Old Email ✓";
+                Swal.fire('OTP Sent', `Authorization OTP sent to your CURRENT Email: ${currentUserData.email}.`, 'success');
+            });
+        });
+    }
+
+    if (btnVerifyEmailUpdate) {
+        btnVerifyEmailUpdate.addEventListener('click', async () => {
+            const enteredOtp = document.getElementById('emailOtpInput').value.trim();
+            const newEmail = document.getElementById('updateEmailInput').value.trim();
+            
+            if (enteredOtp === emailUpdateOTP) {
+                btnVerifyEmailUpdate.innerText = "Saving...";
+                const { error } = await supabase.from('users').update({ email: newEmail }).eq('mobile', currentUserData.mobile); // Identifying by mobile now since email changes
+                if (!error) {
+                    currentUserData.email = newEmail;
+                    document.getElementById('dispEmail').innerText = newEmail;
+                    Swal.fire('Success', 'Email Address updated securely!', 'success');
+                    document.getElementById('emailOtpBox').classList.add('hidden');
+                } else {
+                    Swal.fire('Error', 'Update failed.', 'error');
+                }
+                btnVerifyEmailUpdate.innerText = "Verify & Save";
+            } else {
+                Swal.fire('Error', 'Incorrect OTP', 'error');
+            }
+        });
+    }
+
+
+    // =========================================================
+    // SEARCH, MARQUEE & TIMETABLE LOGIC
     // =========================================================
     const busData = [
-        // === HISAR TO GURUGRAM ===
         { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "05:10 AM", time24: "05:10", busType: "Ordinary", arr: "HR" },
         { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "06:00 AM", time24: "06:00", busType: "Ordinary", arr: "HR" },
         { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "06:40 AM", time24: "06:40", busType: "Ordinary", arr: "HR" },
@@ -53,8 +288,6 @@ document.addEventListener("DOMContentLoaded", () => {
         { from: "Hisar", to: "Gurugram", via: "KMP",   departure: "03:20 PM", time24: "15:20", busType: "Ordinary", arr: "HR" },
         { from: "Hisar", to: "Gurugram", via: "KMP",   departure: "04:30 PM", time24: "16:30", busType: "Ordinary", arr: "HR" },
         { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "05:20 PM", time24: "17:20", busType: "Ordinary", arr: "HR" },
-
-        // === HISAR TO DELHI ===
         { from: "Hisar", to: "Delhi", via: "Hansi", departure: "12:50 AM", time24: "00:50", busType: "Ordinary", arr: "RSRTC" },
         { from: "Hisar", to: "Delhi", via: "Hansi", departure: "01:30 AM", time24: "01:30", busType: "Ordinary", arr: "RSRTC" },
         { from: "Hisar", to: "Delhi", via: "Hansi", departure: "02:03 AM", time24: "02:03", busType: "Ordinary", arr: "RSRTC" },
@@ -130,21 +363,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateLiveMarquee();
     setInterval(updateLiveMarquee, 20000); 
 
-    const themeToggle = document.getElementById('theme-toggle');
-    const iconSun = document.getElementById('icon-sun');
-    const iconMoon = document.getElementById('icon-moon');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            if (document.body.getAttribute('data-theme') === 'dark') {
-                document.body.removeAttribute('data-theme');
-                iconSun.style.opacity = '1'; iconMoon.style.opacity = '0.5';
-            } else {
-                document.body.setAttribute('data-theme', 'dark');
-                iconSun.style.opacity = '0.5'; iconMoon.style.opacity = '1';
-            }
-        });
-    }
-
     function renderTable(data) {
         tableBody.innerHTML = ''; 
         data.forEach((bus, index) => {
@@ -168,9 +386,10 @@ document.addEventListener("DOMContentLoaded", () => {
             // Check Persistent T&C
             const tncAccepted = localStorage.getItem('hr_tnc_accepted') === 'true';
             const errorPopup = document.getElementById('errorPopup');
-            const agreeTncModal = document.getElementById('agreeTncModal');
+            const agreeTncModal = document.getElementById('agreeTncModal'); // For fallback check
             
-            if (!tncAccepted && agreeTncModal && !agreeTncModal.checked) {
+            // If T&C is NOT accepted, show popup and stop
+            if (!tncAccepted) {
                 if(errorPopup) {
                     errorPopup.classList.add('show');
                     setTimeout(() => { errorPopup.classList.remove('show'); }, 4000);
@@ -218,55 +437,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // === SEE ALL ROUTES LOGIC ===
-    const openSeeAllRoutesBtn = document.getElementById("openSeeAllRoutesBtn");
-    const allRoutesModal = document.getElementById("allRoutesModal");
-    const closeAllRoutesBtn = document.getElementById("closeAllRoutesBtn");
-    const cityBtns = document.querySelectorAll(".city-btn");
-    const hisarRoutesList = document.getElementById("hisarRoutesList");
-
-    if (openSeeAllRoutesBtn && allRoutesModal) {
-        openSeeAllRoutesBtn.addEventListener("click", () => {
-            allRoutesModal.classList.add("active");
-            hisarRoutesList.classList.add("hidden"); 
-        });
-    }
-    if (closeAllRoutesBtn && allRoutesModal) {
-        closeAllRoutesBtn.addEventListener("click", () => allRoutesModal.classList.remove("active"));
-    }
-
-    cityBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            const city = btn.getAttribute("data-city");
-            if (city === "Jind" || city === "Bhiwani") {
-                hisarRoutesList.classList.add("hidden");
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Under Maintenance',
-                    text: `Sorry, routes from ${city} are currently under maintenance.`,
-                    confirmButtonColor: '#0b4595',
-                    customClass: { popup: 'glass-swal', title: 'glass-swal-title', htmlContainer: 'glass-swal-text' }
-                });
-            } else if (city === "Hisar") {
-                hisarRoutesList.classList.remove("hidden");
-            }
-        });
-    });
-
-    // === Persistent T&C Handling ===
+    // Modal Background Clicks
     const tncModal = document.getElementById('tncModal');
-    const openTncBtn = document.getElementById('openTncBtn');
     const closeTncBtn = document.getElementById('closeTncBtn');
-    if (openTncBtn && tncModal) openTncBtn.addEventListener('click', (e) => { e.preventDefault(); tncModal.classList.add('active'); });
     if (closeTncBtn && tncModal) closeTncBtn.addEventListener('click', () => tncModal.classList.remove('active'));
 
     const acceptTncBtn = document.getElementById('acceptTncBtn');
     const agreeTncModal = document.getElementById('agreeTncModal');
-    
-    // Auto check if already accepted
-    if (agreeTncModal && localStorage.getItem('hr_tnc_accepted') === 'true') {
-        agreeTncModal.checked = true;
-    }
 
     if (acceptTncBtn && agreeTncModal) {
         acceptTncBtn.addEventListener('click', () => {
@@ -281,9 +458,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Modal Background Clicks
     window.addEventListener("click", (e) => {
         if (e.target === tncModal) tncModal.classList.remove('active');
-        if (e.target === allRoutesModal) allRoutesModal.classList.remove('active');
+        if (e.target === settingsModal) {
+            settingsModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
     });
 });
