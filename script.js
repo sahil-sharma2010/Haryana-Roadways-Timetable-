@@ -1,5 +1,7 @@
-// === AUTH GUARD ===
-if (localStorage.getItem('hr_logged_in') !== 'true') {
+// === AUTO-ACCEPT TERMS FOR LOGGED-IN USERS (Fixes Repeated Terms Issue) ===
+if (localStorage.getItem('hr_logged_in') === 'true') {
+    localStorage.setItem('hr_tnc_accepted', 'true');
+} else {
     window.location.href = 'login.html';
 }
 
@@ -47,13 +49,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let currentUserData = null; // Store user details
 
-    // Open Settings & Fetch Details
     if (btnOpenSettings) {
         btnOpenSettings.addEventListener('click', async () => {
             settingsPage.classList.add('active');
-            document.body.style.overflow = 'hidden'; // Stop background scrolling
+            document.body.style.overflow = 'hidden'; 
             
-            // Fetch User Details logic
             if (supabase && !currentUserData) {
                 const userName = localStorage.getItem('hr_user_name');
                 if (userName) {
@@ -69,27 +69,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // Close Settings
     if (closeSettingsBtn) {
         closeSettingsBtn.addEventListener('click', () => {
             settingsPage.classList.remove('active');
-            document.body.style.overflow = 'auto'; // Restore background scrolling
+            document.body.style.overflow = 'auto'; 
         });
     }
 
-    // Tab Switching
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             navItems.forEach(nav => nav.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
-            
             item.classList.add('active');
             const targetTab = document.getElementById(item.getAttribute('data-tab'));
             if(targetTab) targetTab.classList.add('active');
         });
     });
 
-    // Theme Toggle Logic inside Settings
     const themeToggle = document.getElementById('theme-toggle');
     const iconSun = document.getElementById('icon-sun');
     const iconMoon = document.getElementById('icon-moon');
@@ -109,7 +105,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // Routes Logic inside Settings
     const cityBtns = document.querySelectorAll(".city-btn");
     const hisarRoutesList = document.getElementById("hisarRoutesList");
 
@@ -131,14 +126,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     // UPDATE INFORMATION LOGIC (With 2x/Month Limits)
     // =========================================================
     
-    // Limits Utility
     function checkUpdateLimit(storageKey) {
         const limitData = JSON.parse(localStorage.getItem(storageKey)) || [];
         const now = Date.now();
         const thirtyDays = 30 * 24 * 60 * 60 * 1000;
         const validData = limitData.filter(time => (now - time) < thirtyDays);
         localStorage.setItem(storageKey, JSON.stringify(validData));
-        return validData.length < 2; // Returns true if less than 2 updates in last 30 days
+        return validData.length < 2; 
     }
 
     function addUpdateRecord(storageKey) {
@@ -147,7 +141,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         localStorage.setItem(storageKey, JSON.stringify(limitData));
     }
 
-    // 1. Update Name (1 time per month limit without OTP)
+    // 1. Update Name
     const btnUpdateName = document.getElementById('btnUpdateName');
     if (btnUpdateName) {
         btnUpdateName.addEventListener('click', async () => {
@@ -167,7 +161,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const { error } = await supabase.from('users').update({ name: newName }).eq('email', currentUserData.email);
             if (!error) {
                 localStorage.setItem('hr_name_update_time', Date.now());
-                localStorage.setItem('hr_user_name', newName); // Update local active session
+                localStorage.setItem('hr_user_name', newName); 
                 currentUserData.name = newName;
                 document.getElementById('dispName').innerText = newName;
                 Swal.fire('Success', 'Name updated successfully!', 'success');
@@ -179,7 +173,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // 2. Update Phone (OTP Required, Limit 2x/Month)
+    // 2. Update Phone (OTP Required)
     const btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
     const btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
     let phoneUpdateOTP = null;
@@ -187,22 +181,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnSendPhoneOtp) {
         btnSendPhoneOtp.addEventListener('click', async () => {
             if (!currentUserData) return;
-            
-            if (!checkUpdateLimit('hr_phone_update_history')) {
-                return Swal.fire('Limit Reached', 'You can only update your Mobile Number 2 times in a month.', 'error');
-            }
+            if (!checkUpdateLimit('hr_phone_update_history')) return Swal.fire('Limit Reached', 'You can only update your Mobile Number 2 times in a month.', 'error');
 
             const newPhone = document.getElementById('updatePhoneInput').value.trim();
             if (newPhone.length !== 10) return Swal.fire('Invalid', 'Enter valid 10-digit mobile.', 'warning');
 
-            // Duplicate check
             const { data } = await supabase.from('users').select('mobile').eq('mobile', newPhone).maybeSingle();
             if (data) return Swal.fire('Already Exists', 'This number is already registered.', 'warning');
 
             btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Sending...";
             phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
 
-            // Send OTP to Current Email for Authorization
             emailjs.send("service_ecofefq", "template_grujfl8", { to_email: currentUserData.email, user_name: currentUserData.name, otp: phoneUpdateOTP }).then(() => {
                 document.getElementById('phoneOtpBox').classList.remove('hidden');
                 btnSendPhoneOtp.innerText = "Sent to Email ✓";
@@ -220,7 +209,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 btnVerifyPhoneUpdate.innerText = "Saving...";
                 const { error } = await supabase.from('users').update({ mobile: newPhone }).eq('email', currentUserData.email);
                 if (!error) {
-                    addUpdateRecord('hr_phone_update_history'); // Record the update timestamp
+                    addUpdateRecord('hr_phone_update_history'); 
                     currentUserData.mobile = newPhone;
                     document.getElementById('dispMobile').innerText = "+91 " + newPhone;
                     Swal.fire('Success', 'Phone number updated securely!', 'success');
@@ -236,7 +225,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // 3. Update Email (OTP Required, Limit 2x/Month)
+    // 3. Update Email (OTP Required)
     const btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
     const btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
     let emailUpdateOTP = null;
@@ -244,22 +233,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnSendEmailOtp) {
         btnSendEmailOtp.addEventListener('click', async () => {
             if (!currentUserData) return;
-
-            if (!checkUpdateLimit('hr_email_update_history')) {
-                return Swal.fire('Limit Reached', 'You can only update your Email Address 2 times in a month.', 'error');
-            }
+            if (!checkUpdateLimit('hr_email_update_history')) return Swal.fire('Limit Reached', 'You can only update your Email Address 2 times in a month.', 'error');
 
             const newEmail = document.getElementById('updateEmailInput').value.trim();
             if (!newEmail.includes('@')) return Swal.fire('Invalid', 'Enter valid email.', 'warning');
 
-            // Duplicate check
             const { data } = await supabase.from('users').select('email').eq('email', newEmail).maybeSingle();
             if (data) return Swal.fire('Already Exists', 'This email is already registered.', 'warning');
 
             btnSendEmailOtp.disabled = true; btnSendEmailOtp.innerText = "Sending...";
             emailUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
 
-            // Send OTP to Current Email for Authorization
             emailjs.send("service_ecofefq", "template_grujfl8", { to_email: currentUserData.email, user_name: currentUserData.name, otp: emailUpdateOTP }).then(() => {
                 document.getElementById('emailOtpBox').classList.remove('hidden');
                 btnSendEmailOtp.innerText = "Sent to Old Email ✓";
@@ -277,7 +261,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 btnVerifyEmailUpdate.innerText = "Saving...";
                 const { error } = await supabase.from('users').update({ email: newEmail }).eq('mobile', currentUserData.mobile);
                 if (!error) {
-                    addUpdateRecord('hr_email_update_history'); // Record the update timestamp
+                    addUpdateRecord('hr_email_update_history'); 
                     currentUserData.email = newEmail;
                     document.getElementById('dispEmail').innerText = newEmail;
                     Swal.fire('Success', 'Email Address updated securely!', 'success');
@@ -414,20 +398,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         form.addEventListener('submit', function(e) {
             e.preventDefault(); 
             
-            // Check Persistent T&C
-            const tncAccepted = localStorage.getItem('hr_tnc_accepted') === 'true';
-            const errorPopup = document.getElementById('errorPopup');
-            const agreeTncModal = document.getElementById('agreeTncModal');
-            
-            if (!tncAccepted) {
-                if(errorPopup) {
-                    errorPopup.classList.add('show');
-                    setTimeout(() => { errorPopup.classList.remove('show'); }, 4000);
-                }
-                return;
-            }
-            if(errorPopup) errorPopup.classList.remove('show');
-            
             const fromVal = sourceInput.value.trim().toLowerCase();
             const toVal = destInput.value.trim().toLowerCase();
 
@@ -435,11 +405,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             tableBody.innerHTML = '';
             loadingDiv.style.display = 'flex'; 
 
-            // 5 SECONDS DELAY
             setTimeout(() => {
                 loadingDiv.style.display = 'none';
-
-                // EXACT MATCHING
                 const results = busData.filter(bus => {
                     const bFrom = bus.from.toLowerCase().trim();
                     const bTo = bus.to.toLowerCase().trim();
@@ -467,28 +434,50 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // Modal Background Clicks
-    const tncModal = document.getElementById('tncModal');
-    const closeTncBtn = document.getElementById('closeTncBtn');
-    if (closeTncBtn && tncModal) closeTncBtn.addEventListener('click', () => tncModal.classList.remove('active'));
+    // =========================================================
+    // FOOTER MODALS HANDLING (Open as Full Screen on Mobile)
+    // =========================================================
+    const modalsInfo = [
+        { btn: 'openTncBtn', modal: 'tncModal', close: 'closeTncBtn', action: '.close-tnc-action' },
+        { btn: 'openPrivacyBtn', modal: 'privacyModal', close: 'closePrivacyBtn', action: '.close-privacy-action' },
+        { btn: 'openDisclaimerBtn', modal: 'disclaimerModal', close: 'closeDisclaimerBtn', action: '.close-disclaimer-action' }
+    ];
 
-    const acceptTncBtn = document.getElementById('acceptTncBtn');
-    const agreeTncModal = document.getElementById('agreeTncModal');
-
-    if (acceptTncBtn && agreeTncModal) {
-        acceptTncBtn.addEventListener('click', () => {
-            if (!agreeTncModal.checked) {
-                alert("Please tick the checkbox to agree to the Terms & Conditions.");
-                return;
+    modalsInfo.forEach(m => {
+        const btn = document.getElementById(m.btn);
+        const modal = document.getElementById(m.modal);
+        const closeBtn = document.getElementById(m.close);
+        
+        if (btn && modal) {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        }
+        
+        if (closeBtn && modal) {
+            closeBtn.addEventListener('click', () => {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            });
+        }
+        
+        if (m.action && modal) {
+            const actionBtn = modal.querySelector(m.action);
+            if(actionBtn) {
+                actionBtn.addEventListener('click', () => {
+                    modal.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                });
             }
-            localStorage.setItem('hr_tnc_accepted', 'true'); // PERSIST T&C
-            if(tncModal) tncModal.classList.remove('active');
-            const errorPopup = document.getElementById('errorPopup');
-            if(errorPopup) errorPopup.classList.remove('show');
-        });
-    }
+        }
+    });
 
     window.addEventListener("click", (e) => {
-        if (e.target === tncModal) tncModal.classList.remove('active');
+        if (e.target.classList.contains('glass-modal-overlay')) {
+            e.target.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
     });
 });
