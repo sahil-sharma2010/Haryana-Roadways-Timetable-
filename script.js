@@ -107,34 +107,8 @@ document.addEventListener("DOMContentLoaded", () => {
         { from: "Hisar", to: "Mundhal", via: "Hansi", departure: "06:30 PM", time24: "18:30", busType: "Haryana Roadways AC", arr: "TBD", fare: "Premium" },
         { from: "Hisar", to: "Mundhal", via: "Hansi", departure: "07:10 PM", time24: "19:10", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
         { from: "Hisar", to: "Mundhal", via: "Hansi", departure: "08:00 PM", time24: "20:00", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "05:30 AM", time24: "05:30", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "06:00 AM", time24: "06:00", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "06:35 AM", time24: "06:35", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "07:05 AM", time24: "07:05", busType: "Haryana Roadways AC", arr: "TBD", fare: "Premium" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "07:40 AM", time24: "07:40", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "08:10 AM", time24: "08:10", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "08:40 AM", time24: "08:40", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "09:20 AM", time24: "09:20", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "09:50 AM", time24: "09:50", busType: "Haryana Roadways AC", arr: "TBD", fare: "Premium" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "10:30 AM", time24: "10:30", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "11:00 AM", time24: "11:00", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "11:40 AM", time24: "11:40", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "12:15 PM", time24: "12:15", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "12:50 PM", time24: "12:50", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "01:30 PM", time24: "13:30", busType: "Haryana Roadways AC", arr: "TBD", fare: "Premium" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "02:05 PM", time24: "14:05", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "02:40 PM", time24: "14:40", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "03:20 PM", time24: "15:20", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "03:50 PM", time24: "15:50", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "04:30 PM", time24: "16:30", busType: "Haryana Roadways AC", arr: "TBD", fare: "Premium" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "05:00 PM", time24: "17:00", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "05:40 PM", time24: "17:40", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "06:15 PM", time24: "18:15", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "06:50 PM", time24: "18:50", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "07:30 PM", time24: "19:30", busType: "Haryana Roadways AC", arr: "TBD", fare: "Premium" },
-        { from: "Mundhal", to: "Hisar", via: "Hansi", departure: "08:20 PM", time24: "20:20", busType: "Haryana Roadways", arr: "TBD", fare: "Standard" }
+        
     ];
-
     const form = document.getElementById('searchForm');
     const sourceInput = document.getElementById('source');
     const destInput = document.getElementById('destination');
