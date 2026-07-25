@@ -112,6 +112,168 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // =========================================================
+    // ADMIN PANEL LOGIC (Direct PIN 3806 & Auth Check)
+    // =========================================================
+    const btnUnlockAdmin = document.getElementById('btnUnlockAdmin');
+    const adminPinInput = document.getElementById('adminPinInput');
+    const adminPage = document.getElementById('adminPage');
+
+    if (btnUnlockAdmin) {
+        btnUnlockAdmin.addEventListener('click', () => {
+            const enteredPin = adminPinInput.value;
+            
+            if (enteredPin === '3806') {
+                // Pin is correct, now check if authorized number
+                if (currentUserData && currentUserData.mobile === '7988300872') {
+                    settingsPage.classList.remove('active'); 
+                    adminPage.classList.add('active'); 
+                    loadAdminData();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '⚠️ Unauthorized Access',
+                        text: "Sorry! You don't have permission to view this page.\nThis admin dashboard is restricted to the authorized developer only.",
+                        confirmButtonColor: '#d9534f',
+                        customClass: { popup: 'glass-swal' }
+                    });
+                }
+            } else {
+                Swal.fire('Error', 'Incorrect PIN. Access Denied.', 'error');
+            }
+            adminPinInput.value = ''; // Always reset
+        });
+    }
+
+    const closeAdminBtn = document.getElementById('closeAdminBtn');
+    if (closeAdminBtn) {
+        closeAdminBtn.addEventListener('click', () => {
+            adminPage.classList.remove('active');
+            settingsPage.classList.add('active'); // Back to settings
+        });
+    }
+
+    const tabUsersBtn = document.getElementById('tabUsersBtn');
+    const tabReqBtn = document.getElementById('tabReqBtn');
+    const adminUsersSection = document.getElementById('adminUsersSection');
+    const adminReqSection = document.getElementById('adminReqSection');
+
+    if (tabUsersBtn && tabReqBtn) {
+        tabUsersBtn.addEventListener('click', () => {
+            tabUsersBtn.style.background = 'var(--primary-blue)'; tabUsersBtn.style.color = 'white';
+            tabReqBtn.style.background = '#cdd5df'; tabReqBtn.style.color = '#333';
+            adminUsersSection.classList.remove('hidden'); adminReqSection.classList.add('hidden');
+        });
+        tabReqBtn.addEventListener('click', () => {
+            tabReqBtn.style.background = 'var(--primary-blue)'; tabReqBtn.style.color = 'white';
+            tabUsersBtn.style.background = '#cdd5df'; tabUsersBtn.style.color = '#333';
+            adminReqSection.classList.remove('hidden'); adminUsersSection.classList.add('hidden');
+        });
+    }
+
+    async function loadAdminData() {
+        const adminTableBody = document.getElementById('adminTableBody');
+        const adminRequestsBody = document.getElementById('adminRequestsBody');
+        const totalUsersCount = document.getElementById('totalUsersCount');
+        const reqCountBadge = document.getElementById('reqCountBadge');
+        
+        adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading Data...</td></tr>';
+        adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading Requests...</td></tr>';
+        
+        try {
+            const { data, error } = await supabase.from('users').select('*').order('id', {ascending: false});
+            if (error) throw error;
+            
+            adminTableBody.innerHTML = '';
+            adminRequestsBody.innerHTML = '';
+            
+            let approvedCount = 0;
+            let pendingCount = 0;
+
+            data.forEach(user => {
+                const status = user.status ? user.status.toLowerCase() : 'approved';
+                if (status === 'pending') {
+                    pendingCount++;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${user.name}</td>
+                        <td>${user.mobile}</td>
+                        <td>${user.email}</td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn-accept-req" onclick="acceptUserReq('${user.email}', '${user.name}', '${user.mobile}', '${user.password}')">Accept</button>
+                            <button class="btn-reject-req" onclick="rejectUserReq('${user.email}', '${user.name}', '${user.mobile}')">Reject</button>
+                        </td>
+                    `;
+                    adminRequestsBody.appendChild(tr);
+                } else {
+                    approvedCount++;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${user.name}</td>
+                        <td>${user.mobile}</td>
+                        <td>${user.email}</td>
+                        <td id="pass-${user.id}">****</td>
+                        <td><button class="btn-show-pass" onclick="revealPassword('${user.id}', '${user.password}')">SHOW</button></td>
+                    `;
+                    adminTableBody.appendChild(tr);
+                }
+            });
+
+            totalUsersCount.innerText = approvedCount;
+            reqCountBadge.innerText = pendingCount;
+
+            if(pendingCount === 0) {
+                adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No pending requests found.</td></tr>';
+            }
+            if(approvedCount === 0) {
+                adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No active users found.</td></tr>';
+            }
+        } catch (err) {
+            adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Failed to load data</td></tr>';
+            adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Failed to load data</td></tr>';
+        }
+    }
+
+    window.revealPassword = function(id, pass) {
+        if (currentUserData && currentUserData.mobile === '7988300872') {
+            document.getElementById(`pass-${id}`).innerText = pass;
+        } else {
+            Swal.fire('Error', 'Unauthorized action!', 'error');
+            document.getElementById('adminPage').classList.remove('active');
+        }
+    };
+
+    window.acceptUserReq = async function(email, name, mobile, pass) {
+        Swal.fire({title: 'Approving...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+        const { error } = await supabase.from('users').update({ status: 'Approved' }).eq('email', email);
+        if (!error) {
+            emailjs.send("service_ecofefq", "template_vryvuck", {
+                subject: "🎉 Registration Approved – Haryana Roadways Timetable",
+                status: "Registration Approved Successfully",
+                message: "Congratulations! Your registration has been approved successfully. You can now log in.",
+                name: name, mobile: mobile, email: email, password: pass, color: "#0b7d35"
+            });
+            Swal.fire('Success', 'User Approved & Notified.', 'success');
+            loadAdminData();
+        } else { Swal.fire('Error', error.message, 'error'); }
+    };
+
+    window.rejectUserReq = async function(email, name, mobile) {
+        Swal.fire({title: 'Rejecting & Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+        // DELETING FROM DATABASE INSTEAD OF UPDATING STATUS
+        const { error } = await supabase.from('users').delete().eq('email', email);
+        if (!error) {
+            emailjs.send("service_ecofefq", "template_vryvuck", {
+                subject: "Registration Declined – Haryana Roadways Timetable",
+                status: "Registration Request Declined",
+                message: "We regret to inform you that your request has been declined by the administrator and your data has been removed.",
+                name: name, mobile: mobile, email: email, password: "N/A", color: "#d32f2f"
+            });
+            Swal.fire('Declined', 'User request rejected and deleted from database.', 'info');
+            loadAdminData();
+        } else { Swal.fire('Error', error.message, 'error'); }
+    };
+
+    // =========================================================
     // UPDATE INFORMATION
     // =========================================================
     function checkUpdateLimit(storageKey) {
@@ -260,179 +422,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             } else { Swal.fire('Error', 'Incorrect OTP', 'error'); }
         });
     }
-
-
-    // =========================================================
-    // ADMIN PANEL LOGIC (Verification & Sub-Tabs)
-    // =========================================================
-    const btnVerifyAdminMob = document.getElementById('btnVerifyAdminMob');
-    const adminMobileInput = document.getElementById('adminMobileInput');
-    const adminPinBlock = document.getElementById('adminPinBlock');
-    const btnUnlockAdmin = document.getElementById('btnUnlockAdmin');
-    const adminPinInput = document.getElementById('adminPinInput');
-    const adminPage = document.getElementById('adminPage');
-
-    if (btnVerifyAdminMob) {
-        btnVerifyAdminMob.addEventListener('click', () => {
-            if (adminMobileInput.value.trim() === '7988300872') {
-                btnVerifyAdminMob.classList.add('hidden');
-                adminMobileInput.disabled = true;
-                adminPinBlock.classList.remove('hidden');
-            } else {
-                Swal.fire({
-                    icon: 'error', title: 'Number Does Not Match',
-                    text: 'You are not authorized. This incident has been logged.',
-                    confirmButtonColor: '#d9534f', customClass: { popup: 'glass-swal' }
-                });
-            }
-        });
-    }
-
-    if (btnUnlockAdmin) {
-        btnUnlockAdmin.addEventListener('click', () => {
-            if (adminPinInput.value === '0276') {
-                document.getElementById('settingsPage').classList.remove('active');
-                adminPage.classList.add('active');
-                loadAdminData();
-            } else {
-                Swal.fire('Error', 'Incorrect PIN. Access Denied.', 'error');
-            }
-        });
-    }
-
-    const closeAdminBtn = document.getElementById('closeAdminBtn');
-    if (closeAdminBtn) {
-        closeAdminBtn.addEventListener('click', () => {
-            adminPage.classList.remove('active');
-            adminPinBlock.classList.add('hidden');
-            btnVerifyAdminMob.classList.remove('hidden');
-            adminMobileInput.disabled = false;
-            adminMobileInput.value = "";
-            adminPinInput.value = "";
-            document.getElementById('tab-theme').click(); // Reset settings to theme tab
-        });
-    }
-
-    // Admin Internal Navigation (Users vs Requests)
-    const tabUsersBtn = document.getElementById('tabUsersBtn');
-    const tabReqBtn = document.getElementById('tabReqBtn');
-    const adminUsersSection = document.getElementById('adminUsersSection');
-    const adminReqSection = document.getElementById('adminReqSection');
-
-    if (tabUsersBtn && tabReqBtn) {
-        tabUsersBtn.addEventListener('click', () => {
-            tabUsersBtn.style.background = 'var(--primary-blue)'; tabUsersBtn.style.color = 'white';
-            tabReqBtn.style.background = '#cdd5df'; tabReqBtn.style.color = '#333';
-            adminUsersSection.classList.remove('hidden'); adminReqSection.classList.add('hidden');
-        });
-        tabReqBtn.addEventListener('click', () => {
-            tabReqBtn.style.background = 'var(--primary-blue)'; tabReqBtn.style.color = 'white';
-            tabUsersBtn.style.background = '#cdd5df'; tabUsersBtn.style.color = '#333';
-            adminReqSection.classList.remove('hidden'); adminUsersSection.classList.add('hidden');
-        });
-    }
-
-    async function loadAdminData() {
-        const adminTableBody = document.getElementById('adminTableBody');
-        const adminRequestsBody = document.getElementById('adminRequestsBody');
-        const totalUsersCount = document.getElementById('totalUsersCount');
-        const reqCountBadge = document.getElementById('reqCountBadge');
-        
-        adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading Data...</td></tr>';
-        adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading Requests...</td></tr>';
-        
-        try {
-            const { data, error } = await supabase.from('users').select('*').order('id', {ascending: false});
-            if (error) throw error;
-            
-            adminTableBody.innerHTML = '';
-            adminRequestsBody.innerHTML = '';
-            
-            let approvedCount = 0;
-            let pendingCount = 0;
-
-            data.forEach(user => {
-                const status = user.status ? user.status.toLowerCase() : 'approved';
-                if (status === 'pending') {
-                    pendingCount++;
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${user.name}</td>
-                        <td>${user.mobile}</td>
-                        <td>${user.email}</td>
-                        <td style="white-space:nowrap;">
-                            <button class="btn-accept-req" onclick="acceptUserReq('${user.email}', '${user.name}', '${user.mobile}', '${user.password}')">Accept</button>
-                            <button class="btn-reject-req" onclick="rejectUserReq('${user.email}', '${user.name}', '${user.mobile}')">Reject</button>
-                        </td>
-                    `;
-                    adminRequestsBody.appendChild(tr);
-                } else {
-                    approvedCount++;
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${user.name}</td>
-                        <td>${user.mobile}</td>
-                        <td>${user.email}</td>
-                        <td id="pass-${user.id}">****</td>
-                        <td><button class="btn-show-pass" onclick="revealPassword('${user.id}', '${user.password}')">SHOW</button></td>
-                    `;
-                    adminTableBody.appendChild(tr);
-                }
-            });
-
-            totalUsersCount.innerText = approvedCount;
-            reqCountBadge.innerText = pendingCount;
-
-            if(pendingCount === 0) {
-                adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No pending requests found.</td></tr>';
-            }
-            if(approvedCount === 0) {
-                adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No active users found.</td></tr>';
-            }
-        } catch (err) {
-            adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Failed to load data</td></tr>';
-            adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Failed to load data</td></tr>';
-        }
-    }
-
-    window.revealPassword = function(id, pass) {
-        if (currentUserData && currentUserData.mobile === '7988300872') {
-            document.getElementById(`pass-${id}`).innerText = pass;
-        } else {
-            Swal.fire('Error', 'Unauthorized action!', 'error');
-            adminPage.classList.remove('active');
-        }
-    };
-
-    window.acceptUserReq = async function(email, name, mobile, pass) {
-        Swal.fire({title: 'Approving...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-        const { error } = await supabase.from('users').update({ status: 'Approved' }).eq('email', email);
-        if (!error) {
-            emailjs.send("service_ecofefq", "template_vryvuck", {
-                subject: "🎉 Registration Approved – Haryana Roadways Timetable",
-                status: "Registration Approved Successfully",
-                message: "Congratulations! Your registration has been approved successfully. You can now log in.",
-                name: name, mobile: mobile, email: email, password: pass, color: "#0b7d35"
-            });
-            Swal.fire('Success', 'User Approved & Notified.', 'success');
-            loadAdminData();
-        } else { Swal.fire('Error', error.message, 'error'); }
-    };
-
-    window.rejectUserReq = async function(email, name, mobile) {
-        Swal.fire({title: 'Rejecting...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-        const { error } = await supabase.from('users').update({ status: 'Rejected' }).eq('email', email);
-        if (!error) {
-            emailjs.send("service_ecofefq", "template_vryvuck", {
-                subject: "Registration Declined – Haryana Roadways Timetable",
-                status: "Registration Request Declined",
-                message: "We regret to inform you that your request has been declined by the administrator.",
-                name: name, mobile: mobile, email: email, password: "N/A", color: "#d32f2f"
-            });
-            Swal.fire('Declined', 'User request rejected.', 'info');
-            loadAdminData();
-        } else { Swal.fire('Error', error.message, 'error'); }
-    };
 
     // =========================================================
     // SEARCH & TIMETABLE LOGIC
