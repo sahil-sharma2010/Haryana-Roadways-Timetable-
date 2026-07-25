@@ -1,3 +1,11 @@
+// === FIX FOR POPUPS HIDING BEHIND MODALS ===
+if (typeof document !== 'undefined') {
+    var style = document.createElement('style');
+    // Login page par bhi popups 100% visible rahenge
+    style.innerHTML = '.swal2-container { z-index: 9999999 !important; }';
+    document.head.appendChild(style);
+}
+
 // === SAFE GLOBAL VARIABLES ===
 var isOtpVerified = false;
 var generatedOTP = null;
