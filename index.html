@@ -4,21 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Haryana Roadways Timetable</title>
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <!-- SweetAlert2 for Premium Security Popups -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Supabase & EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <!-- External CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Header (Clean Layout with Settings Icon on Right) -->
+    <!-- Header -->
     <header>
         <div class="header-left">
             <div class="hr-custom-logo">
@@ -28,32 +23,25 @@
             </div>
             <div class="header-static-title">HARYANA ROADWAYS TIME TABLE</div>
         </div>
-        
         <div class="header-right">
-            <!-- Settings Toggle Button -->
-            <button id="btnOpenSettings" class="btn-settings" title="Open Settings">
-                <i class="fa-solid fa-gear"></i>
-            </button>
+            <button id="btnOpenSettings" class="btn-settings" title="Open Settings"><i class="fa-solid fa-gear"></i></button>
         </div>
     </header>
 
-    <!-- Marquee Below Header -->
     <div class="marquee-wrapper">
         <div class="marquee-content" id="marqueeText"></div>
     </div>
 
     <div class="container">
-        <!-- Search Section -->
+        <!-- Search -->
         <div class="search-container slide-in-bottom">
             <h1 class="premium-title">Find Your Bus</h1>
             <p class="limited-route-text">Please note: This portal currently provides timetable information for a limited number of specific routes.</p>
             
-            <!-- Datalist for Auto-Suggest -->
             <datalist id="cityOptions"></datalist>
 
             <form id="searchForm">
                 <div class="search-form-bar">
-                    <!-- SELECT ROUTE -->
                     <div class="search-field-premium">
                         <i class="fa-solid fa-route"></i>
                         <select id="routeSelect" required>
@@ -63,33 +51,24 @@
                             <option value="Bhiwani">Bhiwani</option>
                         </select>
                     </div>
-
-                    <!-- FROM -->
                     <div class="search-field-premium">
                         <i class="fa-solid fa-location-dot"></i>
                         <input type="text" id="source" list="cityOptions" placeholder="From" required autocomplete="off">
                     </div>
-
-                    <!-- TO -->
                     <div class="search-field-premium">
                         <i class="fa-solid fa-location-crosshairs"></i>
                         <input type="text" id="destination" list="cityOptions" placeholder="To" required autocomplete="off">
                     </div>
-                    
-                    <button type="submit" class="btn-search-premium">
-                        <i class="fa-solid fa-magnifying-glass"></i> Search
-                    </button>
+                    <button type="submit" class="btn-search-premium"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
                 </div>
             </form>
 
-            <!-- Premium Skeleton Loader -->
             <div class="skeleton-loader" id="skeletonLoader">
                 <div class="skeleton-row"></div>
                 <div class="skeleton-row" style="width: 80%;"></div>
                 <div class="skeleton-row" style="width: 90%;"></div>
             </div>
 
-            <!-- Premium Empty State -->
             <div id="emptyState" class="empty-state">
                 <i class="fa-solid fa-bus-circle-xmark"></i>
                 <h3>No Route Found</h3>
@@ -97,7 +76,6 @@
             </div>
         </div>
 
-        <!-- Results Table -->
         <div class="results-wrapper" id="resultsTableWrapper">
             <div class="results-header-text" id="resultHeaderText">Search Results</div>
             <table>
@@ -119,10 +97,7 @@
     <!-- Footer -->
     <footer>
         <p class="footer-credits">&copy; 2026 HR Haryana Roadways | Unofficial Portal By Sahil Sharma</p>
-        <div class="footer-warning">
-            This is an independent personal project created for educational and informational purposes. It is not affiliated with or endorsed by Haryana Roadways or the Government of Haryana.
-        </div>
-        
+        <div class="footer-warning">This is an independent personal project created for educational and informational purposes.</div>
         <div class="footer-links-container">
             <a href="#" id="openPrivacyBtn" class="footer-link"><i class="fa-solid fa-user-shield"></i> Privacy Policy</a>
             <span class="link-separator">|</span>
@@ -132,9 +107,7 @@
         </div>
     </footer>
 
-    <!-- =========================================================
-         SETTINGS PAGE (Full Screen)
-         ========================================================= -->
+    <!-- SETTINGS PAGE -->
     <div id="settingsPage" class="settings-page">
         <header class="settings-page-header">
             <div class="settings-header-left">
@@ -146,7 +119,7 @@
         <div class="settings-body container">
             <div class="settings-card glass-modal-box" style="width: 100%; max-width: 100%; box-shadow: none; border: none; background: transparent; padding: 0;">
                 
-                <div class="settings-nav-grid">
+                <div class="settings-nav-grid" style="grid-template-columns: repeat(5, 1fr);">
                     <button class="setting-nav-item active" data-tab="tab-theme"><i class="fa-solid fa-circle-half-stroke"></i> Theme</button>
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
                     <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
@@ -154,6 +127,7 @@
                     <button class="setting-nav-item" data-tab="tab-admin" id="btnAdminTab"><i class="fa-solid fa-user-shield"></i> Admin</button>
                 </div>
 
+                <!-- Theme Tab -->
                 <div id="tab-theme" class="settings-tab-content active slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 10px;">App Theme Preference</h3>
                     <div class="theme-switch-wrapper" id="theme-toggle">
@@ -165,24 +139,17 @@
                     </div>
                 </div>
 
+                <!-- Routes Tab -->
                 <div id="tab-routes" class="settings-tab-content slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 5px;">Select Origin City</h3>
-                    <p style="margin-bottom: 15px; font-size: 0.9rem;">Choose a city to explore available bus departures:</p>
                     <div class="route-city-grid">
                         <button class="city-btn" data-city="Hisar">Hisar</button>
                         <button class="city-btn" data-city="Jind">Jind</button>
                         <button class="city-btn" data-city="Bhiwani">Bhiwani</button>
                     </div>
-                    <div id="hisarRoutesList" class="hidden" style="margin-top: 15px;">
-                        <h4 style="color: var(--primary-blue); margin-bottom: 8px;">Available Routes from Hisar:</h4>
-                        <ul class="route-list-ul">
-                            <li><i class="fa-solid fa-bus"></i> Hisar to Delhi</li>
-                            <li><i class="fa-solid fa-bus"></i> Hisar to Gurugram</li>
-                            <li><i class="fa-solid fa-bus"></i> Hisar to Chandigarh (Coming Soon)</li>
-                        </ul>
-                    </div>
                 </div>
 
+                <!-- Details Tab -->
                 <div id="tab-details" class="settings-tab-content slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 10px;">Account Information</h3>
                     <div class="user-details-card">
@@ -193,22 +160,27 @@
                     </div>
                 </div>
 
+                <!-- Update Tab with Live Limit Check -->
                 <div id="tab-update" class="settings-tab-content slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 15px;">Update Profile Data</h3>
                     
                     <div class="update-block">
-                        <label><strong>Update Full Name</strong> (1 edit limit per month)</label>
+                        <label><strong>Update Full Name</strong></label>
                         <div class="flex-row" style="margin-top: 5px;">
                             <input type="text" id="updateNameInput" class="custom-input" placeholder="New Full Name">
                             <button id="btnUpdateName" class="btn-premium-blue" style="padding: 8px 15px; border-radius: 6px;">Update</button>
                         </div>
                     </div>
                     <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
+                    
                     <div class="update-block">
-                        <label><strong>Update Phone Number</strong> (Limit: 2 Edits / Month)</label>
-                        <div class="flex-row" style="margin-top: 5px;">
-                            <input type="tel" id="updatePhoneInput" class="custom-input" placeholder="New Mobile Number" maxlength="10">
-                            <button id="btnSendPhoneOtp" class="btn-side">Send OTP</button>
+                        <label><strong>Update Phone Number</strong> <span id="phoneLimitText" style="color:#d9534f; font-weight:bold;">(Limit: 2 Edits / Month)</span></label>
+                        <div class="flex-row" style="margin-top: 5px; flex-direction:column; align-items:stretch;">
+                            <input type="tel" id="oldPhoneInput" class="custom-input" placeholder="Enter Old Mobile Number" maxlength="10" style="margin-bottom:5px;">
+                            <div class="flex-row" style="width:100%;">
+                                <input type="tel" id="updatePhoneInput" class="custom-input" placeholder="Enter New Mobile Number" maxlength="10">
+                                <button id="btnSendPhoneOtp" class="btn-side">Send OTP</button>
+                            </div>
                         </div>
                         <div class="flex-row hidden" id="phoneOtpBox" style="margin-top: 10px;">
                             <input type="text" id="phoneOtpInput" class="custom-input" placeholder="Enter OTP" maxlength="4">
@@ -216,8 +188,9 @@
                         </div>
                     </div>
                     <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
+                    
                     <div class="update-block">
-                        <label><strong>Update Email Address</strong> (Limit: 2 Edits / Month)</label>
+                        <label><strong>Update Email Address</strong></label>
                         <div class="flex-row" style="margin-top: 5px;">
                             <input type="email" id="updateEmailInput" class="custom-input" placeholder="New Email Address">
                             <button id="btnSendEmailOtp" class="btn-side">Send OTP</button>
@@ -229,10 +202,9 @@
                     </div>
                 </div>
 
-                <!-- TAB 5: ADMIN AUTHENTICATION -->
+                <!-- Admin Auth Tab -->
                 <div id="tab-admin" class="settings-tab-content slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 15px;"><i class="fa-solid fa-lock"></i> Developer Authentication</h3>
-                    
                     <div class="update-block" id="adminPinBlock" style="margin-top: 10px;">
                         <label style="color:#d9534f;"><strong><i class="fa-solid fa-shield-halved"></i> Enter Developer Password</strong></label>
                         <div class="flex-row" style="margin-top: 5px;">
@@ -251,9 +223,7 @@
         </div>
     </div>
 
-    <!-- =========================================================
-         ADMIN DASHBOARD (SECURE PAGE)
-         ========================================================= -->
+    <!-- ADMIN DASHBOARD (SECURE PAGE) -->
     <div id="adminPage" class="settings-page" style="z-index: 999999;">
         <header class="settings-page-header" style="background: #111;">
             <div class="settings-header-left">
@@ -268,7 +238,7 @@
                 <button id="tabReqBtn" class="btn-side" style="flex:1;">Requests <span id="reqCountBadge" style="background:#d9534f;color:white;padding:3px 8px;border-radius:12px;font-size:0.8rem;margin-left:5px;">0</span></button>
             </div>
 
-            <!-- All Users Section -->
+            <!-- Approved Users List -->
             <div id="adminUsersSection" class="user-details-card slide-in-bottom" style="overflow-x: auto; background: var(--white); box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 25px;">
                 <h3 style="color: var(--primary-blue); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
                     <i class="fa-solid fa-users"></i> Approved Users: <span id="totalUsersCount" style="color: #5eb063;">0</span>
@@ -279,7 +249,7 @@
                             <th>Name</th>
                             <th>Mobile</th>
                             <th>Email</th>
-                            <th>Secret Pass</th>
+                            <th>View</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -287,7 +257,7 @@
                 </table>
             </div>
 
-            <!-- Pending Requests Section -->
+            <!-- Pending Requests -->
             <div id="adminReqSection" class="user-details-card slide-in-bottom hidden" style="overflow-x: auto; background: var(--white); box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 25px;">
                 <h3 style="color: #d9534f; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
                     <i class="fa-solid fa-user-clock"></i> Pending Account Requests
@@ -307,17 +277,12 @@
         </div>
     </div>
 
-    <!-- FULL TEXT MODALS (T&C, Privacy, Disclaimer) -->
+    <!-- MODALS -->
     <div id="tncModal" class="glass-modal-overlay">
         <div class="glass-modal-box">
             <span class="glass-close" id="closeTncBtn">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-file-contract"></i> Terms & Conditions</h2>
-            <div class="glass-content">
-                <p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully before using this website.</p>
-            </div>
-            <div class="modal-action" style="margin-top: 15px; text-align: right;">
-                <button class="btn-premium-blue close-tnc-action">Close</button>
-            </div>
+            <div class="glass-content"><p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully before using this website.</p></div>
         </div>
     </div>
 
