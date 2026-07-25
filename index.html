@@ -133,7 +133,7 @@
     </footer>
 
     <!-- =========================================================
-         SETTINGS PAGE
+         SETTINGS PAGE (Full Screen)
          ========================================================= -->
     <div id="settingsPage" class="settings-page">
         <header class="settings-page-header">
@@ -146,7 +146,7 @@
         <div class="settings-body container">
             <div class="settings-card glass-modal-box" style="width: 100%; max-width: 100%; box-shadow: none; border: none; background: transparent; padding: 0;">
                 
-                <div class="settings-nav-grid" style="grid-template-columns: repeat(5, 1fr);">
+                <div class="settings-nav-grid">
                     <button class="setting-nav-item active" data-tab="tab-theme"><i class="fa-solid fa-circle-half-stroke"></i> Theme</button>
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
                     <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
@@ -234,9 +234,9 @@
                     <h3 style="color: var(--primary-blue); margin-bottom: 15px;"><i class="fa-solid fa-lock"></i> Developer Authentication</h3>
                     
                     <div class="update-block" id="adminPinBlock" style="margin-top: 10px;">
-                        <label style="color:#d9534f;"><strong><i class="fa-solid fa-shield-halved"></i> Enter Premium Lock PIN</strong></label>
+                        <label style="color:#d9534f;"><strong><i class="fa-solid fa-shield-halved"></i> Enter Developer Password</strong></label>
                         <div class="flex-row" style="margin-top: 5px;">
-                            <input type="password" id="adminPinInput" class="custom-input" placeholder="4-Digit PIN" maxlength="4" autocomplete="off">
+                            <input type="password" id="adminPinInput" class="custom-input" placeholder="Enter Password" autocomplete="off">
                             <button id="btnUnlockAdmin" class="btn-premium-blue" style="padding: 8px 15px; border-radius: 6px; background:#d9534f;">Unlock Dashboard</button>
                         </div>
                     </div>
@@ -314,63 +314,9 @@
             <h2 class="glass-title"><i class="fa-solid fa-file-contract"></i> Terms & Conditions</h2>
             <div class="glass-content">
                 <p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully before using this website.</p>
-                <h3>1. Educational Study Project</h3>
-                <p>This website is an independent, unofficial educational study project developed by the developer for learning, portfolio, research, and software development practice.</p>
-                <h3>2. Demonstration Purpose Only</h3>
-                <p>The bus routes, timetable, fare details, and other information available on this website are demo/sample data created only for project demonstration.</p>
-                <h3>3. Not an Official Website</h3>
-                <p>This website is not affiliated with, authorized by, sponsored by, endorsed by, or operated by Haryana Roadways, the Government of Haryana, or any government department.</p>
-                <h3>4. Do Not Use for Real Travel Planning</h3>
-                <p>The information displayed on this website must not be used for actual travel planning or real-time bus schedules.</p>
-                <h3>5. Limited Project Data</h3>
-                <p>The developer has added only selected routes and timetable entries required for demonstrating the project.</p>
-                <h3>6. User Responsibility</h3>
-                <p>Users are responsible for using this website responsibly. Any misuse, unauthorized activity, hacking attempts, or automated scraping is strictly prohibited.</p>
             </div>
             <div class="modal-action" style="margin-top: 15px; text-align: right;">
                 <button class="btn-premium-blue close-tnc-action">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="privacyModal" class="glass-modal-overlay">
-        <div class="glass-modal-box">
-            <span class="glass-close" id="closePrivacyBtn">&times;</span>
-            <h2 class="glass-title"><i class="fa-solid fa-user-shield"></i> Privacy Policy</h2>
-            <div class="glass-content">
-                <p>Welcome to Haryana Roadways Timetable. Your privacy is important to us. This Privacy Policy explains how we collect, use, store, and protect your personal information.</p>
-                <h3>1. Information We Collect</h3>
-                <p>Full Name, Mobile Number, Email Address, Secure Password, Login History, Device Information.</p>
-                <h3>2. Why We Collect Your Information</h3>
-                <p>Your information is collected only for legitimate website functionality, including user registration, secure login, and website security.</p>
-                <h3>3. Data Security</h3>
-                <p>We take reasonable technical and organizational measures to protect your personal information.</p>
-                <h3>4. Data Sharing</h3>
-                <p>We do not intentionally sell, rent, trade, or share your personal information with third parties for marketing or commercial purposes.</p>
-            </div>
-            <div class="modal-action" style="margin-top: 15px; text-align: right;">
-                <button class="btn-premium-blue close-privacy-action">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="disclaimerModal" class="glass-modal-overlay">
-        <div class="glass-modal-box">
-            <span class="glass-close" id="closeDisclaimerBtn">&times;</span>
-            <h2 class="glass-title"><i class="fa-solid fa-triangle-exclamation"></i> Disclaimer</h2>
-            <div class="glass-content">
-                <p>Please read this Disclaimer carefully before using Haryana Roadways Timetable.</p>
-                <h3>1. Educational Study Project</h3>
-                <p>This website is an independent, unofficial educational study project developed solely for learning and research.</p>
-                <h3>2. Unofficial Website</h3>
-                <p>Haryana Roadways Timetable is NOT the official website of Haryana Roadways.</p>
-                <h3>3. Verify Before Travelling</h3>
-                <p>Bus schedules may change. Passengers are strongly advised to verify all travel information through official sources before planning any journey.</p>
-                <h3>4. No Responsibility</h3>
-                <p>The developer shall not be responsible or liable for any bus delays, route modifications, financial loss, or incorrect information.</p>
-            </div>
-            <div class="modal-action" style="margin-top: 15px; text-align: right;">
-                <button class="btn-premium-blue close-disclaimer-action">I Understand</button>
             </div>
         </div>
     </div>
