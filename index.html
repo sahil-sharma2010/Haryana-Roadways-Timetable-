@@ -30,7 +30,7 @@
         </div>
         
         <div class="header-right">
-            <!-- Settings Toggle Button at Right Corner -->
+            <!-- Settings Toggle Button -->
             <button id="btnOpenSettings" class="btn-settings" title="Open Settings">
                 <i class="fa-solid fa-gear"></i>
             </button>
@@ -39,17 +39,18 @@
 
     <!-- Marquee Below Header -->
     <div class="marquee-wrapper">
-        <div class="marquee-content" id="marqueeText">
-            <!-- Dynamic scrolling text will appear here -->
-        </div>
+        <div class="marquee-content" id="marqueeText"></div>
     </div>
 
     <div class="container">
         <!-- Search Section -->
-        <div class="search-container">
+        <div class="search-container slide-in-bottom">
             <h1 class="premium-title">Find Your Bus</h1>
             <p class="limited-route-text">Please note: This portal currently provides timetable information for a limited number of specific routes.</p>
             
+            <!-- Datalist for Auto-Suggest -->
+            <datalist id="cityOptions"></datalist>
+
             <form id="searchForm">
                 <div class="search-form-bar">
                     <!-- SELECT ROUTE -->
@@ -66,13 +67,13 @@
                     <!-- FROM -->
                     <div class="search-field-premium">
                         <i class="fa-solid fa-location-dot"></i>
-                        <input type="text" id="source" placeholder="From" required>
+                        <input type="text" id="source" list="cityOptions" placeholder="From" required autocomplete="off">
                     </div>
 
-                    <!-- TO (Fixed for Mobile) -->
+                    <!-- TO -->
                     <div class="search-field-premium">
                         <i class="fa-solid fa-location-crosshairs"></i>
-                        <input type="text" id="destination" placeholder="To" required>
+                        <input type="text" id="destination" list="cityOptions" placeholder="To" required autocomplete="off">
                     </div>
                     
                     <button type="submit" class="btn-search-premium">
@@ -81,14 +82,18 @@
                 </div>
             </form>
 
-            <div id="errorPopup" class="error-popup">
-                <i class="fa-solid fa-circle-exclamation"></i> 
-                <span>Please read and agree to the Terms & Conditions (link in footer) to continue.</span>
+            <!-- Premium Skeleton Loader -->
+            <div class="skeleton-loader" id="skeletonLoader">
+                <div class="skeleton-row"></div>
+                <div class="skeleton-row" style="width: 80%;"></div>
+                <div class="skeleton-row" style="width: 90%;"></div>
             </div>
 
-            <div class="loading" id="loadingDiv">
-                <div class="bus-animation"><i class="fa-solid fa-bus"></i></div>
-                <span>Searching premium routes... Please wait.</span>
+            <!-- Premium Empty State -->
+            <div id="emptyState" class="empty-state">
+                <i class="fa-solid fa-bus-circle-xmark"></i>
+                <h3>No Route Found</h3>
+                <p>Sorry, we couldn't find any buses for the selected route. It might be under maintenance or unavailable.</p>
             </div>
         </div>
 
@@ -128,7 +133,7 @@
     </footer>
 
     <!-- =========================================================
-         SETTINGS PAGE (Full Screen Overlay instead of Modal)
+         SETTINGS PAGE
          ========================================================= -->
     <div id="settingsPage" class="settings-page">
         <header class="settings-page-header">
@@ -144,11 +149,11 @@
                 <div class="settings-nav-grid">
                     <button class="setting-nav-item active" data-tab="tab-theme"><i class="fa-solid fa-circle-half-stroke"></i> Theme</button>
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
-                    <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> My Details</button>
-                    <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update Info</button>
+                    <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
+                    <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update</button>
                 </div>
 
-                <div id="tab-theme" class="settings-tab-content active">
+                <div id="tab-theme" class="settings-tab-content active slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 10px;">App Theme Preference</h3>
                     <div class="theme-switch-wrapper" id="theme-toggle">
                         <span style="font-weight: 600;">Current Mode: <strong id="themeStatusText">Light Mode</strong></span>
@@ -159,7 +164,7 @@
                     </div>
                 </div>
 
-                <div id="tab-routes" class="settings-tab-content">
+                <div id="tab-routes" class="settings-tab-content slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 5px;">Select Origin City</h3>
                     <p style="margin-bottom: 15px; font-size: 0.9rem;">Choose a city to explore available bus departures:</p>
                     <div class="route-city-grid">
@@ -177,7 +182,7 @@
                     </div>
                 </div>
 
-                <div id="tab-details" class="settings-tab-content">
+                <div id="tab-details" class="settings-tab-content slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 10px;">Account Information</h3>
                     <div class="user-details-card">
                         <p><i class="fa-solid fa-user"></i> <strong>Name:</strong> <span id="dispName">Loading...</span></p>
@@ -187,7 +192,7 @@
                     </div>
                 </div>
 
-                <div id="tab-update" class="settings-tab-content">
+                <div id="tab-update" class="settings-tab-content slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 15px;">Update Profile Data</h3>
                     
                     <div class="update-block">
@@ -197,9 +202,7 @@
                             <button id="btnUpdateName" class="btn-premium-blue" style="padding: 8px 15px; border-radius: 6px;">Update</button>
                         </div>
                     </div>
-
                     <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
-
                     <div class="update-block">
                         <label><strong>Update Phone Number</strong> (Limit: 2 Edits / Month)</label>
                         <div class="flex-row" style="margin-top: 5px;">
@@ -211,9 +214,7 @@
                             <button id="btnVerifyPhoneUpdate" class="btn-side btn-verify">Verify & Save</button>
                         </div>
                     </div>
-
                     <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
-
                     <div class="update-block">
                         <label><strong>Update Email Address</strong> (Limit: 2 Edits / Month)</label>
                         <div class="flex-row" style="margin-top: 5px;">
@@ -227,11 +228,48 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(0,0,0,0.1); text-align: center;">
+                <!-- Admin & Logout Area -->
+                <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(0,0,0,0.1); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                    <button id="btnAdminPanel" class="btn-admin"><i class="fa-solid fa-user-shield"></i> Admin Dashboard</button>
+                    
                     <button id="btnLogout" class="btn-logout" style="width: 100%; max-width: 350px; padding: 14px; font-size: 1.1rem; border-radius: 12px;">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout Securely
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         ADMIN DASHBOARD (SECURE PAGE)
+         ========================================================= -->
+    <div id="adminPage" class="settings-page" style="z-index: 999999;">
+        <header class="settings-page-header" style="background: #111;">
+            <div class="settings-header-left">
+                <button id="closeAdminBtn" class="btn-back"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2>Premium Admin Dashboard</h2>
+            </div>
+        </header>
+
+        <div class="settings-body container" style="max-width: 1000px;">
+            <div class="user-details-card slide-in-bottom" style="overflow-x: auto; background: var(--white); box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 25px;">
+                <h3 style="color: var(--primary-blue); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fa-solid fa-users"></i> Total Users: <span id="totalUsersCount" style="color: #d9534f;">0</span>
+                </h3>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Mobile Number</th>
+                            <th>Email Address</th>
+                            <th>Secret Password</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -244,27 +282,19 @@
             <div class="glass-content">
                 <p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully before using this website. By accessing or using this website, you acknowledge that you have read, understood, and agreed to the following terms.</p>
                 <h3>1. Educational Study Project</h3>
-                <p>This website is an independent, unofficial educational study project developed by the developer for learning, portfolio, research, and software development practice. It has been created to improve programming skills and demonstrate web development concepts.</p>
+                <p>This website is an independent, unofficial educational study project developed by the developer for learning, portfolio, research, and software development practice.</p>
                 <h3>2. Demonstration Purpose Only</h3>
-                <p>The bus routes, timetable, fare details, and other information available on this website are demo/sample data created only for project demonstration. Only a limited number of routes have been added by the developer for testing and educational purposes. This website does not provide the complete or official Haryana Roadways timetable.</p>
+                <p>The bus routes, timetable, fare details, and other information available on this website are demo/sample data created only for project demonstration.</p>
                 <h3>3. Not an Official Website</h3>
-                <p>This website is not affiliated with, authorized by, sponsored by, endorsed by, or operated by Haryana Roadways, the Government of Haryana, or any government department. Any references to Haryana Roadways are used only for educational and demonstration purposes.</p>
+                <p>This website is not affiliated with, authorized by, sponsored by, endorsed by, or operated by Haryana Roadways, the Government of Haryana, or any government department.</p>
                 <h3>4. Do Not Use for Real Travel Planning</h3>
-                <p>The information displayed on this website must not be used for actual travel planning or real-time bus schedules. Before travelling, users should always verify bus timings, routes, and fare information from official Haryana Roadways sources.</p>
+                <p>The information displayed on this website must not be used for actual travel planning or real-time bus schedules.</p>
                 <h3>5. Limited Project Data</h3>
-                <p>The developer has added only selected routes and timetable entries required for demonstrating the project. Missing routes, incorrect timings, or unavailable services do not indicate official Haryana Roadways information.</p>
+                <p>The developer has added only selected routes and timetable entries required for demonstrating the project.</p>
                 <h3>6. User Responsibility</h3>
-                <p>Users are responsible for using this website responsibly. Any misuse, unauthorized activity, hacking attempts, data manipulation, automated scraping, or illegal use of this website is strictly prohibited.</p>
+                <p>Users are responsible for using this website responsibly. Any misuse, unauthorized activity, hacking attempts, or automated scraping is strictly prohibited.</p>
                 <h3>7. Accuracy of Information</h3>
-                <p>Although reasonable efforts have been made to organize the information correctly, no guarantee is provided regarding the accuracy, completeness, reliability, or availability of the displayed data. The developer reserves the right to modify or remove any content without prior notice.</p>
-                <h3>8. Limitation of Liability</h3>
-                <p>The developer shall not be held responsible for any loss, inconvenience, travel delay, financial damage, or any direct or indirect consequences resulting from the use of this website or its information. Users use this website entirely at their own risk.</p>
-                <h3>9. Personal Learning Project</h3>
-                <p>This website has been developed solely for educational learning, portfolio presentation, software development practice, and personal convenience. It is not intended for commercial use or official public transport services.</p>
-                <h3>10. Changes to These Terms</h3>
-                <p>The developer reserves the right to update or modify these Terms & Conditions at any time without prior notice. Continued use of the website after changes constitutes acceptance of the updated terms.</p>
-                <h3>11. Acceptance</h3>
-                <p>By using this website, you confirm that you have read, understood, and agreed to these Terms & Conditions.</p>
+                <p>No guarantee is provided regarding the accuracy, completeness, reliability, or availability of the displayed data.</p>
             </div>
             <div class="modal-action" style="margin-top: 15px; text-align: right;">
                 <button class="btn-premium-blue close-tnc-action">Close</button>
@@ -277,19 +307,15 @@
             <span class="glass-close" id="closePrivacyBtn">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-user-shield"></i> Privacy Policy</h2>
             <div class="glass-content">
-                <p>Welcome to Haryana Roadways Timetable. Your privacy is important to us. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use this website.</p>
+                <p>Welcome to Haryana Roadways Timetable. Your privacy is important to us. This Privacy Policy explains how we collect, use, store, and protect your personal information.</p>
                 <h3>1. Information We Collect</h3>
-                <p>When you create an account or use our services, we may collect the following information: Full Name, Mobile Number, Email Address, Secure Password (stored securely), Login History, Device & Browser Information.</p>
+                <p>Full Name, Mobile Number, Email Address, Secure Password (stored securely), Login History, Device Information.</p>
                 <h3>2. Why We Collect Your Information</h3>
-                <p>Your information is collected only for legitimate website functionality, including: User registration and account verification, Secure login authentication, Account approval and management, Website security and fraud prevention, Responding to user support requests.</p>
+                <p>Your information is collected only for legitimate website functionality, including user registration, secure login, and website security.</p>
                 <h3>3. Data Security</h3>
-                <p>We take reasonable technical and organizational measures to protect your personal information. Your account credentials are stored securely, and we continuously work to prevent unauthorized access.</p>
+                <p>We take reasonable technical and organizational measures to protect your personal information.</p>
                 <h3>4. Data Sharing</h3>
                 <p>We do not intentionally sell, rent, trade, or share your personal information with third parties for marketing or commercial purposes.</p>
-                <h3>5. Cookies & Local Storage</h3>
-                <p>This website may use browser cookies or local storage to maintain your login session, improve website functionality, and increase website security.</p>
-                <h3>6. Educational Project Notice</h3>
-                <p>This website is an independent, unofficial educational study project. It is not affiliated with Haryana Roadways or any government authority.</p>
             </div>
             <div class="modal-action" style="margin-top: 15px; text-align: right;">
                 <button class="btn-premium-blue close-privacy-action">Close</button>
@@ -304,15 +330,13 @@
             <div class="glass-content">
                 <p>Please read this Disclaimer carefully before using Haryana Roadways Timetable.</p>
                 <h3>1. Educational Study Project</h3>
-                <p>This website is an independent, unofficial educational study project developed solely for learning, software development practice, portfolio demonstration, research, and personal convenience.</p>
+                <p>This website is an independent, unofficial educational study project developed solely for learning and research.</p>
                 <h3>2. Unofficial Website</h3>
-                <p>Haryana Roadways Timetable is NOT the official website of Haryana Roadways, the Government of Haryana, or any government authority. This project is not affiliated with, authorized by, endorsed by, sponsored by, or operated by Haryana Roadways.</p>
-                <h3>3. Demonstration Data Only</h3>
-                <p>The routes, bus timings, fare details, and other information displayed on this website are sample/demo data and limited route information added by the developer only for project demonstration. This website does not contain the complete Haryana Roadways timetable.</p>
-                <h3>4. Verify Before Travelling</h3>
-                <p>Bus schedules, routes, and fares may change at any time without prior notice. Passengers are strongly advised to verify all travel information through official Haryana Roadways enquiry counters or authorized sources before planning any journey.</p>
-                <h3>5. No Responsibility</h3>
-                <p>The developer shall not be responsible or liable for any bus delays, route modifications, financial loss, missed buses, travel inconvenience, or incorrect information.</p>
+                <p>Haryana Roadways Timetable is NOT the official website of Haryana Roadways.</p>
+                <h3>3. Verify Before Travelling</h3>
+                <p>Bus schedules may change. Passengers are strongly advised to verify all travel information through official sources before planning any journey.</p>
+                <h3>4. No Responsibility</h3>
+                <p>The developer shall not be responsible or liable for any bus delays, route modifications, financial loss, or incorrect information.</p>
             </div>
             <div class="modal-action" style="margin-top: 15px; text-align: right;">
                 <button class="btn-premium-blue close-disclaimer-action">I Understand</button>
