@@ -17,6 +17,9 @@ async function hashString(str) {
     }
 }
 
+// Global Variables to prevent overwrite crash
+var supabase = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
     if (localStorage.getItem('hr_logged_in') === 'true') { window.location.href = 'index.html'; }
 
@@ -72,13 +75,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    let supabase = null;
+    // Init Supabase (Independent)
     try {
-        emailjs.init("K6cs_matxXu2begVg"); 
         const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU'; 
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (error) { console.error("Database connection failed", error); }
+
+    // Init EmailJS (Independent)
+    try {
+        emailjs.init("K6cs_matxXu2begVg"); 
+    } catch (error) { console.error("EmailJS connection failed", error); }
 
     // ==========================================
     // ADMIN EMAIL ACTION BUTTONS
@@ -231,9 +238,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     setInterval(forceCheckValidity, 300);
 
-    // ==========================================
-    // DUPLICATE REAL-TIME CHECK (POPUP ON FILL)
-    // ==========================================
     if (mobile) {
         mobile.addEventListener('input', async () => {
             const mVal = mobile.value.trim();
@@ -396,7 +400,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                     btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
                 }
 
-                // Database Table Structure mapping
                 if (accStatus === 'blocked') {
                     Swal.fire({
                         title: 'Account Blocked',
