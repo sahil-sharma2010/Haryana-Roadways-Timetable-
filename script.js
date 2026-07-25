@@ -1,11 +1,11 @@
-// === AUTH GUARD & T&C AUTO ACCEPT ===
+// === AUTH GUARD ===
 if (localStorage.getItem('hr_logged_in') !== 'true') {
     window.location.href = 'login.html';
 } else {
     localStorage.setItem('hr_tnc_accepted', 'true');
 }
 
-// === AUTO DETECT DARK MODE AT NIGHT ===
+// === AUTO DETECT DARK MODE ===
 const currentHour = new Date().getHours();
 if (currentHour >= 18 || currentHour < 6) {
     if (!localStorage.getItem('theme_manually_changed')) {
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // =========================================================
-    // SETTINGS PAGE (FULL SCREEN)
+    // SETTINGS PAGE
     // =========================================================
     const btnOpenSettings = document.getElementById('btnOpenSettings');
     const settingsPage = document.getElementById('settingsPage');
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // =========================================================
-    // ADMIN PANEL LOGIC (Direct PIN 3806 & Auth Check)
+    // ADMIN PANEL LOGIC (Direct Password Check & Verification)
     // =========================================================
     const btnUnlockAdmin = document.getElementById('btnUnlockAdmin');
     const adminPinInput = document.getElementById('adminPinInput');
@@ -120,25 +120,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (btnUnlockAdmin) {
         btnUnlockAdmin.addEventListener('click', () => {
-            const enteredPin = adminPinInput.value;
+            const enteredPin = adminPinInput.value.trim();
             
+            // Step 1: Check Password
             if (enteredPin === '3806') {
-                // Pin is correct, now check if authorized number
+                // Step 2: Check Developer Number from Logged In User
                 if (currentUserData && currentUserData.mobile === '7988300872') {
                     settingsPage.classList.remove('active'); 
                     adminPage.classList.add('active'); 
                     loadAdminData();
                 } else {
+                    // Exact specific Warning Popup 
                     Swal.fire({
                         icon: 'error',
                         title: '⚠️ Unauthorized Access',
-                        text: "Sorry! You don't have permission to view this page.\nThis admin dashboard is restricted to the authorized developer only.",
+                        html: "Sorry! You don't have permission to view this page.<br><br>This admin dashboard is restricted to the authorized developer only.",
                         confirmButtonColor: '#d9534f',
                         customClass: { popup: 'glass-swal' }
                     });
                 }
             } else {
-                Swal.fire('Error', 'Incorrect PIN. Access Denied.', 'error');
+                Swal.fire('Error', 'Incorrect Password. Access Denied.', 'error');
             }
             adminPinInput.value = ''; // Always reset
         });
@@ -148,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (closeAdminBtn) {
         closeAdminBtn.addEventListener('click', () => {
             adminPage.classList.remove('active');
-            settingsPage.classList.add('active'); // Back to settings
+            settingsPage.classList.add('active'); 
         });
     }
 
@@ -257,9 +259,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else { Swal.fire('Error', error.message, 'error'); }
     };
 
+    // Rejection completely deletes from Database as requested
     window.rejectUserReq = async function(email, name, mobile) {
         Swal.fire({title: 'Rejecting & Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-        // DELETING FROM DATABASE INSTEAD OF UPDATING STATUS
         const { error } = await supabase.from('users').delete().eq('email', email);
         if (!error) {
             emailjs.send("service_ecofefq", "template_vryvuck", {
@@ -274,7 +276,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     // =========================================================
-    // UPDATE INFORMATION
+    // OTP & UPDATE INFORMATION
     // =========================================================
     function checkUpdateLimit(storageKey) {
         const limitData = JSON.parse(localStorage.getItem(storageKey)) || [];
