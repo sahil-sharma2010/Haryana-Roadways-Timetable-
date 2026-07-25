@@ -1,8 +1,16 @@
-// === AUTO-ACCEPT TERMS FOR LOGGED-IN USERS (Fixes Repeated Terms Issue) ===
-if (localStorage.getItem('hr_logged_in') === 'true') {
-    localStorage.setItem('hr_tnc_accepted', 'true');
-} else {
+// === AUTH GUARD & T&C AUTO ACCEPT ===
+if (localStorage.getItem('hr_logged_in') !== 'true') {
     window.location.href = 'login.html';
+} else {
+    localStorage.setItem('hr_tnc_accepted', 'true'); // Bar-bar error na aaye routes par
+}
+
+// === AUTO DETECT DARK MODE AT NIGHT (6 PM to 6 AM) ===
+const currentHour = new Date().getHours();
+if (currentHour >= 18 || currentHour < 6) {
+    if (!localStorage.getItem('theme_manually_changed')) {
+        document.body.setAttribute('data-theme', 'dark');
+    }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -28,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (error) { console.error("Database connection failed", error); }
 
-    // Logout Logic inside Settings
+    // Logout Logic
     const btnLogout = document.getElementById('btnLogout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
@@ -39,7 +47,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // =========================================================
-    // SETTINGS PAGE (FULL SCREEN) & TABS LOGIC
+    // SETTINGS PAGE (FULL SCREEN)
     // =========================================================
     const btnOpenSettings = document.getElementById('btnOpenSettings');
     const settingsPage = document.getElementById('settingsPage');
@@ -47,7 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const navItems = document.querySelectorAll('.setting-nav-item');
     const tabContents = document.querySelectorAll('.settings-tab-content');
 
-    let currentUserData = null; // Store user details
+    let currentUserData = null; 
 
     if (btnOpenSettings) {
         btnOpenSettings.addEventListener('click', async () => {
@@ -93,6 +101,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
+            localStorage.setItem('theme_manually_changed', 'true');
             if (document.body.getAttribute('data-theme') === 'dark') {
                 document.body.removeAttribute('data-theme');
                 iconSun.style.opacity = '1'; iconMoon.style.opacity = '0.5';
@@ -105,27 +114,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    const cityBtns = document.querySelectorAll(".city-btn");
-    const hisarRoutesList = document.getElementById("hisarRoutesList");
-
-    cityBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            const city = btn.getAttribute("data-city");
-            if (city === "Jind" || city === "Bhiwani") {
-                if(hisarRoutesList) hisarRoutesList.classList.add("hidden");
-                Swal.fire({
-                    icon: 'warning', title: 'Under Maintenance', text: `Sorry, routes from ${city} are currently under maintenance.`, confirmButtonColor: '#0b4595', customClass: { popup: 'glass-swal', title: 'glass-swal-title', htmlContainer: 'glass-swal-text' }
-                });
-            } else if (city === "Hisar") {
-                if(hisarRoutesList) hisarRoutesList.classList.remove("hidden");
-            }
-        });
-    });
-
     // =========================================================
-    // UPDATE INFORMATION LOGIC (With 2x/Month Limits)
+    // UPDATE INFORMATION (OTP FIX & LIMITS)
     // =========================================================
-    
     function checkUpdateLimit(storageKey) {
         const limitData = JSON.parse(localStorage.getItem(storageKey)) || [];
         const now = Date.now();
@@ -141,7 +132,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         localStorage.setItem(storageKey, JSON.stringify(limitData));
     }
 
-    // 1. Update Name
+    // Name
     const btnUpdateName = document.getElementById('btnUpdateName');
     if (btnUpdateName) {
         btnUpdateName.addEventListener('click', async () => {
@@ -151,7 +142,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const lastUpdate = localStorage.getItem('hr_name_update_time');
             const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-            
             if (lastUpdate && (Date.now() - parseInt(lastUpdate)) < thirtyDays) {
                 const daysLeft = Math.ceil((thirtyDays - (Date.now() - parseInt(lastUpdate))) / (1000 * 60 * 60 * 24));
                 return Swal.fire('Limit Reached', `You can only change your name once a month. Try again in ${daysLeft} days.`, 'error');
@@ -166,14 +156,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 document.getElementById('dispName').innerText = newName;
                 Swal.fire('Success', 'Name updated successfully!', 'success');
                 document.getElementById('updateNameInput').value = "";
-            } else {
-                Swal.fire('Error', 'Failed to update name.', 'error');
-            }
+            } else { Swal.fire('Error', 'Failed to update name.', 'error'); }
             btnUpdateName.innerText = "Update";
         });
     }
 
-    // 2. Update Phone (OTP Required)
+    // Mobile
     const btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
     const btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
     let phoneUpdateOTP = null;
@@ -192,10 +180,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Sending...";
             phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
 
-            emailjs.send("service_ecofefq", "template_grujfl8", { to_email: currentUserData.email, user_name: currentUserData.name, otp: phoneUpdateOTP }).then(() => {
+            emailjs.send("service_ecofefq", "template_grujfl8", { 
+                to_email: currentUserData.email, 
+                user_name: currentUserData.name || "User", 
+                otp: phoneUpdateOTP 
+            }).then(() => {
                 document.getElementById('phoneOtpBox').classList.remove('hidden');
                 btnSendPhoneOtp.innerText = "Sent to Email ✓";
                 Swal.fire('OTP Sent', `OTP sent to your registered Email: ${currentUserData.email} for verification.`, 'success');
+            }).catch(err => {
+                btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP";
+                Swal.fire('Error', 'Failed to send OTP email. Please try again.', 'error');
             });
         });
     }
@@ -215,17 +210,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                     Swal.fire('Success', 'Phone number updated securely!', 'success');
                     document.getElementById('phoneOtpBox').classList.add('hidden');
                     document.getElementById('updatePhoneInput').value = "";
-                } else {
-                    Swal.fire('Error', 'Update failed.', 'error');
-                }
+                } else { Swal.fire('Error', 'Update failed.', 'error'); }
                 btnVerifyPhoneUpdate.innerText = "Verify & Save";
-            } else {
-                Swal.fire('Error', 'Incorrect OTP', 'error');
-            }
+            } else { Swal.fire('Error', 'Incorrect OTP', 'error'); }
         });
     }
 
-    // 3. Update Email (OTP Required)
+    // Email
     const btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
     const btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
     let emailUpdateOTP = null;
@@ -244,10 +235,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             btnSendEmailOtp.disabled = true; btnSendEmailOtp.innerText = "Sending...";
             emailUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
 
-            emailjs.send("service_ecofefq", "template_grujfl8", { to_email: currentUserData.email, user_name: currentUserData.name, otp: emailUpdateOTP }).then(() => {
+            emailjs.send("service_ecofefq", "template_grujfl8", { 
+                to_email: currentUserData.email, 
+                user_name: currentUserData.name || "User", 
+                otp: emailUpdateOTP 
+            }).then(() => {
                 document.getElementById('emailOtpBox').classList.remove('hidden');
                 btnSendEmailOtp.innerText = "Sent to Old Email ✓";
                 Swal.fire('OTP Sent', `Authorization OTP sent to your CURRENT Email: ${currentUserData.email}.`, 'success');
+            }).catch(err => {
+                btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP";
+                Swal.fire('Error', 'Failed to send OTP email. Please try again.', 'error');
             });
         });
     }
@@ -267,15 +265,97 @@ document.addEventListener("DOMContentLoaded", async () => {
                     Swal.fire('Success', 'Email Address updated securely!', 'success');
                     document.getElementById('emailOtpBox').classList.add('hidden');
                     document.getElementById('updateEmailInput').value = "";
-                } else {
-                    Swal.fire('Error', 'Update failed.', 'error');
-                }
+                } else { Swal.fire('Error', 'Update failed.', 'error'); }
                 btnVerifyEmailUpdate.innerText = "Verify & Save";
-            } else {
-                Swal.fire('Error', 'Incorrect OTP', 'error');
-            }
+            } else { Swal.fire('Error', 'Incorrect OTP', 'error'); }
         });
     }
+
+    // =========================================================
+    // ADMIN PANEL LOGIC (PIN 0276)
+    // =========================================================
+    const btnAdminPanel = document.getElementById('btnAdminPanel');
+    const adminPage = document.getElementById('adminPage');
+    const closeAdminBtn = document.getElementById('closeAdminBtn');
+
+    if (btnAdminPanel) {
+        btnAdminPanel.addEventListener('click', () => {
+            if (!currentUserData || currentUserData.mobile !== '7988300872') {
+                settingsPage.classList.remove('active');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'UNAUTHORIZED ACCESS',
+                    text: 'PLEASE DO NOT CLICK AND TRY TO OPEN THIS ADMIN PANEL OTHERWISE YOU WILL BE BLOCKED. THIS IS YOUR LAST WARNING.',
+                    confirmButtonColor: '#d9534f',
+                    customClass: { popup: 'glass-swal' }
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'PREMIUM LOCK',
+                text: 'Developer Verification Required',
+                input: 'password',
+                inputPlaceholder: 'Enter 4-Digit PIN',
+                confirmButtonText: 'Unlock Dashboard',
+                confirmButtonColor: '#0b4595',
+                showCancelButton: true,
+                customClass: { popup: 'glass-swal' }
+            }).then((result) => {
+                if (result.value === '0276') {
+                    settingsPage.classList.remove('active');
+                    adminPage.classList.add('active');
+                    loadAdminData();
+                } else if (result.isConfirmed) {
+                    Swal.fire('Error', 'Incorrect PIN. Access Denied.', 'error');
+                }
+            });
+        });
+    }
+
+    if (closeAdminBtn) {
+        closeAdminBtn.addEventListener('click', () => {
+            adminPage.classList.remove('active');
+        });
+    }
+
+    async function loadAdminData() {
+        const adminTableBody = document.getElementById('adminTableBody');
+        const totalUsersCount = document.getElementById('totalUsersCount');
+        adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading Database...</td></tr>';
+        
+        try {
+            const { data, error } = await supabase.from('users').select('*').order('id', {ascending: false});
+            if (error) throw error;
+            
+            totalUsersCount.innerText = data.length;
+            adminTableBody.innerHTML = '';
+            
+            data.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.name}</td>
+                    <td>${user.mobile}</td>
+                    <td>${user.email}</td>
+                    <td id="pass-${user.id}">****</td>
+                    <td><button class="btn-show-pass" onclick="revealPassword('${user.id}', '${user.password}')">SHOW</button></td>
+                `;
+                adminTableBody.appendChild(tr);
+            });
+        } catch (err) {
+            adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Failed to load data</td></tr>';
+        }
+    }
+
+    window.revealPassword = function(id, pass) {
+        if (currentUserData && currentUserData.mobile === '7988300872') {
+            document.getElementById(`pass-${id}`).innerText = pass;
+        } else {
+            Swal.fire('Error', 'You are not developer!', 'error');
+            adminPage.classList.remove('active');
+        }
+    };
+
 
     // =========================================================
     // SEARCH & TIMETABLE LOGIC
@@ -345,10 +425,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:20 PM", time24: "22:20", busType: "Ordinary", arr: "HR" }
     ];
 
+    // Populate Datalist
+    const cityOptions = document.getElementById('cityOptions');
+    const uniqueCities = new Set();
+    busData.forEach(bus => { uniqueCities.add(bus.from); uniqueCities.add(bus.to); });
+    uniqueCities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        if(cityOptions) cityOptions.appendChild(option);
+    });
+
     const form = document.getElementById('searchForm');
     const sourceInput = document.getElementById('source');
     const destInput = document.getElementById('destination');
-    const loadingDiv = document.getElementById('loadingDiv');
+    const skeletonLoader = document.getElementById('skeletonLoader');
+    const emptyState = document.getElementById('emptyState');
     const resultsTableWrapper = document.getElementById('resultsTableWrapper');
     const tableBody = document.getElementById('tableBody');
     const marqueeText = document.getElementById('marqueeText');
@@ -402,11 +493,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             const toVal = destInput.value.trim().toLowerCase();
 
             resultsTableWrapper.style.display = 'none';
+            emptyState.style.display = 'none';
             tableBody.innerHTML = '';
-            loadingDiv.style.display = 'flex'; 
+            
+            // Show Skeleton loader
+            skeletonLoader.style.display = 'flex'; 
 
             setTimeout(() => {
-                loadingDiv.style.display = 'none';
+                skeletonLoader.style.display = 'none';
+                
                 const results = busData.filter(bus => {
                     const bFrom = bus.from.toLowerCase().trim();
                     const bTo = bus.to.toLowerCase().trim();
@@ -416,26 +511,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (results.length > 0) {
                     renderTable(results);
                     resultsTableWrapper.style.display = 'block';
+                    resultsTableWrapper.classList.add('slide-in-bottom');
                 } else {
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Route Unavailable',
-                        text: 'Sorry, currently this route is under maintenance.',
-                        timer: 4000,
-                        timerProgressBar: true,
-                        showConfirmButton: true,
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#0b4595',
-                        backdrop: `rgba(0,0,0,0.5)`,
-                        customClass: { popup: 'glass-swal', title: 'glass-swal-title', htmlContainer: 'glass-swal-text' }
-                    });
+                    emptyState.style.display = 'block';
                 }
-            }, 5000); 
+            }, 2500); 
         });
     }
 
     // =========================================================
-    // FOOTER MODALS HANDLING (Open as Full Screen on Mobile)
+    // FOOTER MODALS (Full Page on Mobile)
     // =========================================================
     const modalsInfo = [
         { btn: 'openTncBtn', modal: 'tncModal', close: 'closeTncBtn', action: '.close-tnc-action' },
