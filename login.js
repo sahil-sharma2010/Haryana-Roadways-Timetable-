@@ -5,7 +5,6 @@ let isForgotOtpVerified = false;
 
 const badWords = ['admin', 'fake', 'test', 'dummy', 'abuse', 'fuck', 'shit'];
 
-// DUPLICATE TRACKING VARIABLES
 let isMobileDuplicate = false;
 let isEmailDuplicate = false;
 
@@ -82,7 +81,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (error) { console.error("Database connection failed", error); }
 
     // ==========================================
-    // ADMIN APPROVAL AUTOMATION
+    // ADMIN EMAIL ACTION BUTTONS
     // ==========================================
     const urlParams = new URLSearchParams(window.location.search);
     const adminAction = urlParams.get('action');
@@ -92,56 +91,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     const targetPass = urlParams.get('pass');
 
     if ((adminAction === 'accept' || adminAction === 'decline') && targetEmail && supabase) {
-        Swal.fire({ title: 'Processing Admin Request...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         if (adminAction === 'accept') {
             try {
-                const { error } = await supabase.from('users').update({ status: 'Approved' }).eq('email', targetEmail);
+                const { error } = await supabase.from('users').update({ status: 'Approved', account_status: 'Active' }).eq('email', targetEmail);
                 if (!error) {
                     const templateParams = {
                         subject: "🎉 Registration Approved – Haryana Roadways Timetable",
                         status: "Registration Approved Successfully",
                         message: "Congratulations! Your registration has been approved successfully. You can now log in using your registered credentials.",
-                        name: targetName,
-                        mobile: targetMob,
-                        email: targetEmail,
-                        password: targetPass,
-                        color: "#0b7d35",
+                        name: targetName, mobile: targetMob, email: targetEmail, password: targetPass, color: "#0b7d35",
                         login_link: window.location.href.split('?')[0] 
                     };
-                    
                     await emailjs.send("service_ecofefq", "template_vryvuck", templateParams);
-                    Swal.fire("Success", "User Approved and notification sent to their email.", "success").then(()=> window.location.href = window.location.pathname);
-                } else {
-                    Swal.fire("Error", error.message, "error");
-                }
+                    Swal.fire("Success", "User Approved and notification sent.", "success").then(()=> window.location.href = window.location.pathname);
+                } else { Swal.fire("Error", error.message, "error"); }
             } catch (err) { Swal.fire("Error", "Failed to process approval.", "error"); }
 
         } else if (adminAction === 'decline') {
             try {
-                const { error } = await supabase.from('users').update({ status: 'Rejected' }).eq('email', targetEmail);
+                const { error } = await supabase.from('users').delete().eq('email', targetEmail);
                 if (!error) {
                     const templateParams = {
                         subject: "Registration Declined – Haryana Roadways Timetable",
                         status: "Registration Request Declined",
-                        message: "We regret to inform you that your registration request has been declined. Please contact the administrator for further assistance.",
-                        name: targetName,
-                        mobile: targetMob || "N/A",
-                        email: targetEmail,
-                        password: "N/A",
-                        color: "#d32f2f",
+                        message: "We regret to inform you that your registration request has been declined and your data has been removed.",
+                        name: targetName, mobile: targetMob || "N/A", email: targetEmail, password: "N/A", color: "#d32f2f",
                         login_link: window.location.href.split('?')[0] 
                     };
-                    
                     await emailjs.send("service_ecofefq", "template_vryvuck", templateParams);
-                    Swal.fire("Declined", "User request has been declined and notification sent.", "info").then(()=> window.location.href = window.location.pathname);
-                } else {
-                    Swal.fire("Error", error.message, "error");
-                }
+                    Swal.fire("Declined", "User request declined and deleted.", "info").then(()=> window.location.href = window.location.pathname);
+                } else { Swal.fire("Error", error.message, "error"); }
             } catch (err) { Swal.fire("Error", "Failed to process decline.", "error"); }
         }
     }
 
+    // ==========================================
+    // CHECK STATUS BUTTON (PENDING PAGE)
+    // ==========================================
     const btnCheckStatus = document.getElementById('btnCheckStatus');
     if (btnCheckStatus) {
         btnCheckStatus.addEventListener('click', async () => {
@@ -156,15 +144,31 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const { data: user } = await supabase.from('users').select('*').eq('email', emailToCheck).maybeSingle();
                 if (user) {
                     const currentStatus = user.status ? user.status.toLowerCase() : 'approved';
+                    
                     if (currentStatus === 'pending') {
                         Swal.fire({ title: "⏳ Application Pending", html: "Your registration request is under review.<br><br>Please wait for administrator approval.", icon: "info", confirmButtonColor: "#0b4595" });
                     } else if (currentStatus === 'rejected' || currentStatus === 'declined') {
                         localStorage.removeItem('hr_pending_email'); 
-                        Swal.fire({ title: "❌ Registration Rejected", html: "Your registration request has been rejected by the administrator.<br><br>Please contact support for more information.", icon: "error", confirmButtonColor: "#d9534f" }).then(() => { showSection('login'); });
+                        Swal.fire({
+                            title: 'Registration Declined',
+                            html: "We regret to inform you that your registration request has been declined.<br><br>If you believe this is a mistake, please contact our support team for assistance.",
+                            icon: "error", confirmButtonText: 'OK', confirmButtonColor: "#d9534f"
+                        }).then(() => { showSection('login'); });
                     } else {
                         localStorage.removeItem('hr_pending_email'); 
-                        Swal.fire({ title: "✅ Registration Approved", text: "Your account is approved! You can now log in.", icon: "success", confirmButtonColor: "#5eb063" }).then(() => { showSection('login'); });
+                        Swal.fire({
+                            title: 'Congratulations!',
+                            html: 'Your account has been approved successfully.<br><br>You can now log in and access all available features of Haryana Roadways Timetable.<br><br>Thank you for being a part of our educational project.',
+                            icon: 'success', confirmButtonText: 'GO TO LOGIN', confirmButtonColor: '#5eb063'
+                        }).then(() => { showSection('login'); });
                     }
+                } else {
+                    localStorage.removeItem('hr_pending_email'); 
+                    Swal.fire({
+                        title: 'Registration Declined',
+                        html: "We regret to inform you that your registration request has been declined.<br><br>If you believe this is a mistake, please contact our support team for assistance.",
+                        icon: "error", confirmButtonText: 'OK', confirmButtonColor: "#d9534f"
+                    }).then(() => { showSection('login'); });
                 }
             } catch (err) { }
             btnCheckStatus.disabled = false;
@@ -227,6 +231,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     setInterval(forceCheckValidity, 300);
 
+    // ==========================================
+    // DUPLICATE REAL-TIME CHECK (POPUP ON FILL)
+    // ==========================================
     if (mobile) {
         mobile.addEventListener('input', async () => {
             const mVal = mobile.value.trim();
@@ -234,25 +241,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const { data } = await supabase.from('users').select('mobile').eq('mobile', mVal).maybeSingle();
                 if (data) {
                     isMobileDuplicate = true;
-                    Swal.fire({ title: 'Number Already Registered', text: 'This Mobile Number is already registered. Please try another Mobile Number.', icon: 'warning', confirmButtonColor: '#0b4595' });
-                    if(fullName) fullName.disabled = true;
-                    if(email) email.disabled = true;
-                    if(passwordInput) passwordInput.disabled = true;
-                    if(confirmPasswordInput) confirmPasswordInput.disabled = true;
-                } else {
-                    isMobileDuplicate = false;
-                    if(fullName) fullName.disabled = false;
-                    if(email) email.disabled = false;
-                    if(passwordInput) passwordInput.disabled = false;
-                    if(confirmPasswordInput) confirmPasswordInput.disabled = false;
-                }
-            } else {
-                isMobileDuplicate = false;
-                if(fullName) fullName.disabled = false;
-                if(email) email.disabled = false;
-                if(passwordInput) passwordInput.disabled = false;
-                if(confirmPasswordInput) confirmPasswordInput.disabled = false;
-            }
+                    Swal.fire({ title: 'Number Already Registered', text: 'This number is already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
+                } else { isMobileDuplicate = false; }
+            } else { isMobileDuplicate = false; }
         });
     }
 
@@ -263,25 +254,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const { data } = await supabase.from('users').select('email').eq('email', eVal).maybeSingle();
                 if (data) {
                     isEmailDuplicate = true;
-                    Swal.fire({ title: 'Email Already Registered', text: 'This Email is already registered. Please try another Email.', icon: 'warning', confirmButtonColor: '#0b4595' });
-                    if(fullName) fullName.disabled = true;
-                    if(mobile) mobile.disabled = true;
-                    if(passwordInput) passwordInput.disabled = true;
-                    if(confirmPasswordInput) confirmPasswordInput.disabled = true;
-                } else {
-                    isEmailDuplicate = false;
-                    if(fullName) fullName.disabled = false;
-                    if(mobile) mobile.disabled = false;
-                    if(passwordInput) passwordInput.disabled = false;
-                    if(confirmPasswordInput) confirmPasswordInput.disabled = false;
-                }
-            } else {
-                isEmailDuplicate = false;
-                if(fullName) fullName.disabled = false;
-                if(mobile) mobile.disabled = false;
-                if(passwordInput) passwordInput.disabled = false;
-                if(confirmPasswordInput) confirmPasswordInput.disabled = false;
-            }
+                    Swal.fire({ title: 'Email Already Registered', text: 'This email is already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
+                } else { isEmailDuplicate = false; }
+            } else { isEmailDuplicate = false; }
         });
     }
 
@@ -298,23 +273,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if(btnSendOtp) {
         btnSendOtp.addEventListener('click', async () => {
-            btnSendOtp.disabled = true;
-            btnSendOtp.innerText = "Checking...";
+            btnSendOtp.disabled = true; btnSendOtp.innerText = "Checking...";
             
             if (supabase) {
-                const { data: duplicateUsers, error: checkError } = await supabase
-                    .from('users').select('*').or(`email.eq.${email.value},mobile.eq.${mobile.value}`);
-                
+                const { data: duplicateUsers } = await supabase.from('users').select('*').or(`email.eq.${email.value},mobile.eq.${mobile.value}`);
                 if (duplicateUsers && duplicateUsers.length > 0) {
                     const isEmailDup = duplicateUsers.some(u => u.email === email.value);
                     const isMobileDup = duplicateUsers.some(u => u.mobile === mobile.value);
-                    
                     if (isEmailDup && isMobileDup) {
-                        Swal.fire({ title: 'Already Registered', text: 'Both this Mobile Number and Email are already registered. Please try another.', icon: 'warning', confirmButtonText: 'OK', confirmButtonColor: '#0b4595' });
+                        Swal.fire({ title: 'Already Registered', text: 'Both this number and email are already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
                     } else if (isEmailDup) {
-                        Swal.fire({ title: 'Email Registered', text: 'This Email is already registered. Please try another email.', icon: 'warning', confirmButtonText: 'OK', confirmButtonColor: '#0b4595' });
+                        Swal.fire({ title: 'Email Registered', text: 'This email is already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
                     } else if (isMobileDup) {
-                        Swal.fire({ title: 'Mobile Registered', text: 'This Mobile Number is already registered. Please try another mobile number.', icon: 'warning', confirmButtonText: 'OK', confirmButtonColor: '#0b4595' });
+                        Swal.fire({ title: 'Mobile Registered', text: 'This number is already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
                     }
                     btnSendOtp.innerText = "Send OTP"; return; 
                 }
@@ -334,16 +305,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if(btnVerifyOtp) {
         btnVerifyOtp.addEventListener('click', () => {
             if (otpInput.value === generatedOTP) {
-                isOtpVerified = true;
-                otpInput.disabled = true;
-                btnVerifyOtp.disabled = true;
+                isOtpVerified = true; otpInput.disabled = true; btnVerifyOtp.disabled = true;
                 btnVerifyOtp.innerHTML = '<i class="fa-solid fa-check"></i> Verified';
                 btnVerifyOtp.style.background = "#5eb063"; btnVerifyOtp.style.color = "white";
                 document.getElementById('pinSetupBox').classList.remove('hidden');
                 Swal.fire({ title: 'Valid OTP', text: 'OTP Verified Successfully!', icon: 'success' });
-            } else {
-                Swal.fire({ title: 'Invalid OTP', text: `Wrong OTP!`, icon: 'error' });
-            }
+            } else { Swal.fire({ title: 'Invalid OTP', text: `Wrong OTP!`, icon: 'error' }); }
         });
     }
 
@@ -356,17 +323,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             const confirmPassVal = confirmPasswordInput ? confirmPasswordInput.value : "";
 
             if (passVal.length !== 4 || passVal !== confirmPassVal) {
-                Swal.fire({ title: 'Invalid Password', text: 'Ensure exactly 4 digits and both match.', icon: 'warning' });
-                return;
+                Swal.fire({ title: 'Invalid Password', text: 'Ensure exactly 4 digits and both match.', icon: 'warning' }); return;
             }
 
-            btnRegisterSubmit.disabled = true;
-            btnRegisterSubmit.innerText = "Processing...";
-
+            btnRegisterSubmit.disabled = true; btnRegisterSubmit.innerText = "Processing...";
             const hashedPass = await hashString(passVal);
 
             const { data: newUser, error: insertError } = await supabase.from('users').insert([{
-                name: fullName.value, mobile: mobile.value, email: email.value, password: passVal, pin: hashedPass, status: 'Pending', termsaccepted: termsCheck.checked
+                name: fullName.value, mobile: mobile.value, email: email.value, password: passVal, pin: hashedPass, status: 'Pending', account_status: 'Active', termsaccepted: termsCheck.checked
             }]).select().single();
 
             if (!insertError) {
@@ -376,12 +340,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const adminMsg = `New Registration:\nName: ${fullName.value}\nMob: ${mobile.value}\nEmail: ${email.value}\n\nACCEPT:\n${acceptLink}\n\nDECLINE:\n${declineLink}`;
 
                 emailjs.send("service_ecofefq", "template_grujfl8", { to_email: "sahilvats0009@gmail.com", user_name: "Admin", message: adminMsg });
-
                 localStorage.setItem('hr_pending_email', email.value); 
 
                 Swal.fire({
-                    title: 'Registration Submitted Successfully',
-                    html: 'Your account has been added to the waiting list successfully.<br><br>Please wait for administrator approval.<br><br>Thank you for registering with Haryana Roadways Timetable.',
+                    title: 'Registration Submitted',
+                    html: 'Your account has been added to the waiting list successfully.<br><br>Please wait for administrator approval.',
                     icon: 'success', confirmButtonColor: '#0b4595'
                 }).then(() => { authForm.reset(); showSection('pending'); });
             } else {
@@ -391,6 +354,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // ==========================================
+    // LOGIN LOGIC & CUSTOM STATUS POPUPS
+    // ==========================================
     const loginForm = document.getElementById('loginForm');
     const loginMobile = document.getElementById('loginMobile');
     const loginPin = document.getElementById('loginPin');
@@ -414,13 +380,45 @@ document.addEventListener("DOMContentLoaded", async () => {
                     btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
                 }
 
+                // Check Status Map
                 const currentStatus = user.status ? user.status.toLowerCase() : 'approved';
+                const accStatus = user.account_status ? user.account_status.toLowerCase() : 'active';
 
                 if (currentStatus === 'pending') {
                     Swal.fire({ title: "⏳ Application Pending", html: "Your registration request is under review.<br>Please wait for administrator approval.", icon: "info", confirmButtonColor: "#0b4595" });
                     btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
                 } else if (currentStatus === 'rejected' || currentStatus === 'declined') {
-                    Swal.fire({ title: "❌ Registration Rejected", html: "Your registration request has been rejected by the administrator.<br>Please contact support for more information.", icon: "error", confirmButtonColor: "#d9534f" });
+                    Swal.fire({
+                        title: 'Registration Declined',
+                        html: 'We regret to inform you that your registration request has been declined.<br><br>If you believe this is a mistake, please contact our support team for assistance.',
+                        icon: 'error', confirmButtonText: 'OK', confirmButtonColor: '#d9534f'
+                    });
+                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
+                }
+
+                // Database Table Structure mapping
+                if (accStatus === 'blocked') {
+                    Swal.fire({
+                        title: 'Account Blocked',
+                        html: 'Your account has been blocked due to a policy violation.<br><br>If you believe this action was taken in error, please contact our support team.',
+                        icon: 'error', showCancelButton: true, confirmButtonText: 'GO TO CONTACT SUPPORT', cancelButtonText: 'Close', confirmButtonColor: '#d9534f'
+                    }).then((res) => {
+                        if (res.isConfirmed) { Swal.fire('Contact Support', 'Phone: 798*****72', 'info'); }
+                    });
+                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
+                }
+
+                if (accStatus === 'suspended') {
+                    let confirmBtn = 'OK';
+                    if (user.suspend_reason) confirmBtn = 'VIEW REASON';
+                    
+                    Swal.fire({
+                        title: 'Account Suspended',
+                        html: 'Your account has been temporarily suspended.<br><br>Please contact the administrator if you need further information.',
+                        icon: 'warning', confirmButtonText: confirmBtn, confirmButtonColor: '#f39c12'
+                    }).then((res) => {
+                        if (res.isConfirmed && user.suspend_reason) { Swal.fire('Suspension Reason', user.suspend_reason, 'info'); }
+                    });
                     btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
                 }
 
@@ -486,7 +484,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // ==========================================
-    // T&C Modal Logic (Login Page) - Full Page on Mobile
+    // T&C Modal Logic (Login Page)
     // ==========================================
     const tncModal = document.getElementById('tncModal');
     const openTncBtn = document.getElementById('openTncBtn'); 
