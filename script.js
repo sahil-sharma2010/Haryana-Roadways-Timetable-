@@ -30,38 +30,6 @@ function getDB() {
 
 document.addEventListener("DOMContentLoaded", async function() {
     
-    // =========================================================
-    // SMART POPUP ROUTER (Fixes Popup Placement Issue)
-    // =========================================================
-    if (typeof Swal !== 'undefined') {
-        var originalSwal = Swal.fire;
-        Swal.fire = function() {
-            var args = Array.prototype.slice.call(arguments);
-            var activeTarget = 'body';
-            var adminP = document.getElementById('adminPage');
-            var setP = document.getElementById('settingsPage');
-
-            // Detect active page to keep popup inside it
-            if (adminP && adminP.classList.contains('active')) {
-                activeTarget = adminP;
-            } else if (setP && setP.classList.contains('active')) {
-                activeTarget = setP;
-            }
-
-            if (typeof args[0] === 'object') {
-                args[0].target = args[0].target || activeTarget;
-            } else {
-                args = [{
-                    title: args[0],
-                    text: args[1],
-                    icon: args[2],
-                    target: activeTarget
-                }];
-            }
-            return originalSwal.apply(this, args);
-        };
-    }
-
     // EmailJS Init
     if (typeof emailjs !== 'undefined') {
         try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) { }
@@ -81,36 +49,31 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // AUTO LOGOUT INTERVAL (Fixed Network Drop Issue)
+    // ONE-TIME SILENT BLOCK CHECK (NO MORE RANDOM LOGOUTS)
     // =========================================================
-    setInterval(async function() {
-        var userEmail = localStorage.getItem('hr_user_email');
-        var db = getDB();
-        if (!db || !userEmail) return;
-        
-        try {
-            var response = await db.from('users').select('account_status, status').eq('email', userEmail).maybeSingle();
+    var userEmail = localStorage.getItem('hr_user_email');
+    var db = getDB();
+    if (db && userEmail) {
+        db.from('users').select('account_status, status').eq('email', userEmail).maybeSingle().then(function(res) {
+            if (res.error) return; // Agar net slow hai toh ignore karo, normal user ko kick mat karo
             
-            // Fix: Ignore network errors. Don't auto-logout if internet is slow.
-            if (response && response.error) {
-                return; 
-            }
-
-            if (response && response.data) {
-                var accStat = response.data.account_status ? response.data.account_status.toLowerCase() : 'active';
-                var reqStat = response.data.status ? response.data.status.toLowerCase() : 'approved';
+            if (res.data) {
+                var accStat = res.data.account_status ? res.data.account_status.toLowerCase() : 'active';
+                var reqStat = res.data.status ? res.data.status.toLowerCase() : 'approved';
                 
                 if (accStat === 'blocked' || accStat === 'suspended' || reqStat !== 'approved') {
                     localStorage.removeItem('hr_logged_in');
+                    localStorage.setItem('hr_kicked_reason', accStat); // Login page ko batao ki ye block hua hai
                     window.location.href = 'login.html';
                 }
-            } else if (response && !response.data && !response.error) {
-                // User explicitly deleted from DB
+            } else {
+                // User database se delete ho chuka hai
                 localStorage.removeItem('hr_logged_in');
+                localStorage.setItem('hr_kicked_reason', 'deleted');
                 window.location.href = 'login.html';
             }
-        } catch(e) { }
-    }, 10000);
+        });
+    }
 
     var btnLogout = document.getElementById('btnLogout');
     if (btnLogout) {
@@ -142,13 +105,11 @@ document.addEventListener("DOMContentLoaded", async function() {
             if(dispMob) dispMob.innerText = localStorage.getItem('hr_user_mobile') ? "+91 " + localStorage.getItem('hr_user_mobile') : "Fetching...";
             if(dispEmail) dispEmail.innerText = localStorage.getItem('hr_user_email') || "Fetching...";
 
-            var db = getDB();
             if (db) {
-                var uEmail = localStorage.getItem('hr_user_email');
                 try {
                     var query = db.from('users').select('*');
-                    if (uEmail) {
-                        var res = await query.eq('email', uEmail).limit(1).maybeSingle();
+                    if (userEmail) {
+                        var res = await query.eq('email', userEmail).limit(1).maybeSingle();
                         if (res && res.data) {
                             currentUserData = res.data;
                             localStorage.setItem('hr_user_name', res.data.name);
@@ -256,7 +217,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     // ADMIN DATA & ACTIONS
     // =========================================================
     window.loadAdminData = async function() {
-        var db = getDB();
         if (!db) { Swal.fire('Error','Database not ready','error'); return; }
 
         var adminTableBody = document.getElementById('adminTableBody');
@@ -319,14 +279,14 @@ document.addEventListener("DOMContentLoaded", async function() {
     };
 
     window.manageUser = function(email, currentStatus) {
-        var db = getDB();
         if (!db) return;
         Swal.fire({
             title: 'Manage Account Status',
             html: `Current Status: <strong>${currentStatus}</strong><br><br>Select Action:`,
             showDenyButton: true, showCancelButton: true,
             confirmButtonText: 'Block', denyButtonText: 'Suspend', cancelButtonText: 'Unblock',
-            confirmButtonColor: '#d9534f', denyButtonColor: '#f39c12', cancelButtonColor: '#5eb063'
+            confirmButtonColor: '#d9534f', denyButtonColor: '#f39c12', cancelButtonColor: '#5eb063',
+            target: document.getElementById('adminPage') || 'body' // Keeps popup in admin page
         }).then(async function(result) {
             var newStatus = null;
             if (result.isConfirmed) newStatus = 'Blocked';
@@ -334,29 +294,27 @@ document.addEventListener("DOMContentLoaded", async function() {
             else if (result.dismiss === Swal.DismissReason.cancel) newStatus = 'Active';
 
             if (newStatus) {
-                Swal.fire({title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                Swal.fire({title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
                 var res = await db.from('users').update({ account_status: newStatus }).eq('email', email);
-                if (!res.error) { Swal.fire('Success', `Account updated to ${newStatus}`, 'success'); loadAdminData(); } 
+                if (!res.error) { Swal.fire({title:'Success', text:`Account updated to ${newStatus}`, icon:'success', target: document.getElementById('adminPage') || 'body'}); loadAdminData(); } 
                 else { Swal.fire('Error', res.error.message, 'error'); }
             }
         });
     };
 
     window.acceptUserReq = async function(email) {
-        var db = getDB();
         if(!db) return;
-        Swal.fire({title: 'Approving...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+        Swal.fire({title: 'Approving...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
         var res = await db.from('users').update({ status: 'Approved', account_status: 'Active' }).eq('email', email);
-        if (!res.error) { Swal.fire('Success', 'User Approved.', 'success'); loadAdminData(); } 
+        if (!res.error) { Swal.fire({title:'Success', text:'User Approved.', icon:'success', target: document.getElementById('adminPage') || 'body'}); loadAdminData(); } 
         else { Swal.fire('Error', res.error.message, 'error'); }
     };
 
     window.rejectUserReq = async function(email) {
-        var db = getDB();
         if(!db) return;
-        Swal.fire({title: 'Rejecting...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+        Swal.fire({title: 'Rejecting...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
         var res = await db.from('users').delete().eq('email', email);
-        if (!res.error) { Swal.fire('Declined', 'User request rejected and deleted.', 'info'); loadAdminData(); } 
+        if (!res.error) { Swal.fire({title:'Declined', text:'User request rejected and deleted.', icon:'info', target: document.getElementById('adminPage') || 'body'}); loadAdminData(); } 
         else { Swal.fire('Error', res.error.message, 'error'); }
     };
 
@@ -382,20 +340,19 @@ document.addEventListener("DOMContentLoaded", async function() {
         btnSendPhoneOtp.addEventListener('click', async function() {
             var currentMobile = localStorage.getItem('hr_user_mobile');
             var currentEmail = localStorage.getItem('hr_user_email');
-            var db = getDB();
 
-            if (!currentMobile || !currentEmail || !db) { Swal.fire('Error','System not ready.','error'); return; }
+            if (!currentMobile || !currentEmail || !db) { Swal.fire({title:'Error',text:'System not ready.',icon:'error', target: document.getElementById('settingsPage') || 'body'}); return; }
             
             var oldPhone = document.getElementById('oldPhoneInput').value.trim();
             var newPhone = document.getElementById('updatePhoneInput').value.trim();
             
-            if (oldPhone !== currentMobile) return Swal.fire('Error', 'Old mobile mismatch.', 'error');
-            if (newPhone.length !== 10) return Swal.fire('Invalid', 'Enter valid 10-digit number.', 'warning');
+            if (oldPhone !== currentMobile) return Swal.fire({title:'Error', text:'Old mobile mismatch.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
+            if (newPhone.length !== 10) return Swal.fire({title:'Invalid', text:'Enter valid 10-digit number.', icon:'warning', target: document.getElementById('settingsPage') || 'body'});
 
             btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Checking...";
             
             var dup = await db.from('users').select('mobile').eq('mobile', newPhone).maybeSingle();
-            if (dup.data) { btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP"; return Swal.fire('Exists', 'New number already registered.', 'warning'); }
+            if (dup.data) { btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP"; return Swal.fire({title:'Exists', text:'New number already registered.', icon:'warning', target: document.getElementById('settingsPage') || 'body'}); }
 
             phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
             
@@ -404,10 +361,10 @@ document.addEventListener("DOMContentLoaded", async function() {
                 .then(() => {
                     document.getElementById('phoneOtpBox').classList.remove('hidden');
                     btnSendPhoneOtp.innerText = "Sent ✓";
-                    Swal.fire('OTP Sent', `OTP sent to ${currentEmail}`, 'success');
+                    Swal.fire({title:'OTP Sent', text:`OTP sent to ${currentEmail}`, icon:'success', target: document.getElementById('settingsPage') || 'body'});
                 }).catch(e => {
                     btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP";
-                    Swal.fire('Error', 'Failed to send Email.', 'error');
+                    Swal.fire({title:'Error', text:'Failed to send Email.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
                 });
             }
         });
@@ -418,7 +375,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             var enteredOtp = document.getElementById('phoneOtpInput').value.trim();
             var newPhone = document.getElementById('updatePhoneInput').value.trim();
             var currentEmail = localStorage.getItem('hr_user_email');
-            var db = getDB();
             
             if (enteredOtp === phoneUpdateOTP && db) {
                 btnVerifyPhoneUpdate.innerText = "Saving...";
@@ -429,12 +385,12 @@ document.addEventListener("DOMContentLoaded", async function() {
                     
                     localStorage.setItem('hr_user_mobile', newPhone);
                     document.getElementById('dispMobile').innerText = "+91 " + newPhone;
-                    Swal.fire('Success', 'Phone number changed!', 'success');
+                    Swal.fire({title:'Success', text:'Phone number changed!', icon:'success', target: document.getElementById('settingsPage') || 'body'});
                     document.getElementById('phoneOtpBox').classList.add('hidden');
                     updateLimitUI();
                 } else { Swal.fire('Error', res.error.message, 'error'); }
                 btnVerifyPhoneUpdate.innerText = "Verify & Save";
-            } else { Swal.fire('Error', 'Incorrect OTP', 'error'); }
+            } else { Swal.fire({title:'Error', text:'Incorrect OTP', icon:'error', target: document.getElementById('settingsPage') || 'body'}); }
         });
     }
 
@@ -502,7 +458,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // 100% WORKING T&C MODAL LOGIC 
+    // T&C MODAL LOGIC
     // ==========================================
     document.body.addEventListener('click', function(e) {
         if (e.target.closest('#openTncBtn') || e.target.id === 'openTncBtn') {
@@ -529,5 +485,4 @@ document.addEventListener("DOMContentLoaded", async function() {
             document.body.style.overflow = 'auto';
         }
     });
-
 });
