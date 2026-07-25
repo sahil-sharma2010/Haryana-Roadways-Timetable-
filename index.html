@@ -146,11 +146,13 @@
         <div class="settings-body container">
             <div class="settings-card glass-modal-box" style="width: 100%; max-width: 100%; box-shadow: none; border: none; background: transparent; padding: 0;">
                 
-                <div class="settings-nav-grid">
+                <!-- Navigation Tabs (Admin Added) -->
+                <div class="settings-nav-grid" style="grid-template-columns: repeat(5, 1fr);">
                     <button class="setting-nav-item active" data-tab="tab-theme"><i class="fa-solid fa-circle-half-stroke"></i> Theme</button>
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
                     <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
                     <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update</button>
+                    <button class="setting-nav-item" id="btnAdminTab" data-tab="admin-action"><i class="fa-solid fa-user-shield"></i> Admin</button>
                 </div>
 
                 <div id="tab-theme" class="settings-tab-content active slide-in-bottom">
@@ -228,11 +230,9 @@
                     </div>
                 </div>
 
-                <!-- Admin & Logout Area -->
-                <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(0,0,0,0.1); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                    <button id="btnAdminPanel" class="btn-admin"><i class="fa-solid fa-user-shield"></i> Admin Dashboard</button>
-                    
-                    <button id="btnLogout" class="btn-logout" style="width: 100%; max-width: 350px; padding: 14px; font-size: 1.1rem; border-radius: 12px;">
+                <!-- Logout Area -->
+                <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(0,0,0,0.1); text-align: center;">
+                    <button id="btnLogout" class="btn-logout" style="width: 100%; max-width: 350px; padding: 14px; font-size: 1.1rem; border-radius: 12px; margin: 0 auto; display: block;">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout Securely
                     </button>
                 </div>
