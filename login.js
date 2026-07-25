@@ -1,530 +1,375 @@
-let isOtpVerified = false;
-let generatedOTP = null;
-let forgotGeneratedOTP = null;
-let isForgotOtpVerified = false;
+// === SAFE GLOBAL VARIABLES ===
+var isOtpVerified = false;
+var generatedOTP = null;
+var forgotGeneratedOTP = null;
+var isForgotOtpVerified = false;
 
-const badWords = ['admin', 'fake', 'test', 'dummy', 'abuse', 'fuck', 'shit'];
+// === SMART DATABASE CONNECTION (FIXED) ===
+var SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
+var SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU'; 
+var supabaseClient = null;
 
-let isMobileDuplicate = false;
-let isEmailDuplicate = false;
+// Ye function jab click karoge tabhi database connect karega, isse error nahi aayega!
+function getDB() {
+    if (supabaseClient) return supabaseClient;
+    if (typeof window.supabase !== 'undefined') {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        return supabaseClient;
+    }
+    return null;
+}
 
 async function hashString(str) {
     try {
-        const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+        var buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
         return Array.prototype.map.call(new Uint8Array(buffer), x => (('00'+x.toString(16)).slice(-2))).join('');
-    } catch(e) {
-        return btoa(str + "_HR"); 
-    }
+    } catch(e) { return btoa(str + "_HR"); }
 }
 
-// Global Variables to prevent overwrite crash
-var supabase = null;
-
-document.addEventListener("DOMContentLoaded", async () => {
-    if (localStorage.getItem('hr_logged_in') === 'true') { window.location.href = 'index.html'; }
-
-    const registerSection = document.getElementById('registerSection');
-    const loginSection = document.getElementById('loginSection');
-    const forgotSection = document.getElementById('forgotSection');
-    const pendingSection = document.getElementById('pendingStateSection');
-    const authHeaderBlock = document.getElementById('authHeaderBlock');
-    const mainAuthTitle = document.getElementById('mainAuthTitle');
+document.addEventListener("DOMContentLoaded", async function() {
     
+    if (localStorage.getItem('hr_logged_in') === 'true') { window.location.href = 'index.html'; }
+    if (typeof emailjs !== 'undefined') { try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) {} }
+
+    // ==========================================
+    // AUTO-ENABLE BUTTONS (FIX FOR SEND OTP GREY BUTTON)
+    // ==========================================
+    setInterval(function() {
+        var n = document.getElementById('fullName');
+        var m = document.getElementById('mobile');
+        var e = document.getElementById('email');
+        var btnSend = document.getElementById('btnSendOtp');
+        var btnReg = document.getElementById('btnRegisterSubmit');
+        var pass = document.getElementById('password');
+        var cpass = document.getElementById('confirmPassword');
+        var terms = document.getElementById('termsCheck');
+
+        if (n && m && e && btnSend) {
+            var nv = n.value.trim();
+            var mv = m.value.trim();
+            var ev = e.value.trim();
+            
+            // Check if fields are correctly filled
+            var isValid = nv.length >= 2 && mv.length === 10 && /^\d+$/.test(mv) && ev.includes('@') && ev.includes('.');
+
+            if (btnSend.innerText === "Send OTP" || btnSend.innerText === "Resend OTP") {
+                btnSend.disabled = !isValid;
+                if(isValid) {
+                    btnSend.style.background = "var(--primary-blue)";
+                    btnSend.style.color = "white";
+                } else {
+                    btnSend.style.background = "#cdd5df";
+                    btnSend.style.color = "#333";
+                }
+            }
+
+            if (btnReg) {
+                var pv = pass ? pass.value.trim() : '';
+                var cpv = cpass ? cpass.value.trim() : '';
+                var isPassValid = pv.length === 4 && pv === cpv;
+                var isTerms = terms ? terms.checked : false;
+
+                if (btnReg.innerText === "REGISTER") {
+                    btnReg.disabled = !(isValid && isOtpVerified && isPassValid && isTerms);
+                    if(!(isValid && isOtpVerified && isPassValid && isTerms)) {
+                        btnReg.style.background = "#cdd5df";
+                    } else {
+                        btnReg.style.background = "var(--accent-green)";
+                    }
+                }
+            }
+        }
+    }, 300);
+
+    // Section Switching Logic
     function showSection(section) {
-        if(registerSection) registerSection.classList.add('hidden');
-        if(loginSection) loginSection.classList.add('hidden');
-        if(forgotSection) forgotSection.classList.add('hidden');
-        if(pendingSection) pendingSection.classList.add('hidden');
+        ['registerSection', 'loginSection', 'forgotSection', 'pendingStateSection'].forEach(id => {
+            var el = document.getElementById(id);
+            if(el) el.classList.add('hidden');
+        });
+        
+        var authHeaderBlock = document.getElementById('authHeaderBlock');
+        var mainAuthTitle = document.getElementById('mainAuthTitle');
+
         if(authHeaderBlock) authHeaderBlock.classList.remove('hidden');
 
-        if (section === 'register' && registerSection) {
-            registerSection.classList.remove('hidden');
+        if (section === 'register') {
+            document.getElementById('registerSection').classList.remove('hidden');
             if(mainAuthTitle) mainAuthTitle.innerText = "HR REGISTER";
-        } else if (section === 'login' && loginSection) {
-            loginSection.classList.remove('hidden');
+        } else if (section === 'login') {
+            document.getElementById('loginSection').classList.remove('hidden');
             if(mainAuthTitle) mainAuthTitle.innerText = "HR LOGIN";
-        } else if (section === 'forgot' && forgotSection) {
-            forgotSection.classList.remove('hidden');
+        } else if (section === 'forgot') {
+            document.getElementById('forgotSection').classList.remove('hidden');
             if(mainAuthTitle) mainAuthTitle.innerText = "RESET PASSWORD";
-        } else if (section === 'pending' && pendingSection) {
-            pendingSection.classList.remove('hidden');
+        } else if (section === 'pending') {
+            document.getElementById('pendingStateSection').classList.remove('hidden');
             if(authHeaderBlock) authHeaderBlock.classList.add('hidden'); 
         }
     }
 
-    const pendingEmail = localStorage.getItem('hr_pending_email');
+    var pendingEmail = localStorage.getItem('hr_pending_email');
     if (pendingEmail) { showSection('pending'); } else { showSection('login'); }
 
-    const showLoginBtn = document.getElementById('showLoginBtn');
-    if(showLoginBtn) showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); showSection('login'); });
+    var btnMap = {
+        'showLoginBtn': 'login',
+        'showRegisterBtn': 'register',
+        'showForgotBtn': 'forgot',
+        'backToLoginBtn': 'login'
+    };
 
-    const showRegisterBtn = document.getElementById('showRegisterBtn');
-    if(showRegisterBtn) showRegisterBtn.addEventListener('click', (e) => { e.preventDefault(); showSection('register'); });
+    for (var btnId in btnMap) {
+        var btn = document.getElementById(btnId);
+        if (btn) {
+            (function(target) {
+                btn.addEventListener('click', function(e) { e.preventDefault(); showSection(target); });
+            })(btnMap[btnId]);
+        }
+    }
 
-    const showForgotBtn = document.getElementById('showForgotBtn');
-    if(showForgotBtn) showForgotBtn.addEventListener('click', (e) => { e.preventDefault(); showSection('forgot'); });
-
-    const backToLoginBtn = document.getElementById('backToLoginBtn');
-    if(backToLoginBtn) backToLoginBtn.addEventListener('click', (e) => { e.preventDefault(); showSection('login'); });
-
-    const btnCancelPending = document.getElementById('btnCancelPending');
+    var btnCancelPending = document.getElementById('btnCancelPending');
     if(btnCancelPending) {
-        btnCancelPending.addEventListener('click', () => {
+        btnCancelPending.addEventListener('click', function() {
             localStorage.removeItem('hr_pending_email');
             showSection('login');
         });
     }
 
-    // Init Supabase (Independent)
-    try {
-        const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU'; 
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch (error) { console.error("Database connection failed", error); }
-
-    // Init EmailJS (Independent)
-    try {
-        emailjs.init("K6cs_matxXu2begVg"); 
-    } catch (error) { console.error("EmailJS connection failed", error); }
-
     // ==========================================
-    // ADMIN EMAIL ACTION BUTTONS
+    // CHECK STATUS BUTTON
     // ==========================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const adminAction = urlParams.get('action');
-    const targetEmail = urlParams.get('email');
-    const targetName = urlParams.get('name');
-    const targetMob = urlParams.get('mob');
-    const targetPass = urlParams.get('pass');
-
-    if ((adminAction === 'accept' || adminAction === 'decline') && targetEmail && supabase) {
-        Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-        if (adminAction === 'accept') {
-            try {
-                const { error } = await supabase.from('users').update({ status: 'Approved', account_status: 'Active' }).eq('email', targetEmail);
-                if (!error) {
-                    const templateParams = {
-                        subject: "🎉 Registration Approved – Haryana Roadways Timetable",
-                        status: "Registration Approved Successfully",
-                        message: "Congratulations! Your registration has been approved successfully. You can now log in using your registered credentials.",
-                        name: targetName, mobile: targetMob, email: targetEmail, password: targetPass, color: "#0b7d35",
-                        login_link: window.location.href.split('?')[0] 
-                    };
-                    await emailjs.send("service_ecofefq", "template_vryvuck", templateParams);
-                    Swal.fire("Success", "User Approved and notification sent.", "success").then(()=> window.location.href = window.location.pathname);
-                } else { Swal.fire("Error", error.message, "error"); }
-            } catch (err) { Swal.fire("Error", "Failed to process approval.", "error"); }
-
-        } else if (adminAction === 'decline') {
-            try {
-                const { error } = await supabase.from('users').delete().eq('email', targetEmail);
-                if (!error) {
-                    const templateParams = {
-                        subject: "Registration Declined – Haryana Roadways Timetable",
-                        status: "Registration Request Declined",
-                        message: "We regret to inform you that your registration request has been declined and your data has been removed.",
-                        name: targetName, mobile: targetMob || "N/A", email: targetEmail, password: "N/A", color: "#d32f2f",
-                        login_link: window.location.href.split('?')[0] 
-                    };
-                    await emailjs.send("service_ecofefq", "template_vryvuck", templateParams);
-                    Swal.fire("Declined", "User request declined and deleted.", "info").then(()=> window.location.href = window.location.pathname);
-                } else { Swal.fire("Error", error.message, "error"); }
-            } catch (err) { Swal.fire("Error", "Failed to process decline.", "error"); }
-        }
-    }
-
-    // ==========================================
-    // CHECK STATUS BUTTON (PENDING PAGE)
-    // ==========================================
-    const btnCheckStatus = document.getElementById('btnCheckStatus');
+    var btnCheckStatus = document.getElementById('btnCheckStatus');
     if (btnCheckStatus) {
-        btnCheckStatus.addEventListener('click', async () => {
-            if (!supabase) return;
-            const emailToCheck = localStorage.getItem('hr_pending_email');
+        btnCheckStatus.addEventListener('click', async function() {
+            var db = getDB();
+            if (!db) { Swal.fire('Error','Database not connected! Please wait 2 seconds and try again.','error'); return; }
+            
+            var emailToCheck = localStorage.getItem('hr_pending_email');
             if (!emailToCheck) return;
 
             btnCheckStatus.disabled = true;
             btnCheckStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
 
             try {
-                const { data: user } = await supabase.from('users').select('*').eq('email', emailToCheck).maybeSingle();
-                if (user) {
-                    const currentStatus = user.status ? user.status.toLowerCase() : 'approved';
-                    
+                var res = await db.from('users').select('*').eq('email', emailToCheck).maybeSingle();
+                if (res.data) {
+                    var currentStatus = res.data.status ? res.data.status.toLowerCase() : 'approved';
                     if (currentStatus === 'pending') {
-                        Swal.fire({ title: "⏳ Application Pending", html: "Your registration request is under review.<br><br>Please wait for administrator approval.", icon: "info", confirmButtonColor: "#0b4595" });
+                        Swal.fire({ title: "⏳ Application Pending", html: "Your registration is under review.", icon: "info" });
                     } else if (currentStatus === 'rejected' || currentStatus === 'declined') {
                         localStorage.removeItem('hr_pending_email'); 
-                        Swal.fire({
-                            title: 'Registration Declined',
-                            html: "We regret to inform you that your registration request has been declined.<br><br>If you believe this is a mistake, please contact our support team for assistance.",
-                            icon: "error", confirmButtonText: 'OK', confirmButtonColor: "#d9534f"
-                        }).then(() => { showSection('login'); });
+                        Swal.fire({ title: 'Declined', html: "Your request was declined.", icon: "error"}).then(() => showSection('login'));
                     } else {
                         localStorage.removeItem('hr_pending_email'); 
-                        Swal.fire({
-                            title: 'Congratulations!',
-                            html: 'Your account has been approved successfully.<br><br>You can now log in and access all available features of Haryana Roadways Timetable.<br><br>Thank you for being a part of our educational project.',
-                            icon: 'success', confirmButtonText: 'GO TO LOGIN', confirmButtonColor: '#5eb063'
-                        }).then(() => { showSection('login'); });
+                        Swal.fire({ title: 'Approved!', html: 'Your account has been approved.', icon: 'success' }).then(() => showSection('login'));
                     }
                 } else {
                     localStorage.removeItem('hr_pending_email'); 
-                    Swal.fire({
-                        title: 'Registration Declined',
-                        html: "We regret to inform you that your registration request has been declined.<br><br>If you believe this is a mistake, please contact our support team for assistance.",
-                        icon: "error", confirmButtonText: 'OK', confirmButtonColor: "#d9534f"
-                    }).then(() => { showSection('login'); });
+                    Swal.fire({ title: 'Declined', html: "Account not found or rejected.", icon: "error" }).then(() => showSection('login'));
                 }
-            } catch (err) { }
+            } catch (err) { console.error(err); }
+            
             btnCheckStatus.disabled = false;
             btnCheckStatus.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Check Status';
         });
     }
 
-    const fullName = document.getElementById('fullName');
-    const mobile = document.getElementById('mobile');
-    const email = document.getElementById('email');
-    const passwordInput = document.getElementById('password'); 
-    const confirmPasswordInput = document.getElementById('confirmPassword'); 
-    const termsCheck = document.getElementById('termsCheck');
-    const btnSendOtp = document.getElementById('btnSendOtp');
-    const btnRegisterSubmit = document.getElementById('btnRegisterSubmit');
-    const btnVerifyOtp = document.getElementById('btnVerifyOtp');
-    const otpInput = document.getElementById('otpInput');
-    const authForm = document.getElementById('authForm');
-    const blockMessage = document.getElementById('blockMessage');
+    // ==========================================
+    // LOGIN LOGIC
+    // ==========================================
+    var loginForm = document.getElementById('loginForm');
+    var loginMobile = document.getElementById('loginMobile');
+    var loginPin = document.getElementById('loginPin');
+    var btnLoginSubmit = document.getElementById('btnLoginSubmit');
 
-    if (termsCheck && localStorage.getItem('hr_tnc_accepted') === 'true') {
-        termsCheck.checked = true;
-    }
+    if (loginForm && loginMobile && loginPin && btnLoginSubmit) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var db = getDB();
+            if (!db) { Swal.fire('Error', 'Database loading... Please click again.', 'error'); return; }
 
-    if (termsCheck) {
-        termsCheck.addEventListener('change', () => {
-            if (termsCheck.checked) {
-                localStorage.setItem('hr_tnc_accepted', 'true');
-            } else {
-                localStorage.removeItem('hr_tnc_accepted');
-            }
-        });
-    }
+            var mobVal = loginMobile.value.trim();
+            var passVal = loginPin.value.trim();
 
-    function forceCheckValidity() {
-        if (!fullName || !mobile || !email || !btnSendOtp) return;
-        const n = fullName.value.trim();
-        const m = mobile.value.trim();
-        const e = email.value.trim();
-        const p = passwordInput ? passwordInput.value.trim() : "";
-        const isChecked = termsCheck ? termsCheck.checked : false;
+            if (mobVal.length !== 10 || passVal.length !== 4) { Swal.fire('Error', 'Invalid Details', 'error'); return; }
 
-        const isNameValid = n.length >= 2;
-        const isMobileValid = m.length === 10 && /^\d+$/.test(m);
-        const isEmailValid = e.includes('@') && e.includes('.');
+            btnLoginSubmit.disabled = true; btnLoginSubmit.innerText = "Checking...";
 
-        let isBlocked = false;
-        const blockUntil = localStorage.getItem('hr_block_time');
-        if (blockUntil && Date.now() < parseInt(blockUntil) && blockMessage) {
-            isBlocked = true;
-            blockMessage.classList.remove('hidden');
-        } else {
-            localStorage.removeItem('hr_block_time');
-            localStorage.removeItem('hr_otp_attempts');
-            if(blockMessage) blockMessage.classList.add('hidden');
-        }
-
-        btnSendOtp.disabled = !(isNameValid && isMobileValid && isEmailValid && !isBlocked && !isMobileDuplicate && !isEmailDuplicate);
-        if(btnRegisterSubmit) btnRegisterSubmit.disabled = !(isNameValid && isMobileValid && isEmailValid && isOtpVerified && isChecked && !isBlocked && p !== "" && !isMobileDuplicate && !isEmailDuplicate);
-    }
-    setInterval(forceCheckValidity, 300);
-
-    if (mobile) {
-        mobile.addEventListener('input', async () => {
-            const mVal = mobile.value.trim();
-            if (mVal.length === 10 && /^\d+$/.test(mVal) && supabase) {
-                const { data } = await supabase.from('users').select('mobile').eq('mobile', mVal).maybeSingle();
-                if (data) {
-                    isMobileDuplicate = true;
-                    Swal.fire({ title: 'Number Already Registered', text: 'This number is already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
-                } else { isMobileDuplicate = false; }
-            } else { isMobileDuplicate = false; }
-        });
-    }
-
-    if (email) {
-        email.addEventListener('input', async () => {
-            const eVal = email.value.trim();
-            if (eVal.includes('@') && eVal.includes('.') && supabase) {
-                const { data } = await supabase.from('users').select('email').eq('email', eVal).maybeSingle();
-                if (data) {
-                    isEmailDuplicate = true;
-                    Swal.fire({ title: 'Email Already Registered', text: 'This email is already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
-                } else { isEmailDuplicate = false; }
-            } else { isEmailDuplicate = false; }
-        });
-    }
-
-    if (fullName) {
-        fullName.addEventListener('change', () => {
-            const val = fullName.value.toLowerCase();
-            let hasBadWord = badWords.some(word => val.includes(word));
-            if (hasBadWord) {
-                Swal.fire({ title: 'Invalid Name', text: 'Please use a valid and respectful name.', icon: 'error', confirmButtonColor: '#0b4595' });
-                fullName.value = "";
-            }
-        });
-    }
-
-    if(btnSendOtp) {
-        btnSendOtp.addEventListener('click', async () => {
-            btnSendOtp.disabled = true; btnSendOtp.innerText = "Checking...";
-            
-            if (supabase) {
-                const { data: duplicateUsers } = await supabase.from('users').select('*').or(`email.eq.${email.value},mobile.eq.${mobile.value}`);
-                if (duplicateUsers && duplicateUsers.length > 0) {
-                    const isEmailDup = duplicateUsers.some(u => u.email === email.value);
-                    const isMobileDup = duplicateUsers.some(u => u.mobile === mobile.value);
-                    if (isEmailDup && isMobileDup) {
-                        Swal.fire({ title: 'Already Registered', text: 'Both this number and email are already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
-                    } else if (isEmailDup) {
-                        Swal.fire({ title: 'Email Registered', text: 'This email is already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
-                    } else if (isMobileDup) {
-                        Swal.fire({ title: 'Mobile Registered', text: 'This number is already registered.', icon: 'warning', confirmButtonColor: '#0b4595' });
-                    }
-                    btnSendOtp.innerText = "Send OTP"; return; 
+            try {
+                var res = await db.from('users').select('*').eq('mobile', mobVal).maybeSingle();
+                var user = res.data;
+                
+                if (!user) {
+                    Swal.fire({ title: "Not Found", text: "Create an account first.", icon: "warning" }).then(() => showSection('register'));
+                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
                 }
+
+                var reqStatus = user.status ? user.status.toLowerCase() : 'approved';
+                var accStatus = user.account_status ? user.account_status.toLowerCase() : 'active';
+
+                if (reqStatus === 'pending') {
+                    Swal.fire({ title: "⏳ Pending", text: "Please wait for approval.", icon: "info" });
+                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
+                }
+                if (accStatus === 'blocked' || accStatus === 'suspended') {
+                    Swal.fire({ title: `Account ${accStatus}`, text: "Your account is restricted.", icon: "error" });
+                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
+                }
+
+                var hashedAttempt = await hashString(passVal);
+                if (user.password !== hashedAttempt && user.pin !== hashedAttempt && user.pin !== passVal && user.password !== passVal) {
+                    Swal.fire({ title: "Wrong Password", text: "Incorrect PIN.", icon: "error" });
+                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
+                }
+
+                localStorage.setItem('hr_logged_in', 'true'); 
+                localStorage.setItem('hr_user_name', user.name);
+                localStorage.setItem('hr_user_email', user.email);
+                localStorage.setItem('hr_user_mobile', user.mobile);
+                
+                await db.from("login_history").insert({ name: user.name, email: user.email, login_status: "SUCCESS", device: navigator.platform, browser: navigator.userAgent });
+                window.location.href = 'index.html';
+
+            } catch (err) {
+                Swal.fire({ title: 'Error', text: 'Server error.', icon: 'error' });
+                btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN";
+            }
+        });
+    }
+
+    // ==========================================
+    // REGISTER LOGIC & OTP (FIXED)
+    // ==========================================
+    var btnSendOtp = document.getElementById('btnSendOtp');
+    var emailInput = document.getElementById('email');
+    var mobileInput = document.getElementById('mobile');
+    var nameInput = document.getElementById('fullName');
+    
+    if (btnSendOtp && emailInput && mobileInput && nameInput) {
+        btnSendOtp.addEventListener('click', async function(e) {
+            e.preventDefault();
+            var db = getDB();
+            
+            if(!db) { Swal.fire('Error', 'Database loading... wait a second and try again.', 'error'); return; }
+            if(typeof emailjs === 'undefined') { Swal.fire('Error', 'Email system not loaded. Refresh page.', 'error'); return; }
+            
+            var eVal = emailInput.value.trim();
+            var nVal = nameInput.value.trim();
+            var mVal = mobileInput.value.trim();
+            
+            if(!eVal.includes('@')) { Swal.fire('Error', 'Invalid Email', 'error'); return; }
+            
+            btnSendOtp.disabled = true; btnSendOtp.innerText = "Checking DB...";
+            
+            var dupCheck = await db.from('users').select('*').or(`email.eq.${eVal},mobile.eq.${mVal}`);
+            if (dupCheck.data && dupCheck.data.length > 0) {
+                Swal.fire('Already Registered', 'These details already exist in database', 'warning');
+                btnSendOtp.disabled = false; btnSendOtp.innerText = "Send OTP"; return;
             }
             
-            btnSendOtp.innerText = "Sending...";
             generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+            btnSendOtp.innerText = "Sending...";
             
-            emailjs.send("service_ecofefq", "template_grujfl8", { to_email: email.value.trim(), user_name: fullName.value.trim(), otp: generatedOTP }).then(() => {
+            emailjs.send("service_ecofefq", "template_grujfl8", { to_email: eVal, user_name: nVal, otp: generatedOTP }).then(() => {
                 document.getElementById('otpBox').classList.remove('hidden');
-                Swal.fire({ title: 'OTP Sent!', text: `OTP sent to ${email.value}`, icon: 'success' });
+                Swal.fire('OTP Sent!', `OTP sent to ${eVal}`, 'success');
                 setTimeout(() => { btnSendOtp.disabled = false; btnSendOtp.innerText = "Resend OTP"; }, 30000); 
+            }).catch(err => {
+                Swal.fire('Error', 'Failed to send OTP email: ' + (err.text || 'Unknown Error'), 'error');
+                btnSendOtp.disabled = false; btnSendOtp.innerText = "Send OTP";
             });
         });
     }
 
-    if(btnVerifyOtp) {
-        btnVerifyOtp.addEventListener('click', () => {
+    var btnVerifyOtp = document.getElementById('btnVerifyOtp');
+    var otpInput = document.getElementById('otpInput');
+    if (btnVerifyOtp && otpInput) {
+        btnVerifyOtp.addEventListener('click', function(e) {
+            e.preventDefault();
             if (otpInput.value === generatedOTP) {
                 isOtpVerified = true; otpInput.disabled = true; btnVerifyOtp.disabled = true;
                 btnVerifyOtp.innerHTML = '<i class="fa-solid fa-check"></i> Verified';
                 btnVerifyOtp.style.background = "#5eb063"; btnVerifyOtp.style.color = "white";
                 document.getElementById('pinSetupBox').classList.remove('hidden');
-                Swal.fire({ title: 'Valid OTP', text: 'OTP Verified Successfully!', icon: 'success' });
-            } else { Swal.fire({ title: 'Invalid OTP', text: `Wrong OTP!`, icon: 'error' }); }
+                Swal.fire('Valid OTP', 'OTP Verified Successfully!', 'success');
+            } else { Swal.fire('Invalid OTP', 'Wrong OTP!', 'error'); }
         });
     }
 
-    if(authForm) {
-        authForm.addEventListener('submit', async (e) => {
+    var authForm = document.getElementById('authForm');
+    var passInput = document.getElementById('password');
+    var confirmPassInput = document.getElementById('confirmPassword');
+    var termsCheck = document.getElementById('termsCheck');
+    var btnRegisterSubmit = document.getElementById('btnRegisterSubmit');
+
+    if (authForm && btnRegisterSubmit) {
+        authForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            if (!isOtpVerified || !supabase) return;
+            var db = getDB();
+            if (!isOtpVerified || !db) return;
 
-            const passVal = passwordInput ? passwordInput.value : "";
-            const confirmPassVal = confirmPasswordInput ? confirmPasswordInput.value : "";
+            var p1 = passInput ? passInput.value : "";
+            var p2 = confirmPassInput ? confirmPassInput.value : "";
+            var tCheck = termsCheck ? termsCheck.checked : false;
 
-            if (passVal.length !== 4 || passVal !== confirmPassVal) {
-                Swal.fire({ title: 'Invalid Password', text: 'Ensure exactly 4 digits and both match.', icon: 'warning' }); return;
-            }
+            if (p1.length !== 4 || p1 !== p2) { Swal.fire('Invalid Password', 'Ensure 4 digits match.', 'warning'); return; }
+            if (!tCheck) { Swal.fire('Terms', 'Please accept T&C', 'warning'); return; }
 
             btnRegisterSubmit.disabled = true; btnRegisterSubmit.innerText = "Processing...";
-            const hashedPass = await hashString(passVal);
+            var hashedPass = await hashString(p1);
 
-            const { data: newUser, error: insertError } = await supabase.from('users').insert([{
-                name: fullName.value, mobile: mobile.value, email: email.value, password: passVal, pin: hashedPass, status: 'Pending', account_status: 'Active', termsaccepted: termsCheck.checked
-            }]).select().single();
+            var ins = await db.from('users').insert([{
+                name: nameInput.value, mobile: mobileInput.value, email: emailInput.value, password: p1, pin: hashedPass, status: 'Pending', account_status: 'Active', termsaccepted: tCheck
+            }]);
 
-            if (!insertError) {
-                const baseUrl = window.location.href.split('?')[0];
-                const acceptLink = `${baseUrl}?action=accept&email=${email.value}&name=${encodeURIComponent(fullName.value)}&mob=${mobile.value}&pass=${passVal}`;
-                const declineLink = `${baseUrl}?action=decline&email=${email.value}&name=${encodeURIComponent(fullName.value)}`;
-                const adminMsg = `New Registration:\nName: ${fullName.value}\nMob: ${mobile.value}\nEmail: ${email.value}\n\nACCEPT:\n${acceptLink}\n\nDECLINE:\n${declineLink}`;
-
-                emailjs.send("service_ecofefq", "template_grujfl8", { to_email: "sahilvats0009@gmail.com", user_name: "Admin", message: adminMsg });
-                localStorage.setItem('hr_pending_email', email.value); 
-
-                Swal.fire({
-                    title: 'Registration Submitted',
-                    html: 'Your account has been added to the waiting list successfully.<br><br>Please wait for administrator approval.',
-                    icon: 'success', confirmButtonColor: '#0b4595'
-                }).then(() => { authForm.reset(); showSection('pending'); });
+            if (!ins.error) {
+                localStorage.setItem('hr_pending_email', emailInput.value); 
+                Swal.fire({ title: 'Submitted', text: 'Account added to waiting list.', icon: 'success' }).then(() => { authForm.reset(); showSection('pending'); });
             } else {
-                Swal.fire({ title: 'Error', text: 'Database error occurred.', icon: 'error' });
+                Swal.fire('Error', ins.error.message, 'error');
                 btnRegisterSubmit.disabled = false; btnRegisterSubmit.innerText = "REGISTER";
             }
         });
     }
 
     // ==========================================
-    // LOGIN LOGIC & CUSTOM STATUS POPUPS
+    // 100% WORKING T&C MODAL LOGIC (Click Fix)
     // ==========================================
-    const loginForm = document.getElementById('loginForm');
-    const loginMobile = document.getElementById('loginMobile');
-    const loginPin = document.getElementById('loginPin');
-    const btnLoginSubmit = document.getElementById('btnLoginSubmit');
-
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
+    document.body.addEventListener('click', function(e) {
+        // OPEN T&C
+        if (e.target.closest('#openTncBtn') || e.target.id === 'openTncBtn') {
             e.preventDefault();
-            const mobVal = loginMobile.value.trim();
-            const passVal = loginPin.value.trim();
-
-            if (mobVal.length !== 10 || passVal.length !== 4 || !supabase) return;
-
-            btnLoginSubmit.disabled = true; btnLoginSubmit.innerText = "Checking...";
-
-            try {
-                const { data: user } = await supabase.from('users').select('*').eq('mobile', mobVal).maybeSingle();
-                
-                if (!user) {
-                    Swal.fire({ title: "Account Not Found", text: "Please create an account first.", icon: "warning", confirmButtonColor: "#0b4595" }).then(() => { showSection('register'); });
-                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
-                }
-
-                // Check Status Map
-                const currentStatus = user.status ? user.status.toLowerCase() : 'approved';
-                const accStatus = user.account_status ? user.account_status.toLowerCase() : 'active';
-
-                if (currentStatus === 'pending') {
-                    Swal.fire({ title: "⏳ Application Pending", html: "Your registration request is under review.<br>Please wait for administrator approval.", icon: "info", confirmButtonColor: "#0b4595" });
-                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
-                } else if (currentStatus === 'rejected' || currentStatus === 'declined') {
-                    Swal.fire({
-                        title: 'Registration Declined',
-                        html: 'We regret to inform you that your registration request has been declined.<br><br>If you believe this is a mistake, please contact our support team for assistance.',
-                        icon: 'error', confirmButtonText: 'OK', confirmButtonColor: '#d9534f'
-                    });
-                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
-                }
-
-                if (accStatus === 'blocked') {
-                    Swal.fire({
-                        title: 'Account Blocked',
-                        html: 'Your account has been blocked due to a policy violation.<br><br>If you believe this action was taken in error, please contact our support team.',
-                        icon: 'error', showCancelButton: true, confirmButtonText: 'GO TO CONTACT SUPPORT', cancelButtonText: 'Close', confirmButtonColor: '#d9534f'
-                    }).then((res) => {
-                        if (res.isConfirmed) { Swal.fire('Contact Support', 'Phone: 798*****72', 'info'); }
-                    });
-                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
-                }
-
-                if (accStatus === 'suspended') {
-                    let confirmBtn = 'OK';
-                    if (user.suspend_reason) confirmBtn = 'VIEW REASON';
-                    
-                    Swal.fire({
-                        title: 'Account Suspended',
-                        html: 'Your account has been temporarily suspended.<br><br>Please contact the administrator if you need further information.',
-                        icon: 'warning', confirmButtonText: confirmBtn, confirmButtonColor: '#f39c12'
-                    }).then((res) => {
-                        if (res.isConfirmed && user.suspend_reason) { Swal.fire('Suspension Reason', user.suspend_reason, 'info'); }
-                    });
-                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
-                }
-
-                const hashedAttempt = await hashString(passVal);
-                if (user.password !== hashedAttempt && user.pin !== hashedAttempt && user.pin !== passVal && user.password !== passVal) {
-                    Swal.fire({ title: "Wrong Password", text: "Please enter the correct password.", icon: "error" });
-                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
-                }
-
-                localStorage.setItem('hr_logged_in', 'true'); localStorage.setItem('hr_user_name', user.name);
-                await supabase.from("login_history").insert({ name: user.name, email: user.email, login_status: "SUCCESS", device: navigator.platform, browser: navigator.userAgent });
-                window.location.href = 'index.html';
-
-            } catch (err) {
-                Swal.fire({ title: 'Error', text: 'Database error occurred.', icon: 'error' });
-                btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN";
+            var modal = document.getElementById('tncModal');
+            if(modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
             }
-        });
-    }
-
-    const forgotForm = document.getElementById('forgotForm');
-    const forgotEmail = document.getElementById('forgotEmail');
-    const btnForgotSendOtp = document.getElementById('btnForgotSendOtp');
-    const forgotOtpInput = document.getElementById('forgotOtpInput');
-    const btnForgotVerifyOtp = document.getElementById('btnForgotVerifyOtp');
-
-    if(btnForgotSendOtp) {
-        btnForgotSendOtp.addEventListener('click', async () => {
-            const eml = forgotEmail.value.trim();
-            if (!eml.includes('@') || !supabase) return;
-
-            btnForgotSendOtp.disabled = true; btnForgotSendOtp.innerText = "Checking...";
-            const { data: user } = await supabase.from('users').select('*').eq('email', eml).maybeSingle();
-            if (!user) { Swal.fire('Error', 'Email not registered.', 'error'); btnForgotSendOtp.disabled = false; return; }
-
-            forgotGeneratedOTP = Math.floor(1000 + Math.random() * 9000).toString();
-            emailjs.send("service_ecofefq", "template_grujfl8", { to_email: eml, user_name: user.name, otp: forgotGeneratedOTP }).then(() => {
-                document.getElementById('forgotOtpBox').classList.remove('hidden'); btnForgotSendOtp.innerText = "Sent ✓";
-            });
-        });
-    }
-
-    if(btnForgotVerifyOtp) {
-        btnForgotVerifyOtp.addEventListener('click', () => {
-            if (forgotOtpInput.value === forgotGeneratedOTP) {
-                isForgotOtpVerified = true; forgotOtpInput.disabled = true; btnForgotVerifyOtp.disabled = true;
-                document.getElementById('forgotPinBox').classList.remove('hidden');
-            } else { Swal.fire('Error', 'Wrong OTP', 'error'); }
-        });
-    }
-
-    if(forgotForm) {
-        forgotForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const p1 = document.getElementById('forgotNewPassword').value.trim();
-            const p2 = document.getElementById('forgotConfirmPassword').value.trim();
-            if (p1.length !== 4 || p1 !== p2) return;
-
-            const hashedNewPass = await hashString(p1);
-            await supabase.from('users').update({ password: p1, pin: hashedNewPass }).eq('email', forgotEmail.value.trim());
-            Swal.fire('Success', 'Password updated!', 'success').then(() => window.location.reload());
-        });
-    }
-
-    // ==========================================
-    // T&C Modal Logic (Login Page)
-    // ==========================================
-    const tncModal = document.getElementById('tncModal');
-    const openTncBtn = document.getElementById('openTncBtn'); 
-    const closeTncBtn = document.getElementById('closeTncBtn');
-    const acceptTncBtn = document.getElementById('acceptTncBtn');
-    const termsCheckModal = document.getElementById('termsCheck'); 
-
-    if (openTncBtn && tncModal) {
-        openTncBtn.addEventListener('click', (e) => { 
-            e.preventDefault(); 
-            tncModal.classList.add('active'); 
-            document.body.style.overflow = 'hidden';
-        });
-    }
-
-    if (closeTncBtn && tncModal) {
-        closeTncBtn.addEventListener('click', () => { 
-            tncModal.classList.remove('active'); 
-            document.body.style.overflow = 'auto'; 
-        });
-    }
-
-    if (acceptTncBtn && tncModal) {
-        acceptTncBtn.addEventListener('click', () => { 
-            tncModal.classList.remove('active'); 
-            document.body.style.overflow = 'auto'; 
-            if(termsCheckModal) {
-                termsCheckModal.checked = true;
-                localStorage.setItem('hr_tnc_accepted', 'true'); 
+        }
+        
+        // CLOSE T&C (Button)
+        if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn') {
+            var modalClose = document.getElementById('tncModal');
+            if(modalClose) {
+                modalClose.classList.remove('active');
+                document.body.style.overflow = 'auto';
             }
-        });
-    }
+        }
 
-    window.addEventListener("click", (e) => {
+        // ACCEPT T&C (Button inside modal)
+        if (e.target.closest('#acceptTncBtn') || e.target.id === 'acceptTncBtn') {
+            var modalAcc = document.getElementById('tncModal');
+            if(modalAcc) {
+                modalAcc.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+            if(termsCheck) termsCheck.checked = true;
+        }
+
+        // Close on outside overlay click
         if (e.target.classList.contains('glass-modal-overlay')) {
             e.target.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
     });
+
 });
