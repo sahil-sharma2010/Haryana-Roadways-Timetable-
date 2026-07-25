@@ -41,8 +41,10 @@ document.addEventListener("DOMContentLoaded", async function() {
             Swal.fire({ title: 'Account Blocked', html: 'Your account has been blocked by the Administrator.<br>If this is a mistake, contact support.', icon: 'error' });
         } else if (kickedReason === 'suspended') {
             Swal.fire({ title: 'Account Suspended', html: 'Your account is temporarily suspended.', icon: 'warning' });
-        } else if (kickedReason === 'deleted') {
-            Swal.fire({ title: 'Account Removed', html: 'Your account has been permanently deleted.', icon: 'error' });
+        } else if (kickedReason === 'rejected' || kickedReason === 'declined') {
+            Swal.fire({ title: 'Access Denied', html: 'Your account request was rejected.', icon: 'error' });
+        } else if (kickedReason === 'pending') {
+            Swal.fire({ title: 'Pending Approval', html: 'Your account is still pending approval by the Admin.', icon: 'info' });
         }
     }
 
