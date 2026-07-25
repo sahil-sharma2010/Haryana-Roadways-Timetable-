@@ -391,6 +391,9 @@ footer { margin-top: auto; background-color: var(--primary-blue-dark); color: wh
 .admin-table th, .admin-table td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
 [data-theme="dark"] .admin-table th, [data-theme="dark"] .admin-table td { border-bottom: 1px solid #444; }
 .btn-show-pass { background: #f39c12; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold; }
+.btn-action-manage { background: #0b4595; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold; }
+[data-theme="dark"] .btn-action-manage { background: #6cb2eb; color: #111; }
+
 .btn-accept-req { background: #5eb063; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem; margin-right: 5px; transition:0.3s; }
 .btn-accept-req:hover { background: #4a914f; }
 .btn-reject-req { background: #d9534f; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition:0.3s; }
