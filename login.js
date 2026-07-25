@@ -27,11 +27,27 @@ async function hashString(str) {
 
 document.addEventListener("DOMContentLoaded", async function() {
     
+    // Redirect if already logged in
     if (localStorage.getItem('hr_logged_in') === 'true') { window.location.href = 'index.html'; }
     if (typeof emailjs !== 'undefined') { try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) {} }
 
     // ==========================================
-    // AUTO-ENABLE BUTTONS (FIX FOR SEND OTP GREY BUTTON)
+    // SHOW BLOCKED POPUP IF KICKED FROM SCRIPT.JS
+    // ==========================================
+    var kickedReason = localStorage.getItem('hr_kicked_reason');
+    if (kickedReason) {
+        localStorage.removeItem('hr_kicked_reason'); 
+        if (kickedReason === 'blocked') {
+            Swal.fire({ title: 'Account Blocked', html: 'Your account has been blocked by the Administrator.<br>If this is a mistake, contact support.', icon: 'error' });
+        } else if (kickedReason === 'suspended') {
+            Swal.fire({ title: 'Account Suspended', html: 'Your account is temporarily suspended.', icon: 'warning' });
+        } else if (kickedReason === 'deleted') {
+            Swal.fire({ title: 'Account Removed', html: 'Your account has been permanently deleted.', icon: 'error' });
+        }
+    }
+
+    // ==========================================
+    // AUTO-ENABLE BUTTONS 
     // ==========================================
     setInterval(function() {
         var n = document.getElementById('fullName');
@@ -48,7 +64,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             var mv = m.value.trim();
             var ev = e.value.trim();
             
-            // Check validation format
             var isValid = nv.length >= 2 && mv.length === 10 && /^\d+$/.test(mv) && ev.includes('@') && ev.includes('.');
 
             if (btnSend.innerText === "Send OTP" || btnSend.innerText === "Resend OTP") {
@@ -142,7 +157,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     if (btnCheckStatus) {
         btnCheckStatus.addEventListener('click', async function() {
             var db = getDB();
-            if (!db) { Swal.fire('Error','Database loading... wait a second and try again.','error'); return; }
+            if (!db) { Swal.fire('Error','Database disconnected. Please check connection.','error'); return; }
             
             var emailToCheck = localStorage.getItem('hr_pending_email');
             if (!emailToCheck) return;
@@ -212,7 +227,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
                 }
                 if (accStatus === 'blocked' || accStatus === 'suspended') {
-                    Swal.fire({ title: `Account ${accStatus}`, text: "Your account is restricted.", icon: "error" });
+                    Swal.fire({ title: `Account ${accStatus}`, text: "Your account is restricted by Administrator.", icon: "error" });
                     btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN"; return;
                 }
 
@@ -250,7 +265,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             e.preventDefault();
             var db = getDB();
             
-            if(!db) { Swal.fire('Error', 'Database loading... wait a second and try again.', 'error'); return; }
+            if(!db) { Swal.fire('Error', 'Database disconnected. Refresh and try again.', 'error'); return; }
             if(typeof emailjs === 'undefined') { Swal.fire('Error', 'Email system not loaded. Refresh page.', 'error'); return; }
             
             var eVal = emailInput.value.trim();
@@ -333,39 +348,26 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // 100% WORKING T&C MODAL LOGIC (Click Fix)
+    // 100% WORKING T&C MODAL LOGIC
     // ==========================================
     document.body.addEventListener('click', function(e) {
-        // OPEN T&C
         if (e.target.closest('#openTncBtn') || e.target.id === 'openTncBtn') {
             e.preventDefault();
             var modal = document.getElementById('tncModal');
-            if(modal) {
-                modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
+            if(modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
         }
         
-        // CLOSE T&C (Button)
         if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn') {
             var modalClose = document.getElementById('tncModal');
-            if(modalClose) {
-                modalClose.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            }
+            if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
         }
 
-        // ACCEPT T&C (Button inside modal)
         if (e.target.closest('#acceptTncBtn') || e.target.id === 'acceptTncBtn') {
             var modalAcc = document.getElementById('tncModal');
-            if(modalAcc) {
-                modalAcc.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            }
+            if(modalAcc) { modalAcc.classList.remove('active'); document.body.style.overflow = 'auto'; }
             if(termsCheck) termsCheck.checked = true;
         }
 
-        // Close on outside overlay click
         if (e.target.classList.contains('glass-modal-overlay')) {
             e.target.classList.remove('active');
             document.body.style.overflow = 'auto';
