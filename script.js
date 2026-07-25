@@ -1,17 +1,19 @@
-// === AUTH GUARD ===
+// === AUTH GUARD & AUTO-LOGOUT CHECKER ===
 if (localStorage.getItem('hr_logged_in') !== 'true') {
     window.location.href = 'login.html';
 } else {
     localStorage.setItem('hr_tnc_accepted', 'true');
 }
 
-// === AUTO DETECT DARK MODE ===
 const currentHour = new Date().getHours();
 if (currentHour >= 18 || currentHour < 6) {
     if (!localStorage.getItem('theme_manually_changed')) {
         document.body.setAttribute('data-theme', 'dark');
     }
 }
+
+let supabase = null;
+let currentUserData = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
     if (localStorage.getItem('hr_welcome_shown') !== 'true') {
@@ -26,13 +28,34 @@ document.addEventListener("DOMContentLoaded", async () => {
         localStorage.setItem('hr_welcome_shown', 'true');
     }
 
-    let supabase = null;
     try {
         emailjs.init("K6cs_matxXu2begVg"); 
         const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU'; 
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (error) { console.error("Database connection failed", error); }
+
+    // ==========================================
+    // AUTO LOGOUT IF BLOCKED/SUSPENDED (Runs every 10 secs)
+    // ==========================================
+    setInterval(async () => {
+        if (!supabase || !currentUserData) return;
+        const { data } = await supabase.from('users').select('account_status, status').eq('email', currentUserData.email).maybeSingle();
+        if (data) {
+            const accStat = data.account_status ? data.account_status.toLowerCase() : 'active';
+            const reqStat = data.status ? data.status.toLowerCase() : 'approved';
+            
+            if (accStat === 'blocked' || accStat === 'suspended' || reqStat !== 'approved') {
+                localStorage.removeItem('hr_logged_in');
+                localStorage.removeItem('hr_welcome_shown');
+                window.location.href = 'login.html';
+            }
+        } else {
+            // User deleted from DB
+            localStorage.removeItem('hr_logged_in');
+            window.location.href = 'login.html';
+        }
+    }, 10000);
 
     const btnLogout = document.getElementById('btnLogout');
     if (btnLogout) {
@@ -52,8 +75,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const navItems = document.querySelectorAll('.setting-nav-item');
     const tabContents = document.querySelectorAll('.settings-tab-content');
 
-    let currentUserData = null; 
-
     if (btnOpenSettings) {
         btnOpenSettings.addEventListener('click', async () => {
             settingsPage.classList.add('active');
@@ -68,9 +89,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                         document.getElementById('dispName').innerText = data.name;
                         document.getElementById('dispMobile').innerText = "+91 " + data.mobile;
                         document.getElementById('dispEmail').innerText = data.email;
+                        updateLimitUI(); // Refresh limit UI
                     }
                 }
-            }
+            } else { updateLimitUI(); }
         });
     }
 
@@ -112,7 +134,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // =========================================================
-    // ADMIN PANEL LOGIC (Direct Password Check & Verification)
+    // ADMIN AUTHENTICATION
     // =========================================================
     const btnUnlockAdmin = document.getElementById('btnUnlockAdmin');
     const adminPinInput = document.getElementById('adminPinInput');
@@ -121,28 +143,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnUnlockAdmin) {
         btnUnlockAdmin.addEventListener('click', () => {
             const enteredPin = adminPinInput.value.trim();
-            
-            // Step 1: Check Password
             if (enteredPin === '3806') {
-                // Step 2: Check Developer Number from Logged In User
                 if (currentUserData && currentUserData.mobile === '7988300872') {
                     settingsPage.classList.remove('active'); 
                     adminPage.classList.add('active'); 
                     loadAdminData();
                 } else {
-                    // Exact specific Warning Popup 
                     Swal.fire({
-                        icon: 'error',
-                        title: '⚠️ Unauthorized Access',
+                        icon: 'error', title: '⚠️ Unauthorized Access',
                         html: "Sorry! You don't have permission to view this page.<br><br>This admin dashboard is restricted to the authorized developer only.",
-                        confirmButtonColor: '#d9534f',
-                        customClass: { popup: 'glass-swal' }
+                        confirmButtonColor: '#d9534f', customClass: { popup: 'glass-swal' }
                     });
                 }
-            } else {
-                Swal.fire('Error', 'Incorrect Password. Access Denied.', 'error');
-            }
-            adminPinInput.value = ''; // Always reset
+            } else { Swal.fire('Error', 'Incorrect Password. Access Denied.', 'error'); }
+            adminPinInput.value = ''; 
         });
     }
 
@@ -154,6 +168,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // Admin Tabs
     const tabUsersBtn = document.getElementById('tabUsersBtn');
     const tabReqBtn = document.getElementById('tabReqBtn');
     const adminUsersSection = document.getElementById('adminUsersSection');
@@ -172,6 +187,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // =========================================================
+    // ADMIN DATA & ACTION MANAGEMENT
+    // =========================================================
     async function loadAdminData() {
         const adminTableBody = document.getElementById('adminTableBody');
         const adminRequestsBody = document.getElementById('adminRequestsBody');
@@ -187,13 +205,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             adminTableBody.innerHTML = '';
             adminRequestsBody.innerHTML = '';
-            
-            let approvedCount = 0;
-            let pendingCount = 0;
+            let approvedCount = 0; let pendingCount = 0;
 
             data.forEach(user => {
-                const status = user.status ? user.status.toLowerCase() : 'approved';
-                if (status === 'pending') {
+                const reqStatus = user.status ? user.status.toLowerCase() : 'approved';
+                const accStatus = user.account_status ? user.account_status.toLowerCase() : 'active';
+
+                if (reqStatus === 'pending') {
                     pendingCount++;
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -206,15 +224,25 @@ document.addEventListener("DOMContentLoaded", async () => {
                         </td>
                     `;
                     adminRequestsBody.appendChild(tr);
-                } else {
+                } else if (reqStatus === 'approved') {
                     approvedCount++;
+                    // Show status indicator if not active
+                    let statBadge = '';
+                    if(accStatus === 'blocked') statBadge = '<span style="color:#d9534f;font-size:0.75rem;display:block;">[BLOCKED]</span>';
+                    if(accStatus === 'suspended') statBadge = '<span style="color:#f39c12;font-size:0.75rem;display:block;">[SUSPENDED]</span>';
+
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${user.name}</td>
+                        <td>${user.name} ${statBadge}</td>
                         <td>${user.mobile}</td>
                         <td>${user.email}</td>
-                        <td id="pass-${user.id}">****</td>
-                        <td><button class="btn-show-pass" onclick="revealPassword('${user.id}', '${user.password}')">SHOW</button></td>
+                        <td>
+                            <button class="btn-show-pass" id="btn-show-${user.id}" onclick="revealPassword('${user.id}', '${user.password}')">VIEW</button>
+                            <span id="pass-${user.id}" style="display:none;font-weight:bold;"></span>
+                        </td>
+                        <td>
+                            <button class="btn-action-manage" onclick="manageUser('${user.email}', '${accStatus}')">Manage</button>
+                        </td>
                     `;
                     adminTableBody.appendChild(tr);
                 }
@@ -222,75 +250,95 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             totalUsersCount.innerText = approvedCount;
             reqCountBadge.innerText = pendingCount;
-
-            if(pendingCount === 0) {
-                adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No pending requests found.</td></tr>';
-            }
-            if(approvedCount === 0) {
-                adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No active users found.</td></tr>';
-            }
-        } catch (err) {
-            adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Failed to load data</td></tr>';
-            adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Failed to load data</td></tr>';
-        }
+            if(pendingCount === 0) adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No pending requests found.</td></tr>';
+            if(approvedCount === 0) adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No active users found.</td></tr>';
+        } catch (err) { }
     }
 
     window.revealPassword = function(id, pass) {
         if (currentUserData && currentUserData.mobile === '7988300872') {
-            document.getElementById(`pass-${id}`).innerText = pass;
+            document.getElementById(`btn-show-${id}`).style.display = 'none';
+            const passSpan = document.getElementById(`pass-${id}`);
+            passSpan.style.display = 'inline';
+            passSpan.innerText = pass;
         } else {
             Swal.fire('Error', 'Unauthorized action!', 'error');
             document.getElementById('adminPage').classList.remove('active');
         }
     };
 
+    window.manageUser = function(email, currentStatus) {
+        Swal.fire({
+            title: 'Manage Account Status',
+            html: `Current Status: <strong style="text-transform:uppercase;">${currentStatus}</strong><br><br>Select Action:`,
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Block',
+            denyButtonText: 'Suspend',
+            cancelButtonText: 'Unblock',
+            confirmButtonColor: '#d9534f',
+            denyButtonColor: '#f39c12',
+            cancelButtonColor: '#5eb063'
+        }).then(async (result) => {
+            let newStatus = null;
+            if (result.isConfirmed) newStatus = 'Blocked';
+            else if (result.isDenied) newStatus = 'Suspended';
+            else if (result.dismiss === Swal.DismissReason.cancel) newStatus = 'Active';
+
+            if (newStatus) {
+                Swal.fire({title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                const { error } = await supabase.from('users').update({ account_status: newStatus }).eq('email', email);
+                if (!error) {
+                    Swal.fire('Success', `Account status updated to ${newStatus}`, 'success');
+                    loadAdminData();
+                } else { Swal.fire('Error', error.message, 'error'); }
+            }
+        });
+    }
+
     window.acceptUserReq = async function(email, name, mobile, pass) {
         Swal.fire({title: 'Approving...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-        const { error } = await supabase.from('users').update({ status: 'Approved' }).eq('email', email);
+        const { error } = await supabase.from('users').update({ status: 'Approved', account_status: 'Active' }).eq('email', email);
         if (!error) {
-            emailjs.send("service_ecofefq", "template_vryvuck", {
-                subject: "🎉 Registration Approved – Haryana Roadways Timetable",
-                status: "Registration Approved Successfully",
-                message: "Congratulations! Your registration has been approved successfully. You can now log in.",
-                name: name, mobile: mobile, email: email, password: pass, color: "#0b7d35"
-            });
-            Swal.fire('Success', 'User Approved & Notified.', 'success');
+            Swal.fire('Success', 'User Approved.', 'success');
             loadAdminData();
         } else { Swal.fire('Error', error.message, 'error'); }
     };
 
-    // Rejection completely deletes from Database as requested
     window.rejectUserReq = async function(email, name, mobile) {
         Swal.fire({title: 'Rejecting & Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
         const { error } = await supabase.from('users').delete().eq('email', email);
         if (!error) {
-            emailjs.send("service_ecofefq", "template_vryvuck", {
-                subject: "Registration Declined – Haryana Roadways Timetable",
-                status: "Registration Request Declined",
-                message: "We regret to inform you that your request has been declined by the administrator and your data has been removed.",
-                name: name, mobile: mobile, email: email, password: "N/A", color: "#d32f2f"
-            });
             Swal.fire('Declined', 'User request rejected and deleted from database.', 'info');
             loadAdminData();
         } else { Swal.fire('Error', error.message, 'error'); }
     };
 
     // =========================================================
-    // OTP & UPDATE INFORMATION
+    // LIMIT TRACKER & OTP UPDATES
     // =========================================================
-    function checkUpdateLimit(storageKey) {
+    function getRemainingEdits(storageKey) {
         const limitData = JSON.parse(localStorage.getItem(storageKey)) || [];
         const now = Date.now();
         const thirtyDays = 30 * 24 * 60 * 60 * 1000;
         const validData = limitData.filter(time => (now - time) < thirtyDays);
         localStorage.setItem(storageKey, JSON.stringify(validData));
-        return validData.length < 2; 
+        return 2 - validData.length;
     }
 
     function addUpdateRecord(storageKey) {
         const limitData = JSON.parse(localStorage.getItem(storageKey)) || [];
         limitData.push(Date.now());
         localStorage.setItem(storageKey, JSON.stringify(limitData));
+    }
+
+    function updateLimitUI() {
+        const phoneLeft = getRemainingEdits('hr_phone_update_history');
+        const phoneLimitText = document.getElementById('phoneLimitText');
+        if(phoneLimitText) {
+            if(phoneLeft <= 0) phoneLimitText.innerHTML = `(Limit Reached - Try again next month)`;
+            else phoneLimitText.innerHTML = `(Limit: 2 Edits / Month - ${phoneLeft} left)`;
+        }
     }
 
     const btnUpdateName = document.getElementById('btnUpdateName');
@@ -321,6 +369,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // Phone Update Logic
     const btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
     const btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
     let phoneUpdateOTP = null;
@@ -328,13 +377,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnSendPhoneOtp) {
         btnSendPhoneOtp.addEventListener('click', async () => {
             if (!currentUserData) return;
-            if (!checkUpdateLimit('hr_phone_update_history')) return Swal.fire('Limit Reached', 'You can only update your Mobile Number 2 times in a month.', 'error');
+            
+            // Check limits first before processing
+            if (getRemainingEdits('hr_phone_update_history') <= 0) {
+                return Swal.fire({ title: 'Limit Reached', text: 'You have reached your limit of 2 number changes per month. Please try again later.', icon: 'error' });
+            }
 
+            const oldPhone = document.getElementById('oldPhoneInput').value.trim();
             const newPhone = document.getElementById('updatePhoneInput').value.trim();
-            if (newPhone.length !== 10) return Swal.fire('Invalid', 'Enter valid 10-digit mobile.', 'warning');
+            
+            if (oldPhone !== currentUserData.mobile) return Swal.fire('Security Error', 'Old mobile number does not match your current registered number.', 'error');
+            if (newPhone.length !== 10) return Swal.fire('Invalid', 'Enter valid 10-digit new mobile number.', 'warning');
+            if (oldPhone === newPhone) return Swal.fire('Warning', 'New number cannot be same as old number.', 'warning');
 
             const { data } = await supabase.from('users').select('mobile').eq('mobile', newPhone).maybeSingle();
-            if (data) return Swal.fire('Already Exists', 'This number is already registered.', 'warning');
+            if (data) return Swal.fire('Already Exists', 'This new number is already registered to another account.', 'warning');
 
             btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Sending...";
             phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
@@ -344,7 +401,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }).then(() => {
                 document.getElementById('phoneOtpBox').classList.remove('hidden');
                 btnSendPhoneOtp.innerText = "Sent to Email ✓";
-                Swal.fire('OTP Sent', `OTP sent to your registered Email: ${currentUserData.email} for verification.`, 'success');
+                Swal.fire('OTP Sent', `Security OTP sent to your registered Email: ${currentUserData.email} to authorize number change.`, 'success');
             }).catch(err => {
                 btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP";
                 Swal.fire('Error', 'Failed to send OTP email. Please try again.', 'error');
@@ -364,63 +421,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                     addUpdateRecord('hr_phone_update_history'); 
                     currentUserData.mobile = newPhone;
                     document.getElementById('dispMobile').innerText = "+91 " + newPhone;
-                    Swal.fire('Success', 'Phone number updated securely!', 'success');
+                    Swal.fire('Success', 'Phone number changed securely!', 'success');
                     document.getElementById('phoneOtpBox').classList.add('hidden');
                     document.getElementById('updatePhoneInput').value = "";
+                    document.getElementById('oldPhoneInput').value = "";
+                    updateLimitUI();
                 } else { Swal.fire('Error', 'Update failed.', 'error'); }
                 btnVerifyPhoneUpdate.innerText = "Verify & Save";
-            } else { Swal.fire('Error', 'Incorrect OTP', 'error'); }
-        });
-    }
-
-    const btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
-    const btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
-    let emailUpdateOTP = null;
-
-    if (btnSendEmailOtp) {
-        btnSendEmailOtp.addEventListener('click', async () => {
-            if (!currentUserData) return;
-            if (!checkUpdateLimit('hr_email_update_history')) return Swal.fire('Limit Reached', 'You can only update your Email Address 2 times in a month.', 'error');
-
-            const newEmail = document.getElementById('updateEmailInput').value.trim();
-            if (!newEmail.includes('@')) return Swal.fire('Invalid', 'Enter valid email.', 'warning');
-
-            const { data } = await supabase.from('users').select('email').eq('email', newEmail).maybeSingle();
-            if (data) return Swal.fire('Already Exists', 'This email is already registered.', 'warning');
-
-            btnSendEmailOtp.disabled = true; btnSendEmailOtp.innerText = "Sending...";
-            emailUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
-
-            emailjs.send("service_ecofefq", "template_grujfl8", { 
-                to_email: currentUserData.email, user_name: currentUserData.name || "User", otp: emailUpdateOTP 
-            }).then(() => {
-                document.getElementById('emailOtpBox').classList.remove('hidden');
-                btnSendEmailOtp.innerText = "Sent to Old Email ✓";
-                Swal.fire('OTP Sent', `Authorization OTP sent to your CURRENT Email: ${currentUserData.email}.`, 'success');
-            }).catch(err => {
-                btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP";
-                Swal.fire('Error', 'Failed to send OTP email. Please try again.', 'error');
-            });
-        });
-    }
-
-    if (btnVerifyEmailUpdate) {
-        btnVerifyEmailUpdate.addEventListener('click', async () => {
-            const enteredOtp = document.getElementById('emailOtpInput').value.trim();
-            const newEmail = document.getElementById('updateEmailInput').value.trim();
-            
-            if (enteredOtp === emailUpdateOTP) {
-                btnVerifyEmailUpdate.innerText = "Saving...";
-                const { error } = await supabase.from('users').update({ email: newEmail }).eq('mobile', currentUserData.mobile);
-                if (!error) {
-                    addUpdateRecord('hr_email_update_history'); 
-                    currentUserData.email = newEmail;
-                    document.getElementById('dispEmail').innerText = newEmail;
-                    Swal.fire('Success', 'Email Address updated securely!', 'success');
-                    document.getElementById('emailOtpBox').classList.add('hidden');
-                    document.getElementById('updateEmailInput').value = "";
-                } else { Swal.fire('Error', 'Update failed.', 'error'); }
-                btnVerifyEmailUpdate.innerText = "Verify & Save";
             } else { Swal.fire('Error', 'Incorrect OTP', 'error'); }
         });
     }
@@ -585,13 +592,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // =========================================================
-    // FOOTER MODALS
-    // =========================================================
+    // MODALS
     const modalsInfo = [
-        { btn: 'openTncBtn', modal: 'tncModal', close: 'closeTncBtn', action: '.close-tnc-action' },
-        { btn: 'openPrivacyBtn', modal: 'privacyModal', close: 'closePrivacyBtn', action: '.close-privacy-action' },
-        { btn: 'openDisclaimerBtn', modal: 'disclaimerModal', close: 'closeDisclaimerBtn', action: '.close-disclaimer-action' }
+        { btn: 'openTncBtn', modal: 'tncModal', close: 'closeTncBtn' },
+        { btn: 'openPrivacyBtn', modal: 'privacyModal', close: 'closePrivacyBtn' },
+        { btn: 'openDisclaimerBtn', modal: 'disclaimerModal', close: 'closeDisclaimerBtn' }
     ];
 
     modalsInfo.forEach(m => {
@@ -606,29 +611,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 document.body.style.overflow = 'hidden';
             });
         }
-        
         if (closeBtn && modal) {
             closeBtn.addEventListener('click', () => {
                 modal.classList.remove('active');
                 document.body.style.overflow = 'auto';
             });
-        }
-        
-        if (m.action && modal) {
-            const actionBtn = modal.querySelector(m.action);
-            if(actionBtn) {
-                actionBtn.addEventListener('click', () => {
-                    modal.classList.remove('active');
-                    document.body.style.overflow = 'auto';
-                });
-            }
-        }
-    });
-
-    window.addEventListener("click", (e) => {
-        if (e.target.classList.contains('glass-modal-overlay')) {
-            e.target.classList.remove('active');
-            document.body.style.overflow = 'auto';
         }
     });
 });
