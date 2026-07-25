@@ -4,12 +4,11 @@ var generatedOTP = null;
 var forgotGeneratedOTP = null;
 var isForgotOtpVerified = false;
 
-// === SMART DATABASE CONNECTION (FIXED) ===
+// === SMART DATABASE CONNECTION ===
 var SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
 var SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU'; 
 var supabaseClient = null;
 
-// Ye function jab click karoge tabhi database connect karega, isse error nahi aayega!
 function getDB() {
     if (supabaseClient) return supabaseClient;
     if (typeof window.supabase !== 'undefined') {
@@ -49,7 +48,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             var mv = m.value.trim();
             var ev = e.value.trim();
             
-            // Check if fields are correctly filled
+            // Check validation format
             var isValid = nv.length >= 2 && mv.length === 10 && /^\d+$/.test(mv) && ev.includes('@') && ev.includes('.');
 
             if (btnSend.innerText === "Send OTP" || btnSend.innerText === "Resend OTP") {
@@ -57,9 +56,11 @@ document.addEventListener("DOMContentLoaded", async function() {
                 if(isValid) {
                     btnSend.style.background = "var(--primary-blue)";
                     btnSend.style.color = "white";
+                    btnSend.style.cursor = "pointer";
                 } else {
                     btnSend.style.background = "#cdd5df";
                     btnSend.style.color = "#333";
+                    btnSend.style.cursor = "not-allowed";
                 }
             }
 
@@ -81,7 +82,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
     }, 300);
 
-    // Section Switching Logic
     function showSection(section) {
         ['registerSection', 'loginSection', 'forgotSection', 'pendingStateSection'].forEach(id => {
             var el = document.getElementById(id);
@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     if (btnCheckStatus) {
         btnCheckStatus.addEventListener('click', async function() {
             var db = getDB();
-            if (!db) { Swal.fire('Error','Database not connected! Please wait 2 seconds and try again.','error'); return; }
+            if (!db) { Swal.fire('Error','Database loading... wait a second and try again.','error'); return; }
             
             var emailToCheck = localStorage.getItem('hr_pending_email');
             if (!emailToCheck) return;
@@ -186,7 +186,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             var db = getDB();
-            if (!db) { Swal.fire('Error', 'Database loading... Please click again.', 'error'); return; }
+            if (!db) { Swal.fire('Error', 'Database disconnected! Please refresh the page.', 'error'); return; }
 
             var mobVal = loginMobile.value.trim();
             var passVal = loginPin.value.trim();
@@ -238,7 +238,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // REGISTER LOGIC & OTP (FIXED)
+    // REGISTER LOGIC & OTP
     // ==========================================
     var btnSendOtp = document.getElementById('btnSendOtp');
     var emailInput = document.getElementById('email');
@@ -275,7 +275,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                 Swal.fire('OTP Sent!', `OTP sent to ${eVal}`, 'success');
                 setTimeout(() => { btnSendOtp.disabled = false; btnSendOtp.innerText = "Resend OTP"; }, 30000); 
             }).catch(err => {
-                Swal.fire('Error', 'Failed to send OTP email: ' + (err.text || 'Unknown Error'), 'error');
+                Swal.fire('Error', 'Failed to send OTP email.', 'error');
                 btnSendOtp.disabled = false; btnSendOtp.innerText = "Send OTP";
             });
         });
