@@ -5,6 +5,7 @@ if (localStorage.getItem('hr_logged_in') !== 'true') {
     localStorage.setItem('hr_tnc_accepted', 'true');
 }
 
+// === AUTO DETECT DARK MODE ===
 const currentHour = new Date().getHours();
 if (currentHour >= 18 || currentHour < 6) {
     if (!localStorage.getItem('theme_manually_changed')) {
@@ -12,10 +13,13 @@ if (currentHour >= 18 || currentHour < 6) {
     }
 }
 
-let supabase = null;
-let currentUserData = null;
+// Using 'var' to prevent any SyntaxError (already declared) if pasted twice accidentally
+var supabase = null;
+var currentUserData = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
+    
+    // Welcome Popup
     if (localStorage.getItem('hr_welcome_shown') !== 'true') {
         const userName = localStorage.getItem('hr_user_name') || 'USER';
         Swal.fire({
@@ -28,6 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         localStorage.setItem('hr_welcome_shown', 'true');
     }
 
+    // Init Supabase & EmailJS
     try {
         emailjs.init("K6cs_matxXu2begVg"); 
         const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
@@ -255,6 +260,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (err) { }
     }
 
+    // Attach to window so onclick works
     window.revealPassword = function(id, pass) {
         if (currentUserData && currentUserData.mobile === '7988300872') {
             document.getElementById(`btn-show-${id}`).style.display = 'none';
