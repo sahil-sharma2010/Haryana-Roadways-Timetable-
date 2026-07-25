@@ -30,6 +30,38 @@ function getDB() {
 
 document.addEventListener("DOMContentLoaded", async function() {
     
+    // =========================================================
+    // SMART POPUP ROUTER (Fixes Popup Placement Issue)
+    // =========================================================
+    if (typeof Swal !== 'undefined') {
+        var originalSwal = Swal.fire;
+        Swal.fire = function() {
+            var args = Array.prototype.slice.call(arguments);
+            var activeTarget = 'body';
+            var adminP = document.getElementById('adminPage');
+            var setP = document.getElementById('settingsPage');
+
+            // Detect active page to keep popup inside it
+            if (adminP && adminP.classList.contains('active')) {
+                activeTarget = adminP;
+            } else if (setP && setP.classList.contains('active')) {
+                activeTarget = setP;
+            }
+
+            if (typeof args[0] === 'object') {
+                args[0].target = args[0].target || activeTarget;
+            } else {
+                args = [{
+                    title: args[0],
+                    text: args[1],
+                    icon: args[2],
+                    target: activeTarget
+                }];
+            }
+            return originalSwal.apply(this, args);
+        };
+    }
+
     // EmailJS Init
     if (typeof emailjs !== 'undefined') {
         try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) { }
@@ -48,7 +80,9 @@ document.addEventListener("DOMContentLoaded", async function() {
         localStorage.setItem('hr_welcome_shown', 'true');
     }
 
-    // Auto Logout Interval
+    // =========================================================
+    // AUTO LOGOUT INTERVAL (Fixed Network Drop Issue)
+    // =========================================================
     setInterval(async function() {
         var userEmail = localStorage.getItem('hr_user_email');
         var db = getDB();
@@ -56,6 +90,12 @@ document.addEventListener("DOMContentLoaded", async function() {
         
         try {
             var response = await db.from('users').select('account_status, status').eq('email', userEmail).maybeSingle();
+            
+            // Fix: Ignore network errors. Don't auto-logout if internet is slow.
+            if (response && response.error) {
+                return; 
+            }
+
             if (response && response.data) {
                 var accStat = response.data.account_status ? response.data.account_status.toLowerCase() : 'active';
                 var reqStat = response.data.status ? response.data.status.toLowerCase() : 'approved';
@@ -64,7 +104,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                     localStorage.removeItem('hr_logged_in');
                     window.location.href = 'login.html';
                 }
-            } else {
+            } else if (response && !response.data && !response.error) {
+                // User explicitly deleted from DB
                 localStorage.removeItem('hr_logged_in');
                 window.location.href = 'login.html';
             }
@@ -320,6 +361,84 @@ document.addEventListener("DOMContentLoaded", async function() {
     };
 
     // =========================================================
+    // SETTINGS OTP / UPDATES
+    // =========================================================
+    window.updateLimitUI = function() {
+        var limitData = JSON.parse(localStorage.getItem('hr_phone_update_history')) || [];
+        var thirtyDays = 30 * 24 * 60 * 60 * 1000;
+        var validData = limitData.filter(t => (Date.now() - t) < thirtyDays);
+        localStorage.setItem('hr_phone_update_history', JSON.stringify(validData));
+        var phoneLeft = 2 - validData.length;
+        
+        var pt = document.getElementById('phoneLimitText');
+        if(pt) pt.innerHTML = phoneLeft <= 0 ? `(Limit Reached)` : `(Limit: 2 Edits / Month - ${phoneLeft} left)`;
+    }
+
+    var btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
+    var btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
+    var phoneUpdateOTP = null;
+
+    if (btnSendPhoneOtp) {
+        btnSendPhoneOtp.addEventListener('click', async function() {
+            var currentMobile = localStorage.getItem('hr_user_mobile');
+            var currentEmail = localStorage.getItem('hr_user_email');
+            var db = getDB();
+
+            if (!currentMobile || !currentEmail || !db) { Swal.fire('Error','System not ready.','error'); return; }
+            
+            var oldPhone = document.getElementById('oldPhoneInput').value.trim();
+            var newPhone = document.getElementById('updatePhoneInput').value.trim();
+            
+            if (oldPhone !== currentMobile) return Swal.fire('Error', 'Old mobile mismatch.', 'error');
+            if (newPhone.length !== 10) return Swal.fire('Invalid', 'Enter valid 10-digit number.', 'warning');
+
+            btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Checking...";
+            
+            var dup = await db.from('users').select('mobile').eq('mobile', newPhone).maybeSingle();
+            if (dup.data) { btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP"; return Swal.fire('Exists', 'New number already registered.', 'warning'); }
+
+            phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
+            
+            if(typeof emailjs !== 'undefined') {
+                emailjs.send("service_ecofefq", "template_grujfl8", { to_email: currentEmail, user_name: localStorage.getItem('hr_user_name') || "User", otp: phoneUpdateOTP })
+                .then(() => {
+                    document.getElementById('phoneOtpBox').classList.remove('hidden');
+                    btnSendPhoneOtp.innerText = "Sent ✓";
+                    Swal.fire('OTP Sent', `OTP sent to ${currentEmail}`, 'success');
+                }).catch(e => {
+                    btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP";
+                    Swal.fire('Error', 'Failed to send Email.', 'error');
+                });
+            }
+        });
+    }
+
+    if (btnVerifyPhoneUpdate) {
+        btnVerifyPhoneUpdate.addEventListener('click', async function() {
+            var enteredOtp = document.getElementById('phoneOtpInput').value.trim();
+            var newPhone = document.getElementById('updatePhoneInput').value.trim();
+            var currentEmail = localStorage.getItem('hr_user_email');
+            var db = getDB();
+            
+            if (enteredOtp === phoneUpdateOTP && db) {
+                btnVerifyPhoneUpdate.innerText = "Saving...";
+                var res = await db.from('users').update({ mobile: newPhone }).eq('email', currentEmail);
+                if (!res.error) {
+                    var limitData = JSON.parse(localStorage.getItem('hr_phone_update_history')) || [];
+                    limitData.push(Date.now()); localStorage.setItem('hr_phone_update_history', JSON.stringify(limitData));
+                    
+                    localStorage.setItem('hr_user_mobile', newPhone);
+                    document.getElementById('dispMobile').innerText = "+91 " + newPhone;
+                    Swal.fire('Success', 'Phone number changed!', 'success');
+                    document.getElementById('phoneOtpBox').classList.add('hidden');
+                    updateLimitUI();
+                } else { Swal.fire('Error', res.error.message, 'error'); }
+                btnVerifyPhoneUpdate.innerText = "Verify & Save";
+            } else { Swal.fire('Error', 'Incorrect OTP', 'error'); }
+        });
+    }
+
+    // =========================================================
     // SEARCH & TIMETABLE LOGIC
     // =========================================================
     var busData = [
@@ -386,41 +505,25 @@ document.addEventListener("DOMContentLoaded", async function() {
     // 100% WORKING T&C MODAL LOGIC 
     // ==========================================
     document.body.addEventListener('click', function(e) {
-        
-        // OPEN T&C
         if (e.target.closest('#openTncBtn') || e.target.id === 'openTncBtn') {
             e.preventDefault();
             var modal = document.getElementById('tncModal');
-            if(modal) {
-                modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
+            if(modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
         }
-        
-        // OPEN PRIVACY
         if (e.target.closest('#openPrivacyBtn') || e.target.id === 'openPrivacyBtn') {
             e.preventDefault();
             var pModal = document.getElementById('privacyModal');
             if(pModal) { pModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
         }
-        
-        // OPEN DISCLAIMER
         if (e.target.closest('#openDisclaimerBtn') || e.target.id === 'openDisclaimerBtn') {
             e.preventDefault();
             var dModal = document.getElementById('disclaimerModal');
             if(dModal) { dModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
         }
-        
-        // CLOSE MODALS
         if (e.target.closest('.glass-close')) {
             var modalClose = e.target.closest('.glass-modal-overlay');
-            if(modalClose) {
-                modalClose.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            }
+            if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
         }
-
-        // Close on outside overlay click
         if (e.target.classList.contains('glass-modal-overlay')) {
             e.target.classList.remove('active');
             document.body.style.overflow = 'auto';
