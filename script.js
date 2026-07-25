@@ -49,27 +49,27 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // ONE-TIME SILENT BLOCK CHECK (NO MORE RANDOM LOGOUTS)
+    // ONE-TIME SILENT BLOCK CHECK (100% FIXED - NO FALSE KICKS)
     // =========================================================
     var userEmail = localStorage.getItem('hr_user_email');
     var db = getDB();
     if (db && userEmail) {
         db.from('users').select('account_status, status').eq('email', userEmail).maybeSingle().then(function(res) {
-            if (res.error) return; // Agar net slow hai toh ignore karo, normal user ko kick mat karo
             
-            if (res.data) {
-                var accStat = res.data.account_status ? res.data.account_status.toLowerCase() : 'active';
-                var reqStat = res.data.status ? res.data.status.toLowerCase() : 'approved';
-                
-                if (accStat === 'blocked' || accStat === 'suspended' || reqStat !== 'approved') {
-                    localStorage.removeItem('hr_logged_in');
-                    localStorage.setItem('hr_kicked_reason', accStat); // Login page ko batao ki ye block hua hai
-                    window.location.href = 'login.html';
-                }
-            } else {
-                // User database se delete ho chuka hai
+            // FAIL-SAFE: Agar database slow hai ya load nahi hua, to user ko Kick MAT karo (Return ho jao)
+            if (res.error || !res.data) return; 
+            
+            var accStat = res.data.account_status ? res.data.account_status.toLowerCase() : 'active';
+            var reqStat = res.data.status ? res.data.status.toLowerCase() : 'approved';
+            
+            // SIRF AUR SIRF tab nikalenge jab 100% confirm ho ki Admin ne block kiya hai
+            if (accStat === 'blocked' || accStat === 'suspended') {
                 localStorage.removeItem('hr_logged_in');
-                localStorage.setItem('hr_kicked_reason', 'deleted');
+                localStorage.setItem('hr_kicked_reason', accStat); 
+                window.location.href = 'login.html';
+            } else if (reqStat === 'pending' || reqStat === 'rejected' || reqStat === 'declined') {
+                localStorage.removeItem('hr_logged_in');
+                localStorage.setItem('hr_kicked_reason', reqStat); 
                 window.location.href = 'login.html';
             }
         });
@@ -286,7 +286,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             showDenyButton: true, showCancelButton: true,
             confirmButtonText: 'Block', denyButtonText: 'Suspend', cancelButtonText: 'Unblock',
             confirmButtonColor: '#d9534f', denyButtonColor: '#f39c12', cancelButtonColor: '#5eb063',
-            target: document.getElementById('adminPage') || 'body' // Keeps popup in admin page
+            target: document.getElementById('adminPage') || 'body'
         }).then(async function(result) {
             var newStatus = null;
             if (result.isConfirmed) newStatus = 'Blocked';
