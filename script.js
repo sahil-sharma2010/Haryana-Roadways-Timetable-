@@ -13,12 +13,39 @@ if (currentHour >= 18 || currentHour < 6) {
     }
 }
 
-// Using 'var' to prevent any SyntaxError (already declared) if pasted twice accidentally
 var supabase = null;
 var currentUserData = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
+// ==========================================
+// SMART POPUP ROUTER (Fixes Z-Index & Target issues)
+// ==========================================
+const originalSwal = Swal.fire;
+Swal.fire = function(...args) {
+    let activeTarget = 'body';
+    const adminP = document.getElementById('adminPage');
+    const setP = document.getElementById('settingsPage');
     
+    // Automatically detect active page
+    if (adminP && adminP.classList.contains('active')) {
+        activeTarget = adminP;
+    } else if (setP && setP.classList.contains('active')) {
+        activeTarget = setP;
+    }
+
+    if (typeof args[0] === 'object') {
+        args[0].target = args[0].target || activeTarget;
+    } else {
+        args = [{
+            title: args[0],
+            text: args[1],
+            icon: args[2],
+            target: activeTarget
+        }];
+    }
+    return originalSwal.apply(this, args);
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
     // Welcome Popup
     if (localStorage.getItem('hr_welcome_shown') !== 'true') {
         const userName = localStorage.getItem('hr_user_name') || 'USER';
@@ -32,16 +59,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         localStorage.setItem('hr_welcome_shown', 'true');
     }
 
-    // Init Supabase & EmailJS
+    // Init Supabase (Independent)
     try {
-        emailjs.init("K6cs_matxXu2begVg"); 
         const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU'; 
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (error) { console.error("Database connection failed", error); }
 
+    // Init EmailJS (Independent)
+    try {
+        emailjs.init("K6cs_matxXu2begVg"); 
+    } catch (error) { console.error("EmailJS connection failed", error); }
+
     // ==========================================
-    // AUTO LOGOUT IF BLOCKED/SUSPENDED (Runs every 10 secs)
+    // AUTO LOGOUT IF BLOCKED/SUSPENDED
     // ==========================================
     setInterval(async () => {
         if (!supabase || !currentUserData) return;
@@ -56,7 +87,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 window.location.href = 'login.html';
             }
         } else {
-            // User deleted from DB
             localStorage.removeItem('hr_logged_in');
             window.location.href = 'login.html';
         }
@@ -72,7 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // =========================================================
-    // SETTINGS PAGE
+    // SETTINGS PAGE & DETAILS LOADING
     // =========================================================
     const btnOpenSettings = document.getElementById('btnOpenSettings');
     const settingsPage = document.getElementById('settingsPage');
@@ -85,19 +115,34 @@ document.addEventListener("DOMContentLoaded", async () => {
             settingsPage.classList.add('active');
             document.body.style.overflow = 'hidden'; 
             
-            if (supabase && !currentUserData) {
+            document.getElementById('dispName').innerText = "Fetching...";
+            document.getElementById('dispMobile').innerText = "Fetching...";
+            document.getElementById('dispEmail').innerText = "Fetching...";
+
+            if (supabase) {
                 const userName = localStorage.getItem('hr_user_name');
                 if (userName) {
-                    const { data } = await supabase.from('users').select('*').eq('name', userName).order('id', {ascending: false}).limit(1).maybeSingle();
-                    if (data) {
-                        currentUserData = data;
-                        document.getElementById('dispName').innerText = data.name;
-                        document.getElementById('dispMobile').innerText = "+91 " + data.mobile;
-                        document.getElementById('dispEmail').innerText = data.email;
-                        updateLimitUI(); // Refresh limit UI
+                    try {
+                        const { data } = await supabase.from('users').select('*').eq('name', userName).order('id', {ascending: false}).limit(1).maybeSingle();
+                        if (data) {
+                            currentUserData = data;
+                            document.getElementById('dispName').innerText = data.name;
+                            document.getElementById('dispMobile').innerText = "+91 " + data.mobile;
+                            document.getElementById('dispEmail').innerText = data.email;
+                            updateLimitUI(); 
+                        } else {
+                            document.getElementById('dispName').innerText = userName;
+                            document.getElementById('dispMobile').innerText = "N/A";
+                            document.getElementById('dispEmail').innerText = "N/A";
+                            updateLimitUI();
+                        }
+                    } catch(err) {
+                        document.getElementById('dispName').innerText = "Network Error";
                     }
                 }
-            } else { updateLimitUI(); }
+            } else {
+                document.getElementById('dispName').innerText = "Database Offline";
+            }
         });
     }
 
@@ -231,7 +276,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                     adminRequestsBody.appendChild(tr);
                 } else if (reqStatus === 'approved') {
                     approvedCount++;
-                    // Show status indicator if not active
                     let statBadge = '';
                     if(accStatus === 'blocked') statBadge = '<span style="color:#d9534f;font-size:0.75rem;display:block;">[BLOCKED]</span>';
                     if(accStatus === 'suspended') statBadge = '<span style="color:#f39c12;font-size:0.75rem;display:block;">[SUSPENDED]</span>';
@@ -260,7 +304,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (err) { }
     }
 
-    // Attach to window so onclick works
     window.revealPassword = function(id, pass) {
         if (currentUserData && currentUserData.mobile === '7988300872') {
             document.getElementById(`btn-show-${id}`).style.display = 'none';
@@ -384,7 +427,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         btnSendPhoneOtp.addEventListener('click', async () => {
             if (!currentUserData) return;
             
-            // Check limits first before processing
             if (getRemainingEdits('hr_phone_update_history') <= 0) {
                 return Swal.fire({ title: 'Limit Reached', text: 'You have reached your limit of 2 number changes per month. Please try again later.', icon: 'error' });
             }
@@ -434,6 +476,58 @@ document.addEventListener("DOMContentLoaded", async () => {
                     updateLimitUI();
                 } else { Swal.fire('Error', 'Update failed.', 'error'); }
                 btnVerifyPhoneUpdate.innerText = "Verify & Save";
+            } else { Swal.fire('Error', 'Incorrect OTP', 'error'); }
+        });
+    }
+
+    const btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
+    const btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
+    let emailUpdateOTP = null;
+
+    if (btnSendEmailOtp) {
+        btnSendEmailOtp.addEventListener('click', async () => {
+            if (!currentUserData) return;
+            if (getRemainingEdits('hr_email_update_history') <= 0) return Swal.fire('Limit Reached', 'You can only update your Email Address 2 times in a month.', 'error');
+
+            const newEmail = document.getElementById('updateEmailInput').value.trim();
+            if (!newEmail.includes('@')) return Swal.fire('Invalid', 'Enter valid email.', 'warning');
+
+            const { data } = await supabase.from('users').select('email').eq('email', newEmail).maybeSingle();
+            if (data) return Swal.fire('Already Exists', 'This email is already registered.', 'warning');
+
+            btnSendEmailOtp.disabled = true; btnSendEmailOtp.innerText = "Sending...";
+            emailUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
+
+            emailjs.send("service_ecofefq", "template_grujfl8", { 
+                to_email: currentUserData.email, user_name: currentUserData.name || "User", otp: emailUpdateOTP 
+            }).then(() => {
+                document.getElementById('emailOtpBox').classList.remove('hidden');
+                btnSendEmailOtp.innerText = "Sent to Old Email ✓";
+                Swal.fire('OTP Sent', `Authorization OTP sent to your CURRENT Email: ${currentUserData.email}.`, 'success');
+            }).catch(err => {
+                btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP";
+                Swal.fire('Error', 'Failed to send OTP email. Please try again.', 'error');
+            });
+        });
+    }
+
+    if (btnVerifyEmailUpdate) {
+        btnVerifyEmailUpdate.addEventListener('click', async () => {
+            const enteredOtp = document.getElementById('emailOtpInput').value.trim();
+            const newEmail = document.getElementById('updateEmailInput').value.trim();
+            
+            if (enteredOtp === emailUpdateOTP) {
+                btnVerifyEmailUpdate.innerText = "Saving...";
+                const { error } = await supabase.from('users').update({ email: newEmail }).eq('mobile', currentUserData.mobile);
+                if (!error) {
+                    addUpdateRecord('hr_email_update_history'); 
+                    currentUserData.email = newEmail;
+                    document.getElementById('dispEmail').innerText = newEmail;
+                    Swal.fire('Success', 'Email Address updated securely!', 'success');
+                    document.getElementById('emailOtpBox').classList.add('hidden');
+                    document.getElementById('updateEmailInput').value = "";
+                } else { Swal.fire('Error', 'Update failed.', 'error'); }
+                btnVerifyEmailUpdate.innerText = "Verify & Save";
             } else { Swal.fire('Error', 'Incorrect OTP', 'error'); }
         });
     }
