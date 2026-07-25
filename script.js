@@ -2,7 +2,7 @@
 if (localStorage.getItem('hr_logged_in') !== 'true') {
     window.location.href = 'login.html';
 } else {
-    localStorage.setItem('hr_tnc_accepted', 'true'); // Bar-bar error na aaye routes par
+    localStorage.setItem('hr_tnc_accepted', 'true');
 }
 
 // === AUTO DETECT DARK MODE AT NIGHT (6 PM to 6 AM) ===
@@ -14,7 +14,6 @@ if (currentHour >= 18 || currentHour < 6) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Welcome Popup
     if (localStorage.getItem('hr_welcome_shown') !== 'true') {
         const userName = localStorage.getItem('hr_user_name') || 'USER';
         Swal.fire({
@@ -27,7 +26,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         localStorage.setItem('hr_welcome_shown', 'true');
     }
 
-    // Init Supabase & EmailJS
     let supabase = null;
     try {
         emailjs.init("K6cs_matxXu2begVg"); 
@@ -36,7 +34,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (error) { console.error("Database connection failed", error); }
 
-    // Logout Logic
     const btnLogout = document.getElementById('btnLogout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
@@ -86,7 +83,45 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
-            navItems.forEach(nav => nav.classList.remove('active'));
+            // ADMIN TAB CLICK LOGIC
+            if (item.id === 'btnAdminTab') {
+                if (!currentUserData || currentUserData.mobile !== '7988300872') {
+                    settingsPage.classList.remove('active');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'UNAUTHORIZED ACCESS',
+                        text: 'PLEASE DO NOT CLICK AND TRY TO OPEN THIS ADMIN PANEL OTHERWISE YOU WILL BE BLOCKED. THIS IS YOUR LAST WARNING.',
+                        confirmButtonColor: '#d9534f',
+                        customClass: { popup: 'glass-swal' }
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'PREMIUM LOCK',
+                    text: 'Developer Verification Required',
+                    input: 'password',
+                    inputPlaceholder: 'Enter 4-Digit PIN',
+                    confirmButtonText: 'Unlock Dashboard',
+                    confirmButtonColor: '#0b4595',
+                    showCancelButton: true,
+                    customClass: { popup: 'glass-swal' }
+                }).then((result) => {
+                    if (result.value === '0276') {
+                        settingsPage.classList.remove('active');
+                        document.getElementById('adminPage').classList.add('active');
+                        loadAdminData();
+                    } else if (result.isConfirmed) {
+                        Swal.fire('Error', 'Incorrect PIN. Access Denied.', 'error');
+                    }
+                });
+                return; // Do not switch active state if it's admin tab
+            }
+
+            // Normal Tabs
+            navItems.forEach(nav => {
+                if(nav.id !== 'btnAdminTab') nav.classList.remove('active');
+            });
             tabContents.forEach(content => content.classList.remove('active'));
             item.classList.add('active');
             const targetTab = document.getElementById(item.getAttribute('data-tab'));
@@ -132,7 +167,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         localStorage.setItem(storageKey, JSON.stringify(limitData));
     }
 
-    // Name
     const btnUpdateName = document.getElementById('btnUpdateName');
     if (btnUpdateName) {
         btnUpdateName.addEventListener('click', async () => {
@@ -161,7 +195,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // Mobile
     const btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
     const btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
     let phoneUpdateOTP = null;
@@ -216,7 +249,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // Email
     const btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
     const btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
     let emailUpdateOTP = null;
@@ -272,50 +304,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // =========================================================
-    // ADMIN PANEL LOGIC (PIN 0276)
+    // ADMIN PANEL DATA LOAD
     // =========================================================
-    const btnAdminPanel = document.getElementById('btnAdminPanel');
-    const adminPage = document.getElementById('adminPage');
     const closeAdminBtn = document.getElementById('closeAdminBtn');
-
-    if (btnAdminPanel) {
-        btnAdminPanel.addEventListener('click', () => {
-            if (!currentUserData || currentUserData.mobile !== '7988300872') {
-                settingsPage.classList.remove('active');
-                Swal.fire({
-                    icon: 'error',
-                    title: 'UNAUTHORIZED ACCESS',
-                    text: 'PLEASE DO NOT CLICK AND TRY TO OPEN THIS ADMIN PANEL OTHERWISE YOU WILL BE BLOCKED. THIS IS YOUR LAST WARNING.',
-                    confirmButtonColor: '#d9534f',
-                    customClass: { popup: 'glass-swal' }
-                });
-                return;
-            }
-
-            Swal.fire({
-                title: 'PREMIUM LOCK',
-                text: 'Developer Verification Required',
-                input: 'password',
-                inputPlaceholder: 'Enter 4-Digit PIN',
-                confirmButtonText: 'Unlock Dashboard',
-                confirmButtonColor: '#0b4595',
-                showCancelButton: true,
-                customClass: { popup: 'glass-swal' }
-            }).then((result) => {
-                if (result.value === '0276') {
-                    settingsPage.classList.remove('active');
-                    adminPage.classList.add('active');
-                    loadAdminData();
-                } else if (result.isConfirmed) {
-                    Swal.fire('Error', 'Incorrect PIN. Access Denied.', 'error');
-                }
-            });
-        });
-    }
-
     if (closeAdminBtn) {
         closeAdminBtn.addEventListener('click', () => {
-            adminPage.classList.remove('active');
+            document.getElementById('adminPage').classList.remove('active');
+            document.body.style.overflow = 'auto';
         });
     }
 
@@ -352,10 +347,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById(`pass-${id}`).innerText = pass;
         } else {
             Swal.fire('Error', 'You are not developer!', 'error');
-            adminPage.classList.remove('active');
+            document.getElementById('adminPage').classList.remove('active');
         }
     };
-
 
     // =========================================================
     // SEARCH & TIMETABLE LOGIC
@@ -496,7 +490,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             emptyState.style.display = 'none';
             tableBody.innerHTML = '';
             
-            // Show Skeleton loader
             skeletonLoader.style.display = 'flex'; 
 
             setTimeout(() => {
@@ -520,7 +513,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // =========================================================
-    // FOOTER MODALS (Full Page on Mobile)
+    // FOOTER MODALS
     // =========================================================
     const modalsInfo = [
         { btn: 'openTncBtn', modal: 'tncModal', close: 'closeTncBtn', action: '.close-tnc-action' },
