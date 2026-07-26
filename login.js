@@ -40,7 +40,6 @@ async function hashString(str) {
 
 document.addEventListener("DOMContentLoaded", async function() {
     
-    // Redirect if already logged in
     if (localStorage.getItem('hr_logged_in') === 'true') { window.location.href = 'index.html'; }
     if (typeof emailjs !== 'undefined') { try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) {} }
 
@@ -378,19 +377,32 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // BULLETPROOF FOOTER & MODAL LOGIC
+    // BULLETPROOF FOOTER & MODAL LOGIC (FIXED)
     // ==========================================
     document.body.addEventListener('click', function(e) {
         
-        var tncTarget = e.target.closest('#openTncBtn, .open-tnc-btn, a[href="#tnc"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Terms'));
-        var privacyTarget = e.target.closest('#openPrivacyBtn, .open-privacy-btn, a[href="#privacy"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Privacy'));
-        var discTarget = e.target.closest('#openDisclaimerBtn, .open-disclaimer-btn, a[href="#disclaimer"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Disclaimer'));
+        var target = e.target;
+        var parentTarget = target.closest('a, button, span, div');
+        var clickedText = target.innerText ? target.innerText.toLowerCase() : '';
+        if(parentTarget && parentTarget.innerText) clickedText = parentTarget.innerText.toLowerCase();
 
-        if (tncTarget) { e.preventDefault(); var m = document.getElementById('tncModal'); if(m) { m.classList.add('active'); document.body.style.overflow = 'hidden'; } }
-        if (privacyTarget) { e.preventDefault(); var p = document.getElementById('privacyModal'); if(p) { p.classList.add('active'); document.body.style.overflow = 'hidden'; } }
-        if (discTarget) { e.preventDefault(); var d = document.getElementById('disclaimerModal'); if(d) { d.classList.add('active'); document.body.style.overflow = 'hidden'; } }
+        // Detect T&C, Privacy, Disclaimer clicks accurately
+        if (target.id === 'openTncBtn' || (parentTarget && parentTarget.id === 'openTncBtn') || clickedText.includes('terms') || clickedText.includes('t&c')) {
+            var modal = document.getElementById('tncModal');
+            if(modal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); modal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
+        }
         
-        // Premium Close / Accept Buttons
+        if (target.id === 'openPrivacyBtn' || (parentTarget && parentTarget.id === 'openPrivacyBtn') || clickedText.includes('privacy')) {
+            var pModal = document.getElementById('privacyModal');
+            if(pModal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); pModal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
+        }
+        
+        if (target.id === 'openDisclaimerBtn' || (parentTarget && parentTarget.id === 'openDisclaimerBtn') || clickedText.includes('disclaimer')) {
+            var dModal = document.getElementById('disclaimerModal');
+            if(dModal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); dModal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
+        }
+
+        // Premium Close / Accept Buttons Logic
         if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn' || e.target.closest('.glass-close')) {
             var modalClose = e.target.closest('.glass-modal-overlay');
             if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
