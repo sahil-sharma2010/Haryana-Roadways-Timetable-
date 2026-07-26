@@ -9,6 +9,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <!-- 🗺️ FREE OPEN-SOURCE MAP LIBRARIES (NO API KEY REQUIRED) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
     <link rel="stylesheet" href="style.css">
     <style>
         /* Custom Premium Overrides */
@@ -31,13 +38,62 @@
         .tnc-content-scroll::-webkit-scrollbar { width: 6px; }
         .tnc-content-scroll::-webkit-scrollbar-thumb { background: #999; border-radius: 10px; }
 
-        /* LIVE MARQUEE - STRICTLY BLACK TEXT ON LIGHT BACKGROUND FOR VISIBILITY */
+        /* LIVE MARQUEE */
         .marquee-wrapper { overflow: hidden; white-space: nowrap; background: #f8f9fa !important; padding: 10px 0; border-bottom: 1px solid #ddd; }
         .marquee-content { display: inline-block; animation: marquee 25s linear infinite; padding-left: 100%; color: #000 !important; font-weight: bold; font-size: 1.05rem; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        /* TRACK BUTTON */
+        .btn-track-route { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.85rem; }
+        .btn-track-route:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4); }
+        
+        /* 🗺️ FULL PAGE MAP STYLES */
+        .map-btn { padding: 10px 15px; background: white; color: var(--primary-blue); border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .map-btn:hover { transform: scale(1.05); }
+        .map-info-item { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; margin-bottom: 6px; color: #444; }
+        [data-theme="dark"] .map-info-item { color: #ddd; }
+        
+        /* Hiding OSRM default instruction panel for clean UI */
+        .leaflet-routing-container { display: none !important; }
+        .custom-div-icon { background: none; border: none; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
+
+    <!-- 🗺️ FULL PAGE ROUTE MAP (NEW PREMIUM FEATURE) -->
+    <div id="routeMapPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f1f3f5; z-index: 9999999; flex-direction: column;">
+        <!-- Map Container -->
+        <div id="map" style="flex: 1; width: 100%;"></div>
+        
+        <!-- Map Controls -->
+        <button id="btnBackFromMap" class="map-btn" style="position: absolute; top: 20px; left: 20px; z-index: 9999; color: #333;"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        <div style="position: absolute; top: 20px; right: 20px; z-index: 9999; display: flex; gap: 10px;">
+            <button id="btnMyLocation" class="map-btn"><i class="fa-solid fa-location-crosshairs"></i> My Location</button>
+            <button id="btnFitRoute" class="map-btn"><i class="fa-solid fa-expand"></i> Fit Route</button>
+        </div>
+
+        <!-- Floating Info Card -->
+        <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999; border: 1px solid rgba(0,0,0,0.05);">
+            <h3 id="mapRouteTitle" style="color: var(--primary-blue); margin-bottom: 10px; font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 8px;">Hisar &rarr; Delhi</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="map-info-item"><i class="fa-regular fa-clock" style="color:var(--primary-blue);"></i> <span id="mapDepTime">--</span></div>
+                <div class="map-info-item"><i class="fa-solid fa-bus" style="color:var(--primary-blue);"></i> <span id="mapBusType">--</span></div>
+                <div class="map-info-item"><i class="fa-solid fa-id-badge" style="color:var(--primary-blue);"></i> <span id="mapOp">--</span></div>
+                <div class="map-info-item"><i class="fa-solid fa-road" style="color:var(--primary-blue);"></i> <span id="mapEstDist">Calculating...</span></div>
+            </div>
+            
+            <div class="map-info-item" style="margin-top:10px; font-weight:bold;"><i class="fa-solid fa-hourglass-half" style="color:#f39c12;"></i> Est. Travel Time: <span id="mapEstTime" style="margin-left:5px;">Calculating...</span></div>
+            
+            <div class="map-info-item" style="margin-top:10px; align-items:flex-start;">
+                <i class="fa-solid fa-map-pin" style="color:#d9534f; margin-top:4px;"></i> 
+                <div>
+                    <strong style="font-size:0.85rem; color:#888;">VIA STOPS</strong><br>
+                    <span id="mapViaStops" style="font-size:0.9rem;">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Header -->
     <header>
@@ -116,6 +172,7 @@
                         <th>Via</th>
                         <th>Bus Type</th>
                         <th>Operator</th>
+                        <th>Track</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -155,7 +212,6 @@
                     <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update</button>
                     <button class="setting-nav-item" data-tab="tab-admin" id="btnAdminTab"><i class="fa-solid fa-user-shield"></i> Admin</button>
                     
-                    <!-- 🚍 LIVE SPEED TRACKER TAB BUTTON -->
                     <button class="setting-nav-item" data-tab="tab-tracker" id="openTrackerTabBtn">
                         <i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> Tracker
                         <span style="font-size:10px; background:#f39c12; color:white; padding:2px 5px; border-radius:10px; margin-left:5px;">PRO</span>
@@ -174,7 +230,7 @@
                     </div>
                 </div>
 
-                <!-- Routes Tab (UPDATED DYNAMIC LIST) -->
+                <!-- Routes Tab -->
                 <div id="tab-routes" class="settings-tab-content slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 5px;">Select Origin City</h3>
                     <div class="route-city-grid">
@@ -182,7 +238,6 @@
                         <button class="city-btn" data-city="Jind">Jind</button>
                         <button class="city-btn" data-city="Bhiwani">Bhiwani</button>
                     </div>
-                    <!-- Dynamic Routes Container -->
                     <div id="routeDetailsContainer" style="margin-top: 20px; text-align: left;"></div>
                 </div>
 
@@ -254,7 +309,7 @@
                     </div>
                 </div>
 
-                <!-- 🚍 NEW SPEED TRACKER TAB CONTENT -->
+                <!-- 🚍 DEVICE SPEED TRACKER TAB CONTENT -->
                 <div id="tab-tracker" class="settings-tab-content slide-in-bottom">
                     <div class="tracker-content" style="width: 100%; margin: auto; padding: 25px; border-radius: 16px; text-align: center; background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
                         <h3 style="margin-bottom:5px; color:var(--primary-blue); font-size: 1.5rem;"><i class="fa-solid fa-bus"></i> Live Speed Tracker</h3>
@@ -285,7 +340,6 @@
                             </div>
                         </div>
 
-                        <!-- 🚍 BUTTONS WITH NO ICONS -->
                         <div class="tracker-btns" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
                             <button class="t-btn" id="btnStartTracker" style="flex:1; padding:12px; border:none; border-radius:10px; font-weight:bold; font-size: 0.95rem; cursor:pointer; color:white; background:#5eb063;">Start</button>
                             <button class="t-btn" id="btnPauseTracker" style="flex:1; padding:12px; border:none; border-radius:10px; font-weight:bold; font-size: 0.95rem; cursor:pointer; color:white; background:#f39c12; display:none;">Pause</button>
@@ -363,10 +417,8 @@
             <span class="glass-close" onclick="document.getElementById('privacyModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-lock"></i> PRIVACY POLICY</h2>
             <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
-            
             <div class="tnc-content-scroll">
                 <p><strong>Last Updated: July 2026</strong><br>Welcome to Haryana Roadways Timetable.<br>We value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and protect your information while using this website.</p>
-                
                 <h3>1. Information We Collect</h3>
                 <ul>
                     <li>Full Name</li>
@@ -378,52 +430,6 @@
                     <li>IP Address (if available)</li>
                     <li>Account Status (Pending, Approved, Rejected, Suspended, Blocked)</li>
                 </ul>
-                
-                <h3>2. Why We Collect Your Information</h3>
-                <ul>
-                    <li>To create and manage your account.</li>
-                    <li>To verify user identity.</li>
-                    <li>To provide secure login and authentication.</li>
-                    <li>To approve or reject user registrations.</li>
-                    <li>To improve website security and performance.</li>
-                    <li>To prevent unauthorized access and misuse.</li>
-                    <li>To maintain login history for security purposes.</li>
-                </ul>
-                
-                <h3>3. Data Security</h3>
-                <ul>
-                    <li>Your information is stored securely.</li>
-                    <li>Passwords are protected and never intentionally shared with other users.</li>
-                    <li>We implement reasonable security measures to protect your account and personal information. (aiEDU)</li>
-                </ul>
-                
-                <h3>4. Information Sharing</h3>
-                <ul>
-                    <li>We do NOT sell your personal information.</li>
-                    <li>We do NOT rent your personal information.</li>
-                    <li>We do NOT intentionally share your personal information with third parties except where required for the functioning of this project or by law.</li>
-                </ul>
-                
-                <h3>5. User Responsibilities</h3>
-                <ul>
-                    <li>Keep your login credentials confidential.</li>
-                    <li>Do not share your password with anyone.</li>
-                    <li>You are responsible for all activity performed using your account.</li>
-                </ul>
-                
-                <h3>6. Account Management</h3>
-                <p>Your account may be:</p>
-                <ul>
-                    <li>Pending Approval</li>
-                    <li>Approved</li>
-                    <li>Rejected</li>
-                    <li>Suspended</li>
-                    <li>Blocked</li>
-                </ul>
-                <p>Any misuse of the website may result in temporary suspension or permanent blocking of your account.</p>
-                
-                <h3>7. Educational Project Notice</h3>
-                <p>This website is an independent educational project created for learning, demonstration, and personal convenience. It is not affiliated with Haryana Roadways or the Government of Haryana.</p>
             </div>
             <div style="margin-top: 20px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
                 <button class="btn-side" onclick="document.getElementById('privacyModal').classList.remove('active'); document.body.style.overflow = 'auto';">Close</button>
@@ -437,47 +443,13 @@
             <span class="glass-close" id="closeTncBtnTop" onclick="document.getElementById('tncModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-file-contract"></i> TERMS & CONDITIONS</h2>
             <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
-            
             <div class="tnc-content-scroll">
                 <p><strong>Last Updated: July 2026</strong><br>By using Haryana Roadways Timetable, you agree to the following terms:</p>
-                
                 <h3>1. Educational Purpose</h3>
                 <p>This website has been developed solely for educational, informational, and project demonstration purposes.</p>
-                
                 <h3>2. Unofficial Project</h3>
-                <p>This website is NOT the official Haryana Roadways website and has no affiliation, authorization, or endorsement from Haryana Roadways or the Government of Haryana.</p>
-                
-                <h3>3. Timetable Information</h3>
-                <p>The routes and timetable information available on this website are provided for demonstration and educational purposes. Only selected routes have been included by the developer as part of this academic project.</p>
-                
-                <h3>4. User Conduct</h3>
-                <p>Users must not:</p>
-                <ul>
-                    <li>Attempt unauthorized access.</li>
-                    <li>Misuse the website.</li>
-                    <li>Upload malicious content.</li>
-                    <li>Use automated tools to attack or abuse the service.</li>
-                    <li>Copy or misuse project content without permission.</li>
-                </ul>
-                
-                <h3>5. Account Approval</h3>
-                <p>Registration does not guarantee access. Accounts may be approved, rejected, suspended, or blocked at the administrator's discretion.</p>
-                
-                <h3>6. Limitation of Liability</h3>
-                <p>The developer is not responsible for:</p>
-                <ul>
-                    <li>Incorrect timetable information.</li>
-                    <li>Travel delays.</li>
-                    <li>Route changes.</li>
-                    <li>Missed buses.</li>
-                    <li>Financial loss.</li>
-                    <li>Any inconvenience resulting from use of this website.</li>
-                </ul>
-                
-                <h3>7. Verification</h3>
-                <p>Users should always verify travel information through official Haryana Roadways sources before making travel decisions. (Diksha)</p>
+                <p>This website is NOT the official Haryana Roadways website.</p>
             </div>
-            
             <div style="margin-top: 25px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
                 <button id="acceptTncBtn">Accept & Close</button>
             </div>
@@ -490,7 +462,6 @@
             <span class="glass-close" onclick="document.getElementById('disclaimerModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-triangle-exclamation"></i> DISCLAIMER</h2>
             <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
-            
             <div class="tnc-content-scroll">
                 <p><strong>Last Updated: July 2026</strong></p>
                 <p><strong>Haryana Roadways Timetable – Educational Project</strong></p>
@@ -498,21 +469,7 @@
                     <li>This website is an independent educational and informational project.</li>
                     <li>This is NOT the official website of Haryana Roadways.</li>
                     <li>This project has no affiliation, authorization, sponsorship, or endorsement from Haryana Roadways or the Government of Haryana.</li>
-                    <li>The routes, bus timings, fares, and other information are provided only for learning, testing, demonstration, and project purposes.</li>
-                    <li>Only selected routes have been added by the developer for project demonstration.</li>
-                    <li>Information may be incomplete, outdated, or subject to change.</li>
-                    <li>Users should always verify travel details through official Haryana Roadways enquiry services before travelling.</li>
                 </ul>
-                <p>The developer shall not be liable for:</p>
-                <ul>
-                    <li>Bus delays</li>
-                    <li>Route changes</li>
-                    <li>Timetable updates</li>
-                    <li>Financial loss</li>
-                    <li>Travel inconvenience</li>
-                    <li>Incorrect third-party information</li>
-                </ul>
-                <p>All trademarks, logos, and brand names belong to their respective owners.<br>By using this website, you acknowledge that it is an unofficial educational project and agree to use it at your own discretion. (Kailvex Technologies)</p>
             </div>
             <div style="margin-top: 20px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
                 <button class="btn-side" onclick="document.getElementById('disclaimerModal').classList.remove('active'); document.body.style.overflow = 'auto';">Close</button>
