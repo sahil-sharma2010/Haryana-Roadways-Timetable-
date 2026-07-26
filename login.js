@@ -1,7 +1,6 @@
 // === FIX FOR POPUPS HIDING BEHIND MODALS ===
 if (typeof document !== 'undefined') {
     var style = document.createElement('style');
-    // Login page par bhi popups 100% visible rahenge
     style.innerHTML = '.swal2-container { z-index: 9999999 !important; }';
     document.head.appendChild(style);
 }
@@ -35,17 +34,24 @@ async function hashString(str) {
 
 document.addEventListener("DOMContentLoaded", async function() {
     
-    // Redirect if already logged in
     if (localStorage.getItem('hr_logged_in') === 'true') { window.location.href = 'index.html'; }
     if (typeof emailjs !== 'undefined') { try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) {} }
 
     // ==========================================
-    // SHOW BLOCKED POPUP IF KICKED FROM SCRIPT.JS
+    // SHOW BLOCKED & MAINTENANCE POPUPS (Custom UI)
     // ==========================================
     var kickedReason = localStorage.getItem('hr_kicked_reason');
     if (kickedReason) {
         localStorage.removeItem('hr_kicked_reason'); 
-        if (kickedReason === 'blocked') {
+        if (kickedReason === 'maintenance') {
+            Swal.fire({ 
+                title: 'Site Under Maintenance', 
+                html: "You can't login now because the site is under maintenance.", 
+                icon: 'warning', 
+                confirmButtonText: 'Okk',
+                confirmButtonColor: '#d9534f'
+            });
+        } else if (kickedReason === 'blocked') {
             Swal.fire({ title: 'Account Blocked', html: 'Your account has been blocked by the Administrator.<br>If this is a mistake, contact support.', icon: 'error' });
         } else if (kickedReason === 'suspended') {
             Swal.fire({ title: 'Account Suspended', html: 'Your account is temporarily suspended.', icon: 'warning' });
@@ -200,7 +206,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // LOGIN LOGIC
+    // LOGIN LOGIC (WITH ADMIN MAINTENANCE CHECK)
     // ==========================================
     var loginForm = document.getElementById('loginForm');
     var loginMobile = document.getElementById('loginMobile');
@@ -221,6 +227,15 @@ document.addEventListener("DOMContentLoaded", async function() {
             btnLoginSubmit.disabled = true; btnLoginSubmit.innerText = "Checking...";
 
             try {
+                // Check Global Maintenance Status From Admin
+                var adminRes = await db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle();
+                if (adminRes.data && adminRes.data.is_maintenance === true && mobVal !== '7988300872') {
+                    Swal.fire({ title: 'Site Under Maintenance', html: "You can't login now because the site is under maintenance", icon: 'warning', confirmButtonText: 'Okk', confirmButtonColor: '#d9534f' });
+                    btnLoginSubmit.disabled = false; btnLoginSubmit.innerText = "LOGIN";
+                    return;
+                }
+
+                // Normal Login Proceed
                 var res = await db.from('users').select('*').eq('mobile', mobVal).maybeSingle();
                 var user = res.data;
                 
@@ -358,26 +373,30 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // 100% WORKING T&C MODAL LOGIC
+    // FLAWLESS T&C MODAL LOGIC (PREMIUM FIX)
     // ==========================================
     document.body.addEventListener('click', function(e) {
+        // Open Triggers
         if (e.target.closest('#openTncBtn') || e.target.id === 'openTncBtn') {
             e.preventDefault();
             var modal = document.getElementById('tncModal');
             if(modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
         }
         
-        if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn') {
-            var modalClose = document.getElementById('tncModal');
+        // Premium Close / Accept Buttons Logic
+        if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn' || e.target.closest('.glass-close')) {
+            var modalClose = e.target.closest('.glass-modal-overlay');
             if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
         }
 
         if (e.target.closest('#acceptTncBtn') || e.target.id === 'acceptTncBtn') {
-            var modalAcc = document.getElementById('tncModal');
+            var modalAcc = e.target.closest('.glass-modal-overlay') || document.getElementById('tncModal');
             if(modalAcc) { modalAcc.classList.remove('active'); document.body.style.overflow = 'auto'; }
+            var termsCheck = document.getElementById('termsCheck');
             if(termsCheck) termsCheck.checked = true;
         }
 
+        // Overlay Outside Click Close
         if (e.target.classList.contains('glass-modal-overlay')) {
             e.target.classList.remove('active');
             document.body.style.overflow = 'auto';
