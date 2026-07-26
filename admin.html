@@ -60,7 +60,6 @@
 </head>
 <body>
 
-    <!-- LOGIN SCREEN -->
     <div id="loginScreen" class="admin-login-card slide-in">
         <div class="admin-logo">HR</div>
         <h2 style="color: var(--primary-blue); margin-bottom: 5px;">🔐 Secure Admin Portal</h2>
@@ -74,7 +73,6 @@
         <button id="btnLogin" class="btn-full">Secure Login <i class="fa-solid fa-arrow-right-to-bracket"></i></button>
     </div>
 
-    <!-- DASHBOARD SCREEN -->
     <div id="dashboardScreen" class="admin-dashboard">
         <div class="dashboard-container slide-in">
             <div class="dashboard-header">
@@ -85,7 +83,6 @@
                 <button id="btnAdminLogout" class="btn-logout"><i class="fa-solid fa-power-off"></i> Logout</button>
             </div>
 
-            <!-- Dashboard Options -->
             <div class="admin-grid">
                 <div class="admin-box" id="tabUsers" onclick="switchTab('Users')">
                     <i class="fa-solid fa-users"></i><br><strong>Manage Users</strong>
@@ -98,19 +95,15 @@
                 </div>
             </div>
 
-            <!-- Dynamic Content Area -->
             <div id="adminContentArea" style="background: white; padding: 0; display: none;">
                 <h3 id="contentTitle" style="margin-bottom: 15px; color: var(--primary-blue);">Loading...</h3>
-                <div class="table-responsive" id="tableContainer">
-                    <!-- Tables will be injected here via JS -->
-                </div>
+                <div class="table-responsive" id="tableContainer"></div>
             </div>
 
         </div>
     </div>
 
     <script>
-        // === SUPABASE CONNECTION ===
         const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU';
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -120,7 +113,7 @@
         const passInput = document.getElementById('adminPass');
         
         let sessionTimer;
-        let timeLeft = 900; // 15 minutes
+        let timeLeft = 900; 
         let currentActiveTab = 'Users';
         
         let allUsers = [];
