@@ -18,19 +18,14 @@
     
     <link rel="stylesheet" href="style.css">
     <style>
-        /* FIX FOR BLUE TAP HIGHLIGHT ON MOBILE */
+        /* TAP HIGHLIGHT FIX */
         button, a, .theme-switch, .theme-switch-wrapper, .setting-nav-item, .city-btn, .t-btn, .btn-logout {
-            -webkit-tap-highlight-color: transparent;
-            outline: none;
-            user-select: none;
+            -webkit-tap-highlight-color: transparent; outline: none; user-select: none;
         }
 
         .settings-nav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; } 
         
-        #acceptTncBtn {
-            background: linear-gradient(135deg, #5eb063, #4a914f); color: white; border: none; padding: 10px 24px; 
-            border-radius: 25px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(94, 176, 99, 0.3); transition: all 0.3s ease;
-        }
+        #acceptTncBtn { background: linear-gradient(135deg, #5eb063, #4a914f); color: white; border: none; padding: 10px 24px; border-radius: 25px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(94, 176, 99, 0.3); transition: all 0.3s ease; }
         #acceptTncBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(94, 176, 99, 0.4); }
         
         .tnc-content-scroll { max-height: 400px; overflow-y: auto; text-align: left; padding-right: 15px; margin-top: 15px; font-size: 0.95rem; line-height: 1.6; color: #444; }
@@ -52,14 +47,19 @@
         .btn-track-route { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.85rem; }
         .btn-track-route:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4); }
         
+        /* FREE ROUTE MAP UI CSS & ZOOM FIXES */
         .map-btn { padding: 10px 15px; background: white; color: var(--primary-blue); border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
         .map-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
         .map-info-item { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; margin-bottom: 6px; color: #444; }
         [data-theme="dark"] .map-info-item { color: #ddd; }
         
+        /* ZOOM CONTROL UI POSITIONING FIX */
+        .leaflet-control-zoom { margin-top: 85px !important; margin-left: 15px !important; border: none !important; box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important; border-radius: 8px !important; overflow: hidden; }
+        .leaflet-control-zoom a { color: var(--primary-blue) !important; font-weight: bold !important; width: 34px !important; height: 34px !important; line-height: 34px !important; }
+        
         @media (max-width: 600px) {
             .map-btn-text { display: none; }
-            .map-btn { padding: 10px 12px; }
+            .map-btn { padding: 12px 14px; font-size: 1.1rem; }
         }
 
         .leaflet-routing-container { display: none !important; }
@@ -82,8 +82,12 @@
     <!-- 🗺️ FULL PAGE ROUTE MAP -->
     <div id="routeMapPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f1f3f5; z-index: 9999999; flex-direction: column;">
         
-        <div style="position: absolute; top: 15px; left: 15px; right: 15px; z-index: 9999; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none;">
-            <button id="btnBackFromMap" class="map-btn" style="pointer-events: auto; color: #333;"><i class="fa-solid fa-arrow-left"></i> <span class="map-btn-text">Back</span></button>
+        <!-- Dark gradient shadow so buttons are always visible on mobile -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 90px; background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 100%); z-index: 9998; pointer-events: none;"></div>
+
+        <!-- Safe Area Top Bar -->
+        <div style="position: absolute; top: max(15px, env(safe-area-inset-top)); left: 15px; right: 15px; z-index: 9999; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none;">
+            <button id="btnBackFromMap" class="map-btn" style="pointer-events: auto; background: var(--primary-blue); color: white;"><i class="fa-solid fa-arrow-left"></i> <span class="map-btn-text">Back</span></button>
             
             <div style="display: flex; gap: 10px; pointer-events: auto;">
                 <button id="btnShowMapInfo" class="map-btn" style="display:none; background:var(--primary-blue); color:white;"><i class="fa-solid fa-circle-info"></i> <span class="map-btn-text">Info</span></button>
