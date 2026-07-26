@@ -1,36 +1,14 @@
-// === PREMIUM STYLES INJECTION (Buttons & Tracker) ===
+// === PREMIUM STYLES INJECTION ===
 if (typeof document !== 'undefined') {
     var style = document.createElement('style');
     style.innerHTML = `
         .swal2-container { z-index: 9999999 !important; }
-        
-        /* Premium Modal Buttons */
         #acceptTncBtn { background: linear-gradient(135deg, #5eb063, #4a914f) !important; color: white !important; border: none !important; padding: 10px 24px !important; border-radius: 25px !important; font-weight: 600 !important; cursor: pointer !important; box-shadow: 0 4px 10px rgba(94, 176, 99, 0.3) !important; transition: all 0.3s ease !important; }
         #acceptTncBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(94, 176, 99, 0.4) !important; }
         #closeTncBtn { background: #f1f3f5 !important; color: #333 !important; border: none !important; padding: 10px 24px !important; border-radius: 25px !important; font-weight: 600 !important; cursor: pointer !important; transition: all 0.3s ease !important; }
         #closeTncBtn:hover { background: #e2e6ea !important; }
-
-        /* Speed Tracker CSS */
-        .tracker-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(5px); }
-        .tracker-modal.active { opacity: 1; pointer-events: all; }
-        .tracker-content { background: rgba(255, 255, 255, 0.95); width: 90%; max-width: 400px; border-radius: 20px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; border: 1px solid rgba(255,255,255,0.5); transform: translateY(20px); transition: transform 0.3s ease; }
-        .tracker-modal.active .tracker-content { transform: translateY(0); }
-        [data-theme="dark"] .tracker-content { background: rgba(30, 35, 45, 0.95); color: white; border-color: rgba(255,255,255,0.1); }
-        .gauge-container { position: relative; width: 180px; height: 180px; margin: 20px auto; border-radius: 50%; background: conic-gradient(#e0e0e0 100%, transparent 0); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.1); transition: background 0.2s; }
-        .gauge-inner { width: 150px; height: 150px; background: white; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        [data-theme="dark"] .gauge-inner { background: #1e232d; }
-        .speed-value { font-size: 2.5rem; font-weight: 800; color: var(--primary-blue); line-height: 1; }
-        .speed-unit { font-size: 0.9rem; font-weight: 600; color: #777; }
-        .tracker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; text-align: left; }
-        .track-box { background: rgba(0,0,0,0.05); padding: 12px; border-radius: 12px; font-size: 0.85rem; }
-        [data-theme="dark"] .track-box { background: rgba(255,255,255,0.05); }
-        .track-box i { color: var(--primary-blue); margin-bottom: 5px; font-size: 1.1rem; display: block; }
-        .track-box strong { display: block; font-size: 1rem; margin-top: 2px; }
-        .tracker-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .t-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 5px; transition: transform 0.2s; }
-        .t-btn:active { transform: scale(0.95); }
-        .btn-start { background: #5eb063; } .btn-pause { background: #f39c12; } .btn-stop { background: #d9534f; } .btn-close { background: #6c757d; width: 100%; margin-top: 10px; }
-        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-top: 5px; }
+        [data-theme="dark"] .gauge-inner { background: #1e232d !important; }
+        [data-theme="dark"] .tracker-content { background: #1a1e23 !important; border: 1px solid rgba(255,255,255,0.1); }
     `;
     document.head.appendChild(style);
 }
@@ -38,8 +16,6 @@ if (typeof document !== 'undefined') {
 // === AUTH GUARD & AUTO-LOGOUT ===
 if (localStorage.getItem('hr_logged_in') !== 'true') {
     window.location.href = 'login.html';
-} else {
-    localStorage.setItem('hr_tnc_accepted', 'true');
 }
 
 // === THEME CHECK ===
@@ -67,9 +43,7 @@ function getDB() {
 
 document.addEventListener("DOMContentLoaded", async function() {
     
-    if (typeof emailjs !== 'undefined') {
-        try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) { }
-    }
+    if (typeof emailjs !== 'undefined') { try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) { } }
 
     if (localStorage.getItem('hr_welcome_shown') !== 'true' && typeof Swal !== 'undefined') {
         var userName = localStorage.getItem('hr_user_name') || 'USER';
@@ -98,7 +72,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                 window.location.href = 'login.html';
                 return;
             }
-
             db.from('users').select('account_status, status').eq('email', userEmail).maybeSingle().then(function(res) {
                 if (res.error || !res.data) return; 
                 var accStat = res.data.account_status ? res.data.account_status.toLowerCase() : 'active';
@@ -179,6 +152,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     navItems.forEach(function(item) {
         item.addEventListener('click', function() {
+            if (item.id === 'openTrackerBtn') return; // Speed Tracker ke liye alag logic hai
             navItems.forEach(nav => nav.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
             item.classList.add('active');
@@ -221,12 +195,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                     if(settingsPage) settingsPage.classList.remove('active'); 
                     if(adminPage) adminPage.classList.add('active'); 
                     if(typeof loadAdminData === 'function') loadAdminData();
-                } else {
-                    Swal.fire('⚠️ Unauthorized Access', "Sorry! You don't have permission.", 'error');
-                }
-            } else { 
-                Swal.fire('Error', 'Incorrect Password.', 'error'); 
-            }
+                } else { Swal.fire('⚠️ Unauthorized Access', "Sorry! You don't have permission.", 'error'); }
+            } else { Swal.fire('Error', 'Incorrect Password.', 'error'); }
             adminPinInput.value = ''; 
         });
     }
@@ -565,7 +535,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             if(resultsTableWrapper) resultsTableWrapper.style.display = 'none';
             if(emptyState) emptyState.style.display = 'none';
             tableBody.innerHTML = '';
-            
             if(skeletonLoader) skeletonLoader.style.display = 'flex'; 
 
             setTimeout(function() {
@@ -592,32 +561,33 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // BULLETPROOF FOOTER & MODAL LOGIC 
+    // BULLETPROOF FOOTER & MODAL LOGIC (FIXED)
     // ==========================================
     document.body.addEventListener('click', function(e) {
         
-        // Find if clicked element is meant to open modals (Checking by ID, Class, or Text to be 100% sure)
-        var tncTarget = e.target.closest('#openTncBtn, .open-tnc-btn, a[href="#tnc"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Terms'));
-        var privacyTarget = e.target.closest('#openPrivacyBtn, .open-privacy-btn, a[href="#privacy"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Privacy'));
-        var discTarget = e.target.closest('#openDisclaimerBtn, .open-disclaimer-btn, a[href="#disclaimer"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Disclaimer'));
+        // 1. Get the element that was clicked
+        var target = e.target;
+        var parentTarget = target.closest('a, button, span, div');
+        var clickedText = target.innerText ? target.innerText.toLowerCase() : '';
+        if(parentTarget && parentTarget.innerText) clickedText = parentTarget.innerText.toLowerCase();
 
-        if (tncTarget) {
-            e.preventDefault();
+        // 2. Identify which modal to open based on text or ID
+        if (target.id === 'openTncBtn' || (parentTarget && parentTarget.id === 'openTncBtn') || clickedText.includes('terms') || clickedText.includes('t&c')) {
             var modal = document.getElementById('tncModal');
-            if(modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
-        }
-        if (privacyTarget) {
-            e.preventDefault();
-            var pModal = document.getElementById('privacyModal');
-            if(pModal) { pModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
-        }
-        if (discTarget) {
-            e.preventDefault();
-            var dModal = document.getElementById('disclaimerModal');
-            if(dModal) { dModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+            if(modal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); modal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
         }
         
-        // Premium Close / Accept Buttons Logic
+        if (target.id === 'openPrivacyBtn' || (parentTarget && parentTarget.id === 'openPrivacyBtn') || clickedText.includes('privacy')) {
+            var pModal = document.getElementById('privacyModal');
+            if(pModal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); pModal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
+        }
+        
+        if (target.id === 'openDisclaimerBtn' || (parentTarget && parentTarget.id === 'openDisclaimerBtn') || clickedText.includes('disclaimer')) {
+            var dModal = document.getElementById('disclaimerModal');
+            if(dModal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); dModal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
+        }
+
+        // 3. Premium Close / Accept Buttons Logic
         if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn' || e.target.closest('.glass-close')) {
             var modalClose = e.target.closest('.glass-modal-overlay');
             if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
@@ -630,189 +600,131 @@ document.addEventListener("DOMContentLoaded", async function() {
             if(termsCheck) termsCheck.checked = true;
         }
 
+        // 4. Overlay Outside Click Close
         if (e.target.classList.contains('glass-modal-overlay')) {
             e.target.classList.remove('active'); document.body.style.overflow = 'auto';
         }
     });
 
     // =========================================================
-    // 🚍 LIVE SPEED TRACKER (Premium Injectable Feature)
+    // 🚍 LIVE SPEED TRACKER LOGIC
     // =========================================================
-    function initSpeedTracker() {
-        // 1. Inject Button into Settings Page
-        var settingsNav = document.querySelector('.settings-sidebar nav');
-        if (settingsNav && !document.getElementById('openTrackerBtn')) {
-            var trackerBtn = document.createElement('div');
-            trackerBtn.id = 'openTrackerBtn';
-            trackerBtn.className = 'setting-nav-item';
-            trackerBtn.innerHTML = '<i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> <span>Live Speed Tracker</span> <span style="font-size:10px; background:#f39c12; color:white; padding:2px 5px; border-radius:10px; margin-left:auto;">PRO</span>';
-            settingsNav.appendChild(trackerBtn);
-        }
+    var watchId = null;
+    var totalDistance = 0;
+    var lastLat = null;
+    var lastLon = null;
 
-        // 2. Inject Modal into Body
-        if (!document.getElementById('speedTrackerModal')) {
-            var modalHTML = `
-                <div id="speedTrackerModal" class="tracker-modal">
-                    <div class="tracker-content">
-                        <h3 style="margin-bottom:15px; color:var(--primary-blue);"><i class="fa-solid fa-bus"></i> Live Speed Tracker</h3>
-                        
-                        <div class="gauge-container" id="speedGauge">
-                            <div class="gauge-inner">
-                                <span class="speed-value" id="speedVal">00</span>
-                                <span class="speed-unit">km/h</span>
-                            </div>
-                        </div>
-                        <div style="margin-top:-10px; margin-bottom:15px;">
-                            <span class="status-badge" id="speedStatusBadge" style="background:#e0e0e0; color:#333;">Idle</span>
-                        </div>
+    var openBtn = document.getElementById('openTrackerBtn');
+    var modal = document.getElementById('speedTrackerModal');
+    var closeBtn = document.getElementById('btnCloseTracker');
+    var startBtn = document.getElementById('btnStartTracker');
+    var pauseBtn = document.getElementById('btnPauseTracker');
+    var stopBtn = document.getElementById('btnStopTracker');
+    
+    var speedVal = document.getElementById('speedVal');
+    var speedGauge = document.getElementById('speedGauge');
+    var speedStatusBadge = document.getElementById('speedStatusBadge');
+    var gpsStatus = document.getElementById('gpsStatus');
+    var gpsDirection = document.getElementById('gpsDirection');
+    var gpsDistance = document.getElementById('gpsDistance');
+    var gpsTime = document.getElementById('gpsTime');
 
-                        <div class="tracker-grid">
-                            <div class="track-box"><i class="fa-solid fa-location-dot"></i> <span style="font-size:10px;color:#777">GPS Status</span><strong id="gpsStatus">Not Started</strong></div>
-                            <div class="track-box"><i class="fa-regular fa-compass"></i> <span style="font-size:10px;color:#777">Direction</span><strong id="gpsDirection">--</strong></div>
-                            <div class="track-box"><i class="fa-solid fa-road"></i> <span style="font-size:10px;color:#777">Distance</span><strong id="gpsDistance">0.00 km</strong></div>
-                            <div class="track-box"><i class="fa-regular fa-clock"></i> <span style="font-size:10px;color:#777">Last Updated</span><strong id="gpsTime">--:--:--</strong></div>
-                        </div>
+    if (openBtn) { openBtn.addEventListener('click', () => { if(modal) modal.classList.add('active'); }); }
+    if (closeBtn) { closeBtn.addEventListener('click', () => { if(modal) modal.classList.remove('active'); }); }
 
-                        <div class="tracker-btns">
-                            <button class="t-btn btn-start" id="btnStartTracker"><i class="fa-solid fa-play"></i> Start</button>
-                            <button class="t-btn btn-pause" id="btnPauseTracker" style="display:none;"><i class="fa-solid fa-pause"></i> Pause</button>
-                            <button class="t-btn btn-stop" id="btnStopTracker" style="display:none;"><i class="fa-solid fa-stop"></i> Stop</button>
-                        </div>
-                        <button class="t-btn btn-close" id="btnCloseTracker">Close Tracker</button>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-        }
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        var R = 6371; 
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c; 
+    }
 
-        // 3. Logic & State Variables
-        var watchId = null;
-        var totalDistance = 0;
-        var lastLat = null;
-        var lastLon = null;
-        var isTracking = false;
+    function getDirection(heading) {
+        if (heading === null || isNaN(heading)) return '--';
+        var val = Math.floor((heading / 22.5) + 0.5);
+        var arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        return arr[(val % 16)];
+    }
 
-        var openBtn = document.getElementById('openTrackerBtn');
-        var modal = document.getElementById('speedTrackerModal');
-        var closeBtn = document.getElementById('btnCloseTracker');
+    function updateUI(speedKmH, heading) {
+        speedKmH = Math.max(0, speedKmH);
+        if(speedVal) speedVal.innerText = speedKmH < 10 ? '0' + speedKmH.toFixed(0) : speedKmH.toFixed(0);
+        if(gpsDirection) gpsDirection.innerText = getDirection(heading);
+        if(gpsDistance) gpsDistance.innerText = totalDistance.toFixed(2) + ' km';
         
-        var startBtn = document.getElementById('btnStartTracker');
-        var pauseBtn = document.getElementById('btnPauseTracker');
-        var stopBtn = document.getElementById('btnStopTracker');
+        var d = new Date();
+        if(gpsTime) gpsTime.innerText = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0') + ':' + d.getSeconds().toString().padStart(2, '0');
+
+        var color = '#e0e0e0';
+        var statText = 'Idle';
         
-        var speedVal = document.getElementById('speedVal');
-        var speedGauge = document.getElementById('speedGauge');
-        var speedStatusBadge = document.getElementById('speedStatusBadge');
-        var gpsStatus = document.getElementById('gpsStatus');
-        var gpsDirection = document.getElementById('gpsDirection');
-        var gpsDistance = document.getElementById('gpsDistance');
-        var gpsTime = document.getElementById('gpsTime');
+        if (speedKmH > 0 && speedKmH <= 20) { color = '#5eb063'; statText = 'Low Speed 🟢'; }
+        else if (speedKmH > 20 && speedKmH <= 50) { color = '#f39c12'; statText = 'Medium 🟡'; }
+        else if (speedKmH > 50 && speedKmH <= 80) { color = '#e67e22'; statText = 'High 🟠'; }
+        else if (speedKmH > 80) { color = '#d9534f'; statText = 'Very High 🔴'; }
 
-        if (openBtn) { openBtn.addEventListener('click', () => { modal.classList.add('active'); }); }
-        if (closeBtn) { closeBtn.addEventListener('click', () => { modal.classList.remove('active'); }); }
-
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            var R = 6371; 
-            var dLat = (lat2 - lat1) * Math.PI / 180;
-            var dLon = (lon2 - lon1) * Math.PI / 180;
-            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c; 
-        }
-
-        function getDirection(heading) {
-            if (heading === null || isNaN(heading)) return '--';
-            var val = Math.floor((heading / 22.5) + 0.5);
-            var arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-            return arr[(val % 16)];
-        }
-
-        function updateUI(speedKmH, heading) {
-            speedKmH = Math.max(0, speedKmH);
-            speedVal.innerText = speedKmH < 10 ? '0' + speedKmH.toFixed(0) : speedKmH.toFixed(0);
-            gpsDirection.innerText = getDirection(heading);
-            gpsDistance.innerText = totalDistance.toFixed(2) + ' km';
-            
-            var d = new Date();
-            gpsTime.innerText = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0') + ':' + d.getSeconds().toString().padStart(2, '0');
-
-            var color = '#e0e0e0';
-            var statText = 'Idle';
-            
-            if (speedKmH > 0 && speedKmH <= 20) { color = '#5eb063'; statText = 'Low Speed 🟢'; }
-            else if (speedKmH > 20 && speedKmH <= 50) { color = '#f39c12'; statText = 'Medium 🟡'; }
-            else if (speedKmH > 50 && speedKmH <= 80) { color = '#e67e22'; statText = 'High 🟠'; }
-            else if (speedKmH > 80) { color = '#d9534f'; statText = 'Very High 🔴'; }
-
+        if(speedStatusBadge) {
             speedStatusBadge.style.background = color;
             speedStatusBadge.style.color = 'white';
             speedStatusBadge.innerText = statText;
+        }
 
+        if(speedGauge) {
             var percentage = Math.min(speedKmH / 120 * 100, 100);
             speedGauge.style.background = `conic-gradient(${color} ${percentage}%, transparent 0)`;
         }
-
-        function success(pos) {
-            gpsStatus.innerText = "Connected 🛰️";
-            gpsStatus.style.color = "#5eb063";
-            var crd = pos.coords;
-            
-            if (lastLat !== null && lastLon !== null) {
-                totalDistance += calculateDistance(lastLat, lastLon, crd.latitude, crd.longitude);
-            }
-            lastLat = crd.latitude; lastLon = crd.longitude;
-            
-            var speed = crd.speed ? (crd.speed * 3.6) : 0; 
-            updateUI(speed, crd.heading);
-        }
-
-        function error(err) {
-            console.warn(`ERROR(${err.code}): ${err.message}`);
-            gpsStatus.innerText = "GPS Error ❌";
-            gpsStatus.style.color = "#d9534f";
-            if (err.code === 1) {
-                Swal.fire({ title: 'Permission Denied', text: 'Location permission is required to use Live Speed Tracker.', icon: 'error', target: document.getElementById('speedTrackerModal') || 'body' });
-                stopTracking();
-            }
-        }
-
-        function startTracking() {
-            if (!navigator.geolocation) { Swal.fire('Error', 'Geolocation is not supported by your browser', 'error'); return; }
-            isTracking = true;
-            gpsStatus.innerText = "Searching... 📡";
-            gpsStatus.style.color = "#f39c12";
-            startBtn.style.display = 'none';
-            pauseBtn.style.display = 'flex';
-            stopBtn.style.display = 'flex';
-            watchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-        }
-
-        function stopTracking() {
-            if (watchId) navigator.geolocation.clearWatch(watchId);
-            isTracking = false;
-            lastLat = null; lastLon = null; totalDistance = 0;
-            updateUI(0, null);
-            gpsStatus.innerText = "Stopped ⏹";
-            gpsStatus.style.color = "#d9534f";
-            startBtn.style.display = 'flex';
-            pauseBtn.style.display = 'none';
-            stopBtn.style.display = 'none';
-        }
-
-        function pauseTracking() {
-            if (watchId) navigator.geolocation.clearWatch(watchId);
-            isTracking = false;
-            gpsStatus.innerText = "Paused ⏸";
-            gpsStatus.style.color = "#f39c12";
-            startBtn.style.display = 'flex';
-            pauseBtn.style.display = 'none';
-        }
-
-        startBtn.addEventListener('click', startTracking);
-        stopBtn.addEventListener('click', stopTracking);
-        pauseBtn.addEventListener('click', pauseTracking);
     }
-    
-    // Initialize feature silently
-    initSpeedTracker();
+
+    function success(pos) {
+        if(gpsStatus) { gpsStatus.innerText = "Connected 🛰️"; gpsStatus.style.color = "#5eb063"; }
+        var crd = pos.coords;
+        
+        if (lastLat !== null && lastLon !== null) {
+            totalDistance += calculateDistance(lastLat, lastLon, crd.latitude, crd.longitude);
+        }
+        lastLat = crd.latitude; lastLon = crd.longitude;
+        var speed = crd.speed ? (crd.speed * 3.6) : 0; 
+        updateUI(speed, crd.heading);
+    }
+
+    function error(err) {
+        if(gpsStatus) { gpsStatus.innerText = "GPS Error ❌"; gpsStatus.style.color = "#d9534f"; }
+        if (err.code === 1) {
+            Swal.fire({ title: 'Permission Denied', text: 'Location permission is required to use Live Speed Tracker.', icon: 'error', target: document.getElementById('speedTrackerModal') || 'body' });
+            stopTracking();
+        }
+    }
+
+    function startTracking() {
+        if (!navigator.geolocation) { Swal.fire('Error', 'Geolocation is not supported', 'error'); return; }
+        if(gpsStatus) { gpsStatus.innerText = "Searching... 📡"; gpsStatus.style.color = "#f39c12"; }
+        if(startBtn) startBtn.style.display = 'none';
+        if(pauseBtn) pauseBtn.style.display = 'flex';
+        if(stopBtn) stopBtn.style.display = 'flex';
+        watchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    }
+
+    function stopTracking() {
+        if (watchId) navigator.geolocation.clearWatch(watchId);
+        lastLat = null; lastLon = null; totalDistance = 0;
+        updateUI(0, null);
+        if(gpsStatus) { gpsStatus.innerText = "Stopped ⏹"; gpsStatus.style.color = "#d9534f"; }
+        if(startBtn) startBtn.style.display = 'flex';
+        if(pauseBtn) pauseBtn.style.display = 'none';
+        if(stopBtn) stopBtn.style.display = 'none';
+    }
+
+    function pauseTracking() {
+        if (watchId) navigator.geolocation.clearWatch(watchId);
+        if(gpsStatus) { gpsStatus.innerText = "Paused ⏸"; gpsStatus.style.color = "#f39c12"; }
+        if(startBtn) startBtn.style.display = 'flex';
+        if(pauseBtn) pauseBtn.style.display = 'none';
+    }
+
+    if(startBtn) startBtn.addEventListener('click', startTracking);
+    if(stopBtn) stopBtn.addEventListener('click', stopTracking);
+    if(pauseBtn) pauseBtn.addEventListener('click', pauseTracking);
+
 });
