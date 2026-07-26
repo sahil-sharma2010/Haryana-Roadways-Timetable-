@@ -1,7 +1,37 @@
-// === FIX FOR POPUPS HIDING BEHIND MODALS ===
+// === PREMIUM STYLES INJECTION (Buttons & Tracker) ===
 if (typeof document !== 'undefined') {
     var style = document.createElement('style');
-    style.innerHTML = '.swal2-container { z-index: 9999999 !important; }';
+    style.innerHTML = `
+        .swal2-container { z-index: 9999999 !important; }
+        
+        /* Premium Modal Buttons */
+        #acceptTncBtn { background: linear-gradient(135deg, #5eb063, #4a914f) !important; color: white !important; border: none !important; padding: 10px 24px !important; border-radius: 25px !important; font-weight: 600 !important; cursor: pointer !important; box-shadow: 0 4px 10px rgba(94, 176, 99, 0.3) !important; transition: all 0.3s ease !important; }
+        #acceptTncBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(94, 176, 99, 0.4) !important; }
+        #closeTncBtn { background: #f1f3f5 !important; color: #333 !important; border: none !important; padding: 10px 24px !important; border-radius: 25px !important; font-weight: 600 !important; cursor: pointer !important; transition: all 0.3s ease !important; }
+        #closeTncBtn:hover { background: #e2e6ea !important; }
+
+        /* Speed Tracker CSS */
+        .tracker-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(5px); }
+        .tracker-modal.active { opacity: 1; pointer-events: all; }
+        .tracker-content { background: rgba(255, 255, 255, 0.95); width: 90%; max-width: 400px; border-radius: 20px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; border: 1px solid rgba(255,255,255,0.5); transform: translateY(20px); transition: transform 0.3s ease; }
+        .tracker-modal.active .tracker-content { transform: translateY(0); }
+        [data-theme="dark"] .tracker-content { background: rgba(30, 35, 45, 0.95); color: white; border-color: rgba(255,255,255,0.1); }
+        .gauge-container { position: relative; width: 180px; height: 180px; margin: 20px auto; border-radius: 50%; background: conic-gradient(#e0e0e0 100%, transparent 0); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.1); transition: background 0.2s; }
+        .gauge-inner { width: 150px; height: 150px; background: white; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        [data-theme="dark"] .gauge-inner { background: #1e232d; }
+        .speed-value { font-size: 2.5rem; font-weight: 800; color: var(--primary-blue); line-height: 1; }
+        .speed-unit { font-size: 0.9rem; font-weight: 600; color: #777; }
+        .tracker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; text-align: left; }
+        .track-box { background: rgba(0,0,0,0.05); padding: 12px; border-radius: 12px; font-size: 0.85rem; }
+        [data-theme="dark"] .track-box { background: rgba(255,255,255,0.05); }
+        .track-box i { color: var(--primary-blue); margin-bottom: 5px; font-size: 1.1rem; display: block; }
+        .track-box strong { display: block; font-size: 1rem; margin-top: 2px; }
+        .tracker-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .t-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 5px; transition: transform 0.2s; }
+        .t-btn:active { transform: scale(0.95); }
+        .btn-start { background: #5eb063; } .btn-pause { background: #f39c12; } .btn-stop { background: #d9534f; } .btn-close { background: #6c757d; width: 100%; margin-top: 10px; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-top: 5px; }
+    `;
     document.head.appendChild(style);
 }
 
@@ -62,7 +92,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     
     if (db && userEmail) {
         db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle().then(function(adminRes) {
-            
             if (adminRes.data && adminRes.data.is_maintenance === true && userMob !== '7988300872') {
                 localStorage.removeItem('hr_logged_in');
                 localStorage.setItem('hr_kicked_reason', 'maintenance');
@@ -177,7 +206,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // ADMIN PANEL
+    // ADMIN PANEL & MAINTENANCE
     // =========================================================
     var btnUnlockAdmin = document.getElementById('btnUnlockAdmin');
     var adminPinInput = document.getElementById('adminPinInput');
@@ -230,15 +259,10 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
     }
 
-    // =========================================================
-    // ADMIN DATA, ACTIONS & MAINTENANCE TOGGLE
-    // =========================================================
     window.loadAdminData = async function() {
         if (!db) { Swal.fire('Error','Database not ready','error'); return; }
-
         var adminTableBody = document.getElementById('adminTableBody');
         var adminRequestsBody = document.getElementById('adminRequestsBody');
-        
         if(!adminTableBody || !adminRequestsBody) return;
         adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
         adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
@@ -256,13 +280,9 @@ document.addEventListener("DOMContentLoaded", async function() {
                 maintContainer.style.borderRadius = '8px';
                 maintContainer.style.textAlign = 'center';
                 maintContainer.style.boxShadow = '0 4px 10px rgba(0,0,0,0.1)';
-                
                 var adminHeader = document.querySelector('.admin-header') || document.getElementById('adminPage');
-                if (document.querySelector('.admin-header')) {
-                    adminHeader.parentNode.insertBefore(maintContainer, adminHeader.nextSibling);
-                } else {
-                    adminHeader.insertBefore(maintContainer, adminHeader.firstChild);
-                }
+                if (document.querySelector('.admin-header')) { adminHeader.parentNode.insertBefore(maintContainer, adminHeader.nextSibling); } 
+                else { adminHeader.insertBefore(maintContainer, adminHeader.firstChild); }
             }
 
             maintContainer.style.background = isMaint ? '#f8d7da' : '#d4edda';
@@ -279,12 +299,8 @@ document.addEventListener("DOMContentLoaded", async function() {
             document.getElementById('toggleMaintBtn').onclick = async function() {
                 Swal.fire({title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
                 var res = await db.from('users').update({ is_maintenance: !isMaint }).eq('mobile', '7988300872');
-                if (!res.error) {
-                    Swal.fire({title:'Success', text:'Website status updated.', icon:'success', target: document.getElementById('adminPage') || 'body'});
-                    loadAdminData(); 
-                } else {
-                    Swal.fire('Error', res.error.message, 'error');
-                }
+                if (!res.error) { Swal.fire({title:'Success', text:'Website status updated.', icon:'success', target: document.getElementById('adminPage') || 'body'}); loadAdminData(); } 
+                else { Swal.fire('Error', res.error.message, 'error'); }
             };
 
             var response = await db.from('users').select('*').order('id', {ascending: false});
@@ -338,7 +354,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         } else { Swal.fire('Error', 'Unauthorized action!', 'error'); }
     };
 
-    // FIX: ADDED UNSUSPEND / UNBLOCK LOGIC HERE
     window.manageUser = function(email, currentStatus) {
         if (!db) return;
         Swal.fire({
@@ -352,7 +367,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             var newStatus = null;
             if (result.isConfirmed) newStatus = 'Blocked';
             else if (result.isDenied) newStatus = 'Suspended';
-            else if (result.dismiss === Swal.DismissReason.cancel) newStatus = 'Active'; // This UNSUSPENDS or UNBLOCKS
+            else if (result.dismiss === Swal.DismissReason.cancel) newStatus = 'Active';
 
             if (newStatus) {
                 Swal.fire({title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
@@ -380,7 +395,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     };
 
     // =========================================================
-    // PHONE & EMAIL UPDATES (WITH MONTHLY LIMITS)
+    // PHONE & EMAIL UPDATES
     // =========================================================
     window.updatePhoneLimitUI = function() {
         var limitData = JSON.parse(localStorage.getItem('hr_phone_update_history')) || [];
@@ -390,7 +405,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         var phoneLeft = 2 - validData.length;
         var pt = document.getElementById('phoneLimitText');
         if(pt) pt.innerHTML = phoneLeft <= 0 ? `(Limit Reached)` : `(Limit: 2 Edits / Month - ${phoneLeft} left)`;
-        
         var btnP = document.getElementById('btnSendPhoneOtp');
         if (btnP) btnP.disabled = (phoneLeft <= 0);
     }
@@ -403,12 +417,10 @@ document.addEventListener("DOMContentLoaded", async function() {
         var emailLeft = 2 - validData.length;
         var et = document.getElementById('emailLimitText');
         if(et) et.innerHTML = emailLeft <= 0 ? `(Limit Reached)` : `(Limit: 2 Edits / Month - ${emailLeft} left)`;
-        
         var btnE = document.getElementById('btnSendEmailOtp');
         if (btnE) btnE.disabled = (emailLeft <= 0);
     }
 
-    // Phone Update Logic
     var btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
     var btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
     var phoneUpdateOTP = null;
@@ -418,18 +430,15 @@ document.addEventListener("DOMContentLoaded", async function() {
             var currentMobile = localStorage.getItem('hr_user_mobile');
             var currentEmail = localStorage.getItem('hr_user_email');
             if (!currentMobile || !currentEmail || !db) { Swal.fire('Error', 'System not ready.', 'error'); return; }
-            
             var oldPhone = document.getElementById('oldPhoneInput') ? document.getElementById('oldPhoneInput').value.trim() : '';
             var newPhone = document.getElementById('updatePhoneInput') ? document.getElementById('updatePhoneInput').value.trim() : '';
             
             if (oldPhone !== currentMobile) return Swal.fire({title:'Error', text:'Old mobile mismatch.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
             if (newPhone.length !== 10) return Swal.fire({title:'Invalid', text:'Enter valid 10-digit number.', icon:'warning', target: document.getElementById('settingsPage') || 'body'});
-
             btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Checking...";
             
             var dup = await db.from('users').select('mobile').eq('mobile', newPhone).maybeSingle();
             if (dup.data) { btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP"; return Swal.fire('Exists', 'New number already registered.', 'warning'); }
-
             phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
             
             if(typeof emailjs !== 'undefined') {
@@ -451,14 +460,12 @@ document.addEventListener("DOMContentLoaded", async function() {
             var enteredOtp = document.getElementById('phoneOtpInput').value.trim();
             var newPhone = document.getElementById('updatePhoneInput').value.trim();
             var currentEmail = localStorage.getItem('hr_user_email');
-            
             if (enteredOtp === phoneUpdateOTP && db) {
                 btnVerifyPhoneUpdate.innerText = "Saving...";
                 var res = await db.from('users').update({ mobile: newPhone }).eq('email', currentEmail);
                 if (!res.error) {
                     var limitData = JSON.parse(localStorage.getItem('hr_phone_update_history')) || [];
                     limitData.push(Date.now()); localStorage.setItem('hr_phone_update_history', JSON.stringify(limitData));
-                    
                     localStorage.setItem('hr_user_mobile', newPhone);
                     document.getElementById('dispMobile').innerText = "+91 " + newPhone;
                     Swal.fire({title:'Success', text:'Phone number changed!', icon:'success', target: document.getElementById('settingsPage') || 'body'});
@@ -470,7 +477,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
     }
 
-    // Email Update Logic
     var btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
     var btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
     var emailUpdateOTP = null;
@@ -480,18 +486,15 @@ document.addEventListener("DOMContentLoaded", async function() {
             var currentMobile = localStorage.getItem('hr_user_mobile');
             var currentEmail = localStorage.getItem('hr_user_email');
             if (!currentMobile || !currentEmail || !db) { Swal.fire('Error', 'System not ready.', 'error'); return; }
-            
             var oldEmail = document.getElementById('oldEmailInput') ? document.getElementById('oldEmailInput').value.trim() : '';
             var newEmail = document.getElementById('updateEmailInput') ? document.getElementById('updateEmailInput').value.trim() : '';
             
             if (oldEmail !== currentEmail) return Swal.fire({title:'Error', text:'Old email mismatch.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
             if (!newEmail.includes('@')) return Swal.fire({title:'Invalid', text:'Enter a valid new email address.', icon:'warning', target: document.getElementById('settingsPage') || 'body'});
-
             btnSendEmailOtp.disabled = true; btnSendEmailOtp.innerText = "Checking...";
             
             var dup = await db.from('users').select('email').eq('email', newEmail).maybeSingle();
             if (dup.data) { btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP"; return Swal.fire('Exists', 'New email already registered.', 'warning'); }
-
             emailUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
             
             if(typeof emailjs !== 'undefined') {
@@ -514,18 +517,15 @@ document.addEventListener("DOMContentLoaded", async function() {
             var enteredOtp = document.getElementById('emailOtpInput').value.trim();
             var newEmail = document.getElementById('updateEmailInput').value.trim();
             var currentMobile = localStorage.getItem('hr_user_mobile');
-            
             if (enteredOtp === emailUpdateOTP && db) {
                 btnVerifyEmailUpdate.innerText = "Saving...";
                 var res = await db.from('users').update({ email: newEmail }).eq('mobile', currentMobile);
                 if (!res.error) {
                     var limitData = JSON.parse(localStorage.getItem('hr_email_update_history')) || [];
                     limitData.push(Date.now()); localStorage.setItem('hr_email_update_history', JSON.stringify(limitData));
-                    
                     localStorage.setItem('hr_user_email', newEmail);
                     var dispEmail = document.getElementById('dispEmail');
                     if(dispEmail) dispEmail.innerText = newEmail;
-                    
                     Swal.fire({title:'Success', text:'Email Address changed!', icon:'success', target: document.getElementById('settingsPage') || 'body'});
                     var eBox = document.getElementById('emailOtpBox');
                     if(eBox) eBox.classList.add('hidden');
@@ -570,10 +570,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
             setTimeout(function() {
                 if(skeletonLoader) skeletonLoader.style.display = 'none';
-                
-                var results = busData.filter(function(bus) {
-                    return bus.from.toLowerCase().trim() === fromVal && bus.to.toLowerCase().trim() === toVal;
-                });
+                var results = busData.filter(function(bus) { return bus.from.toLowerCase().trim() === fromVal && bus.to.toLowerCase().trim() === toVal; });
 
                 if (results.length > 0) {
                     results.forEach(function(bus, index) {
@@ -588,34 +585,33 @@ document.addEventListener("DOMContentLoaded", async function() {
                         `;
                         tableBody.appendChild(tr);
                     });
-                    if(resultsTableWrapper) {
-                        resultsTableWrapper.style.display = 'block';
-                        resultsTableWrapper.classList.add('slide-in-bottom');
-                    }
-                } else {
-                    if(emptyState) emptyState.style.display = 'block';
-                }
+                    if(resultsTableWrapper) { resultsTableWrapper.style.display = 'block'; resultsTableWrapper.classList.add('slide-in-bottom'); }
+                } else { if(emptyState) emptyState.style.display = 'block'; }
             }, 1500); 
         });
     }
 
     // ==========================================
-    // FLAWLESS T&C & FOOTER MODAL LOGIC (PREMIUM FIX)
+    // BULLETPROOF FOOTER & MODAL LOGIC 
     // ==========================================
     document.body.addEventListener('click', function(e) {
         
-        // Open Triggers
-        if (e.target.closest('#openTncBtn') || e.target.id === 'openTncBtn') {
+        // Find if clicked element is meant to open modals (Checking by ID, Class, or Text to be 100% sure)
+        var tncTarget = e.target.closest('#openTncBtn, .open-tnc-btn, a[href="#tnc"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Terms'));
+        var privacyTarget = e.target.closest('#openPrivacyBtn, .open-privacy-btn, a[href="#privacy"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Privacy'));
+        var discTarget = e.target.closest('#openDisclaimerBtn, .open-disclaimer-btn, a[href="#disclaimer"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Disclaimer'));
+
+        if (tncTarget) {
             e.preventDefault();
             var modal = document.getElementById('tncModal');
             if(modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
         }
-        if (e.target.closest('#openPrivacyBtn') || e.target.id === 'openPrivacyBtn') {
+        if (privacyTarget) {
             e.preventDefault();
             var pModal = document.getElementById('privacyModal');
             if(pModal) { pModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
         }
-        if (e.target.closest('#openDisclaimerBtn') || e.target.id === 'openDisclaimerBtn') {
+        if (discTarget) {
             e.preventDefault();
             var dModal = document.getElementById('disclaimerModal');
             if(dModal) { dModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
@@ -634,11 +630,189 @@ document.addEventListener("DOMContentLoaded", async function() {
             if(termsCheck) termsCheck.checked = true;
         }
 
-        // Overlay Outside Click Close
         if (e.target.classList.contains('glass-modal-overlay')) {
-            e.target.classList.remove('active');
-            document.body.style.overflow = 'auto';
+            e.target.classList.remove('active'); document.body.style.overflow = 'auto';
         }
     });
 
+    // =========================================================
+    // 🚍 LIVE SPEED TRACKER (Premium Injectable Feature)
+    // =========================================================
+    function initSpeedTracker() {
+        // 1. Inject Button into Settings Page
+        var settingsNav = document.querySelector('.settings-sidebar nav');
+        if (settingsNav && !document.getElementById('openTrackerBtn')) {
+            var trackerBtn = document.createElement('div');
+            trackerBtn.id = 'openTrackerBtn';
+            trackerBtn.className = 'setting-nav-item';
+            trackerBtn.innerHTML = '<i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> <span>Live Speed Tracker</span> <span style="font-size:10px; background:#f39c12; color:white; padding:2px 5px; border-radius:10px; margin-left:auto;">PRO</span>';
+            settingsNav.appendChild(trackerBtn);
+        }
+
+        // 2. Inject Modal into Body
+        if (!document.getElementById('speedTrackerModal')) {
+            var modalHTML = `
+                <div id="speedTrackerModal" class="tracker-modal">
+                    <div class="tracker-content">
+                        <h3 style="margin-bottom:15px; color:var(--primary-blue);"><i class="fa-solid fa-bus"></i> Live Speed Tracker</h3>
+                        
+                        <div class="gauge-container" id="speedGauge">
+                            <div class="gauge-inner">
+                                <span class="speed-value" id="speedVal">00</span>
+                                <span class="speed-unit">km/h</span>
+                            </div>
+                        </div>
+                        <div style="margin-top:-10px; margin-bottom:15px;">
+                            <span class="status-badge" id="speedStatusBadge" style="background:#e0e0e0; color:#333;">Idle</span>
+                        </div>
+
+                        <div class="tracker-grid">
+                            <div class="track-box"><i class="fa-solid fa-location-dot"></i> <span style="font-size:10px;color:#777">GPS Status</span><strong id="gpsStatus">Not Started</strong></div>
+                            <div class="track-box"><i class="fa-regular fa-compass"></i> <span style="font-size:10px;color:#777">Direction</span><strong id="gpsDirection">--</strong></div>
+                            <div class="track-box"><i class="fa-solid fa-road"></i> <span style="font-size:10px;color:#777">Distance</span><strong id="gpsDistance">0.00 km</strong></div>
+                            <div class="track-box"><i class="fa-regular fa-clock"></i> <span style="font-size:10px;color:#777">Last Updated</span><strong id="gpsTime">--:--:--</strong></div>
+                        </div>
+
+                        <div class="tracker-btns">
+                            <button class="t-btn btn-start" id="btnStartTracker"><i class="fa-solid fa-play"></i> Start</button>
+                            <button class="t-btn btn-pause" id="btnPauseTracker" style="display:none;"><i class="fa-solid fa-pause"></i> Pause</button>
+                            <button class="t-btn btn-stop" id="btnStopTracker" style="display:none;"><i class="fa-solid fa-stop"></i> Stop</button>
+                        </div>
+                        <button class="t-btn btn-close" id="btnCloseTracker">Close Tracker</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 3. Logic & State Variables
+        var watchId = null;
+        var totalDistance = 0;
+        var lastLat = null;
+        var lastLon = null;
+        var isTracking = false;
+
+        var openBtn = document.getElementById('openTrackerBtn');
+        var modal = document.getElementById('speedTrackerModal');
+        var closeBtn = document.getElementById('btnCloseTracker');
+        
+        var startBtn = document.getElementById('btnStartTracker');
+        var pauseBtn = document.getElementById('btnPauseTracker');
+        var stopBtn = document.getElementById('btnStopTracker');
+        
+        var speedVal = document.getElementById('speedVal');
+        var speedGauge = document.getElementById('speedGauge');
+        var speedStatusBadge = document.getElementById('speedStatusBadge');
+        var gpsStatus = document.getElementById('gpsStatus');
+        var gpsDirection = document.getElementById('gpsDirection');
+        var gpsDistance = document.getElementById('gpsDistance');
+        var gpsTime = document.getElementById('gpsTime');
+
+        if (openBtn) { openBtn.addEventListener('click', () => { modal.classList.add('active'); }); }
+        if (closeBtn) { closeBtn.addEventListener('click', () => { modal.classList.remove('active'); }); }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            var R = 6371; 
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLon = (lon2 - lon1) * Math.PI / 180;
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; 
+        }
+
+        function getDirection(heading) {
+            if (heading === null || isNaN(heading)) return '--';
+            var val = Math.floor((heading / 22.5) + 0.5);
+            var arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+            return arr[(val % 16)];
+        }
+
+        function updateUI(speedKmH, heading) {
+            speedKmH = Math.max(0, speedKmH);
+            speedVal.innerText = speedKmH < 10 ? '0' + speedKmH.toFixed(0) : speedKmH.toFixed(0);
+            gpsDirection.innerText = getDirection(heading);
+            gpsDistance.innerText = totalDistance.toFixed(2) + ' km';
+            
+            var d = new Date();
+            gpsTime.innerText = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0') + ':' + d.getSeconds().toString().padStart(2, '0');
+
+            var color = '#e0e0e0';
+            var statText = 'Idle';
+            
+            if (speedKmH > 0 && speedKmH <= 20) { color = '#5eb063'; statText = 'Low Speed 🟢'; }
+            else if (speedKmH > 20 && speedKmH <= 50) { color = '#f39c12'; statText = 'Medium 🟡'; }
+            else if (speedKmH > 50 && speedKmH <= 80) { color = '#e67e22'; statText = 'High 🟠'; }
+            else if (speedKmH > 80) { color = '#d9534f'; statText = 'Very High 🔴'; }
+
+            speedStatusBadge.style.background = color;
+            speedStatusBadge.style.color = 'white';
+            speedStatusBadge.innerText = statText;
+
+            var percentage = Math.min(speedKmH / 120 * 100, 100);
+            speedGauge.style.background = `conic-gradient(${color} ${percentage}%, transparent 0)`;
+        }
+
+        function success(pos) {
+            gpsStatus.innerText = "Connected 🛰️";
+            gpsStatus.style.color = "#5eb063";
+            var crd = pos.coords;
+            
+            if (lastLat !== null && lastLon !== null) {
+                totalDistance += calculateDistance(lastLat, lastLon, crd.latitude, crd.longitude);
+            }
+            lastLat = crd.latitude; lastLon = crd.longitude;
+            
+            var speed = crd.speed ? (crd.speed * 3.6) : 0; 
+            updateUI(speed, crd.heading);
+        }
+
+        function error(err) {
+            console.warn(`ERROR(${err.code}): ${err.message}`);
+            gpsStatus.innerText = "GPS Error ❌";
+            gpsStatus.style.color = "#d9534f";
+            if (err.code === 1) {
+                Swal.fire({ title: 'Permission Denied', text: 'Location permission is required to use Live Speed Tracker.', icon: 'error', target: document.getElementById('speedTrackerModal') || 'body' });
+                stopTracking();
+            }
+        }
+
+        function startTracking() {
+            if (!navigator.geolocation) { Swal.fire('Error', 'Geolocation is not supported by your browser', 'error'); return; }
+            isTracking = true;
+            gpsStatus.innerText = "Searching... 📡";
+            gpsStatus.style.color = "#f39c12";
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'flex';
+            stopBtn.style.display = 'flex';
+            watchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        }
+
+        function stopTracking() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            isTracking = false;
+            lastLat = null; lastLon = null; totalDistance = 0;
+            updateUI(0, null);
+            gpsStatus.innerText = "Stopped ⏹";
+            gpsStatus.style.color = "#d9534f";
+            startBtn.style.display = 'flex';
+            pauseBtn.style.display = 'none';
+            stopBtn.style.display = 'none';
+        }
+
+        function pauseTracking() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            isTracking = false;
+            gpsStatus.innerText = "Paused ⏸";
+            gpsStatus.style.color = "#f39c12";
+            startBtn.style.display = 'flex';
+            pauseBtn.style.display = 'none';
+        }
+
+        startBtn.addEventListener('click', startTracking);
+        stopBtn.addEventListener('click', stopTracking);
+        pauseBtn.addEventListener('click', pauseTracking);
+    }
+    
+    // Initialize feature silently
+    initSpeedTracker();
 });
