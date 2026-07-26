@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🎵 PREMIUM BACKGROUND MUSIC SYSTEM (3% VOLUME)
+    // 🎵 PREMIUM BACKGROUND MUSIC SYSTEM (3% VOLUME AUTO-PLAY)
     // =========================================================
     const bgMusic = document.getElementById('bgMusic');
     const musicToggle = document.getElementById('music-toggle');
@@ -321,6 +321,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     function setMusicUI(isPlaying) {
+        if (!musicStatusText) return;
         if (isPlaying) {
             musicStatusText.innerText = "ON";
             musicIconOn.style.opacity = '1';
@@ -335,13 +336,12 @@ document.addEventListener("DOMContentLoaded", async function() {
     if (bgMusic) {
         bgMusic.volume = 0; 
         
-        // Loop fallback to ensure continuous play
         bgMusic.addEventListener('ended', function() {
             this.currentTime = 0;
             this.play();
         });
 
-        const musicPref = localStorage.getItem('hr_music_pref') || 'playing'; // Default ON
+        const musicPref = localStorage.getItem('hr_music_pref') || 'playing';
         
         if (musicPref === 'muted') {
             setMusicUI(false);
@@ -373,13 +373,20 @@ document.addEventListener("DOMContentLoaded", async function() {
                     // Silent fail
                 });
             }
-            document.body.removeEventListener('click', startMusicOnInteraction);
+            // Remove listeners after first interaction
+            ['click', 'touchstart', 'scroll', 'keydown'].forEach(evt => document.removeEventListener(evt, startMusicOnInteraction));
         };
 
-        // Trigger on any interaction
-        document.body.addEventListener('click', startMusicOnInteraction);
+        // Try playing immediately if browser allows, otherwise wait for interaction
+        if (musicPref !== 'muted') {
+            bgMusic.play().then(() => {
+                musicStarted = true;
+                fadeAudio(targetVolume, 2000);
+            }).catch(e => {
+                ['click', 'touchstart', 'scroll', 'keydown'].forEach(evt => document.addEventListener(evt, startMusicOnInteraction, {once: true}));
+            });
+        }
 
-        // Settings Toggle Logic
         if (musicToggle) {
             musicToggle.addEventListener('click', (e) => {
                 e.stopPropagation(); 
@@ -400,7 +407,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚨 LIVE MARQUEE ALERT LOGIC (SLOWED DOWN)
+    // 🚨 LIVE MARQUEE ALERT LOGIC (SUPER SLOW)
     // =========================================================
     function getMinutesToDeparture(departureStr) {
         var now = new Date();
@@ -471,7 +478,16 @@ document.addEventListener("DOMContentLoaded", async function() {
                 if (accStat === 'blocked' || accStat === 'suspended') {
                     localStorage.removeItem('hr_logged_in');
                     localStorage.setItem('hr_kicked_reason', accStat); 
-                    window.location.href = 'login.html';
+                    
+                    Swal.fire({
+                        title: 'Account ' + accStat.toUpperCase(),
+                        html: `Your account has been ${accStat}.<br><br><div style="font-size:0.85rem; color:#777; text-align:left; background:#f8f9fa; padding:10px; border-radius:8px;"><strong>📞 Contact Support:</strong><br>Email: support@hrtimetable.in<br>Phone: +91 798******2</div>`,
+                        icon: 'error',
+                        confirmButtonColor: '#d9534f',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        window.location.href = 'login.html';
+                    });
                 } else if (reqStat === 'pending' || reqStat === 'rejected' || reqStat === 'declined') {
                     localStorage.removeItem('hr_logged_in');
                     localStorage.setItem('hr_kicked_reason', reqStat); 
@@ -812,11 +828,11 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // BULLETPROOF FOOTER & MODAL LOGIC (CLICK BUG FIXED)
+    // BULLETPROOF FOOTER & MODAL LOGIC (BUG FIXED)
     // ==========================================
     document.body.addEventListener('click', function(e) {
         
-        // Strictly check for Button IDs to prevent false triggering on any text click
+        // Strict button ID check to prevent clicking anywhere else opening the modal
         if (e.target.closest('#openTncBtn')) {
             e.preventDefault(); 
             var modal = document.getElementById('tncModal');
@@ -838,7 +854,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             return;
         }
 
-        // Close Logic
         if (e.target.closest('#closeTncBtnTop') || e.target.closest('#closePrivacyBtnTop') || e.target.closest('#closeDisclaimerBtnTop') || e.target.closest('.btn-side')) {
             var modalClose = e.target.closest('.glass-modal-overlay');
             if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
@@ -1032,7 +1047,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚍 DEVICE SPEED TRACKER LOGIC (SETTINGS TAB)
+    // 🚍 DEVICE SPEED TRACKER LOGIC (SMOOTH NO-HANG FIX)
     // =========================================================
     var watchSpeedId = null;
     var totalSpeedDist = 0;
@@ -1097,12 +1112,19 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(gpsStatus) { gpsStatus.innerText = "Connected"; gpsStatus.style.color = "#5eb063"; }
         var crd = pos.coords;
         
+        // Prevent hang by rejecting duplicate coordinates
+        if (lastSpeedLat === crd.latitude && lastSpeedLon === crd.longitude) return;
+
         if (lastSpeedLat !== null && lastSpeedLon !== null) {
             totalSpeedDist += calcDeviceDist(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
         }
         lastSpeedLat = crd.latitude; lastSpeedLon = crd.longitude;
+        
         var speed = crd.speed ? (crd.speed * 3.6) : 0; 
-        updateDeviceUI(speed, crd.heading);
+        if (speed < 2) speed = 0; // Filter out GPS noise (walking speed bounce)
+        
+        // Use requestAnimationFrame for smooth UI update without hanging browser
+        window.requestAnimationFrame(() => updateDeviceUI(speed, crd.heading));
     }
 
     function deviceError(err) {
@@ -1123,7 +1145,12 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(pauseBtn) pauseBtn.style.display = 'flex';
         if(stopBtn) stopBtn.style.display = 'flex';
         
-        watchSpeedId = navigator.geolocation.watchPosition(deviceSuccess, deviceError, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+        // maximumAge 2000 & timeout 10000 ensures smooth tracking without thread locking/hanging
+        watchSpeedId = navigator.geolocation.watchPosition(deviceSuccess, deviceError, { 
+            enableHighAccuracy: true, 
+            timeout: 10000, 
+            maximumAge: 2000 
+        });
     }
 
     function stopDeviceTracking() {
