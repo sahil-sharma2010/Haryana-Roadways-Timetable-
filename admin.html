@@ -203,16 +203,14 @@
         async function syncDatabase() {
             Swal.fire({title: 'Syncing Database...', text: 'Fetching secure data', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
             try {
-                // Fetch Settings
                 let maintRes = await db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle();
                 if(maintRes.data) isMaintenance = maintRes.data.is_maintenance;
 
-                // Fetch All Users
                 let userRes = await db.from('users').select('*').order('id', {ascending: false});
                 if(userRes.data) allUsers = userRes.data;
 
                 Swal.close();
-                switchTab(currentActiveTab); // Reload the current tab with new data
+                switchTab(currentActiveTab);
             } catch(e) {
                 Swal.fire('Connection Error', 'Failed to fetch data from Supabase.', 'error');
             }
@@ -223,7 +221,6 @@
             currentActiveTab = tabName;
             document.getElementById('adminContentArea').style.display = 'block';
             
-            // Reset active classes
             document.getElementById('tabUsers').classList.remove('active');
             document.getElementById('tabReqs').classList.remove('active');
             document.getElementById('tabSettings').classList.remove('active');
@@ -304,8 +301,6 @@
                 container.innerHTML = html;
             }
         };
-
-        // === ACTION FUNCTIONS (WITH PREMIUM SWEETALERTS) ===
 
         window.revealPass = function(id, pass) {
             document.getElementById(`btn-show-${id}`).style.display = 'none';
