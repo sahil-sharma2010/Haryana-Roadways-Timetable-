@@ -56,19 +56,19 @@
         .modal-contact-block { margin-top: 25px; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); font-size: 0.9rem; }
         [data-theme="dark"] .modal-contact-block { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.05); }
 
-        /* 🔥 PREMIUM MAP FLOATING BUTTONS (Icons instead of text arrows) */
+        /* 🔥 PREMIUM MAP FLOATING BUTTONS (CIRCULAR ICONS) */
         .map-floating-btn {
-            width: 45px; height: 45px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.05);
-            background: white; color: var(--primary-blue); font-size: 1.3rem;
+            width: 48px; height: 48px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.05);
+            background: white; color: var(--primary-blue); font-size: 1.35rem;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15); cursor: pointer; transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; transition: 0.2s;
             -webkit-tap-highlight-color: transparent; outline: none; z-index: 9999;
         }
-        .map-floating-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+        .map-floating-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
         
-        /* ZOOM CONTROL UI POSITIONING FIX */
-        .leaflet-control-zoom { margin-top: max(15px, env(safe-area-inset-top)) !important; margin-left: 15px !important; border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important; border-radius: 8px !important; overflow: hidden; }
-        .leaflet-control-zoom a { color: var(--primary-blue) !important; font-weight: bold !important; width: 40px !important; height: 40px !important; line-height: 40px !important; }
+        /* ZOOM CONTROL UI POSITIONING FIX - MOVED TO BOTTOM LEFT TO AVOID OVERLAPS */
+        .leaflet-control-zoom { margin-bottom: 25px !important; margin-left: 15px !important; border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important; border-radius: 8px !important; overflow: hidden; z-index: 9998 !important; }
+        .leaflet-control-zoom a { color: var(--primary-blue) !important; font-weight: bold !important; width: 42px !important; height: 42px !important; line-height: 42px !important; font-size: 1.2rem !important; }
         .leaflet-routing-container { display: none !important; }
         .custom-div-icon { background: none; border: none; display: flex; align-items: center; justify-content: center; }
     </style>
@@ -81,20 +81,23 @@
     </audio>
 
     <!-- 🗺️ FULL PAGE ROUTE MAP -->
-    <div id="routeMapPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f1f3f5; z-index: 9999999; flex-direction: column;">
+    <div id="routeMapPage" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f1f3f5; z-index: 9999999; flex-direction: column;">
         
-        <!-- Action Buttons: My Location & Fit Route (Top Right) -->
-        <div style="position: absolute; top: max(15px, env(safe-area-inset-top)); right: 15px; z-index: 9999; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Left Side Buttons: Close Map (X) & Info (i) -->
+        <div style="position: absolute; top: 25px; left: 15px; z-index: 9999; display: flex; flex-direction: column; gap: 15px;">
+            <button id="btnBackFromMap" class="map-floating-btn" style="background: #d9534f; color: white; border:none;" title="Close Map"><i class="fa-solid fa-xmark"></i></button>
+            <button id="btnShowMapInfo" class="map-floating-btn" style="display:none; background: var(--primary-blue); color: white; border:none;" title="Show Info"><i class="fa-solid fa-circle-info"></i></button>
+        </div>
+
+        <!-- Right Side Action Buttons: Live Location & Fit Route -->
+        <div style="position: absolute; top: 25px; right: 15px; z-index: 9999; display: flex; flex-direction: column; gap: 15px;">
             <button id="btnMyLocation" class="map-floating-btn" title="My Live Location"><i class="fa-solid fa-location-crosshairs"></i></button>
             <button id="btnFitRoute" class="map-floating-btn" title="Fit Full Route"><i class="fa-solid fa-route"></i></button>
         </div>
 
-        <!-- Info Button (Top Left, below Zoom controls) -->
-        <!-- Zoom control takes approx 90px height, so placing info button at 120px down -->
-        <button id="btnShowMapInfo" class="map-floating-btn" style="position: absolute; top: calc(max(15px, env(safe-area-inset-top)) + 105px); left: 15px; display:none; background: var(--primary-blue); color: white; border-radius: 8px;" title="Show Info"><i class="fa-solid fa-circle-info"></i></button>
+        <div id="map" style="flex: 1; width: 100%; height: 100%;"></div>
 
-        <div id="map" style="flex: 1; width: 100%;"></div>
-
+        <!-- Floating Info Card -->
         <div id="mapInfoCard" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999; border: 1px solid rgba(0,0,0,0.05);">
             <button id="btnCloseMapInfo" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: #888; transition: 0.2s;"><i class="fa-solid fa-xmark"></i></button>
             
