@@ -15,11 +15,11 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-
+    
     <link rel="stylesheet" href="style.css">
     <style>
         /* Custom Premium Overrides */
-        .settings-nav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .settings-nav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; } /* Changed to 2 columns since Admin is removed */
         
         #acceptTncBtn {
             background: linear-gradient(135deg, #5eb063, #4a914f); color: white; border: none; padding: 10px 24px; 
@@ -47,34 +47,50 @@
         .btn-track-route { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.85rem; }
         .btn-track-route:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4); }
         
-        /* 🗺️ FULL PAGE MAP STYLES */
-        .map-btn { padding: 10px 15px; background: white; color: var(--primary-blue); border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
-        .map-btn:hover { transform: scale(1.05); }
+        /* FREE ROUTE MAP UI CSS (Premium Mobile Responsive) */
+        .map-btn { padding: 10px 15px; background: white; color: var(--primary-blue); border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        .map-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
         .map-info-item { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; margin-bottom: 6px; color: #444; }
         [data-theme="dark"] .map-info-item { color: #ddd; }
         
-        /* Hiding OSRM default instruction panel for clean UI */
+        /* Mobile Responsive adjustments for Map buttons */
+        @media (max-width: 600px) {
+            .map-btn-text { display: none; }
+            .map-btn { padding: 10px 12px; }
+        }
+
         .leaflet-routing-container { display: none !important; }
         .custom-div-icon { background: none; border: none; display: flex; align-items: center; justify-content: center; }
+        
+        /* Glassmorphism Info Card */
+        #mapInfoCard { transition: opacity 0.3s ease, transform 0.3s ease; }
+        #mapInfoCard.hidden { opacity: 0; pointer-events: none; transform: translate(-50%, 20px); }
     </style>
 </head>
 <body>
 
-    <!-- 🗺️ FULL PAGE ROUTE MAP (NEW PREMIUM FEATURE) -->
+    <!-- 🗺️ FULL PAGE ROUTE MAP (FREE OPENSTREETMAP VERSION) -->
     <div id="routeMapPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f1f3f5; z-index: 9999999; flex-direction: column;">
-        <!-- Map Container -->
-        <div id="map" style="flex: 1; width: 100%;"></div>
         
-        <!-- Map Controls -->
-        <button id="btnBackFromMap" class="map-btn" style="position: absolute; top: 20px; left: 20px; z-index: 9999; color: #333;"><i class="fa-solid fa-arrow-left"></i> Back</button>
-        <div style="position: absolute; top: 20px; right: 20px; z-index: 9999; display: flex; gap: 10px;">
-            <button id="btnMyLocation" class="map-btn"><i class="fa-solid fa-location-crosshairs"></i> My Location</button>
-            <button id="btnFitRoute" class="map-btn"><i class="fa-solid fa-expand"></i> Fit Route</button>
+        <!-- Top Action Bar (Premium & Mobile Responsive) -->
+        <div style="position: absolute; top: 15px; left: 15px; right: 15px; z-index: 9999; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none;">
+            <button id="btnBackFromMap" class="map-btn" style="pointer-events: auto; color: #333;"><i class="fa-solid fa-arrow-left"></i> <span class="map-btn-text">Back</span></button>
+            
+            <div style="display: flex; gap: 10px; pointer-events: auto;">
+                <button id="btnShowMapInfo" class="map-btn" style="display:none; background:var(--primary-blue); color:white;"><i class="fa-solid fa-circle-info"></i> <span class="map-btn-text">Info</span></button>
+                <button id="btnMyLocation" class="map-btn"><i class="fa-solid fa-location-crosshairs"></i> <span class="map-btn-text">My Location</span></button>
+                <button id="btnFitRoute" class="map-btn"><i class="fa-solid fa-expand"></i> <span class="map-btn-text">Fit Route</span></button>
+            </div>
         </div>
 
-        <!-- Floating Info Card -->
-        <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999; border: 1px solid rgba(0,0,0,0.05);">
-            <h3 id="mapRouteTitle" style="color: var(--primary-blue); margin-bottom: 10px; font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 8px;">Hisar &rarr; Delhi</h3>
+        <!-- Leaflet Map Container -->
+        <div id="map" style="flex: 1; width: 100%;"></div>
+
+        <!-- Floating Info Card (With Close Button) -->
+        <div id="mapInfoCard" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999; border: 1px solid rgba(0,0,0,0.05);">
+            <button id="btnCloseMapInfo" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: #888; transition: 0.2s;"><i class="fa-solid fa-xmark"></i></button>
+            
+            <h3 id="mapRouteTitle" style="color: var(--primary-blue); margin-bottom: 10px; font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 8px; padding-right: 20px;">Hisar &rarr; Delhi</h3>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="map-info-item"><i class="fa-regular fa-clock" style="color:var(--primary-blue);"></i> <span id="mapDepTime">--</span></div>
@@ -193,7 +209,7 @@
         </div>
     </footer>
 
-    <!-- SETTINGS PAGE -->
+    <!-- SETTINGS PAGE (ADMIN REMOVED) -->
     <div id="settingsPage" class="settings-page">
         <header class="settings-page-header">
             <div class="settings-header-left">
@@ -210,10 +226,9 @@
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
                     <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
                     <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update</button>
-                    <button class="setting-nav-item" data-tab="tab-admin" id="btnAdminTab"><i class="fa-solid fa-user-shield"></i> Admin</button>
-                    
-                    <button class="setting-nav-item" data-tab="tab-tracker" id="openTrackerTabBtn">
-                        <i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> Tracker
+                    <!-- HIDDEN ADMIN TAB REMOVED AS REQUESTED -->
+                    <button class="setting-nav-item" data-tab="tab-tracker" id="openTrackerTabBtn" style="grid-column: span 2;">
+                        <i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> Speed Tracker
                         <span style="font-size:10px; background:#f39c12; color:white; padding:2px 5px; border-radius:10px; margin-left:5px;">PRO</span>
                     </button>
                 </div>
@@ -297,23 +312,11 @@
                     </div>
                 </div>
 
-                <!-- Admin Auth Tab -->
-                <div id="tab-admin" class="settings-tab-content slide-in-bottom">
-                    <h3 style="color: var(--primary-blue); margin-bottom: 15px;"><i class="fa-solid fa-lock"></i> Developer Authentication</h3>
-                    <div class="update-block" id="adminPinBlock" style="margin-top: 10px;">
-                        <label style="color:#d9534f;"><strong><i class="fa-solid fa-shield-halved"></i> Enter Developer Password</strong></label>
-                        <div class="flex-row" style="margin-top: 5px;">
-                            <input type="password" id="adminPinInput" class="custom-input" placeholder="Enter Password" autocomplete="off">
-                            <button id="btnUnlockAdmin" class="btn-premium-blue" style="padding: 8px 15px; border-radius: 6px; background:#d9534f;">Unlock Dashboard</button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 🚍 DEVICE SPEED TRACKER TAB CONTENT -->
                 <div id="tab-tracker" class="settings-tab-content slide-in-bottom">
                     <div class="tracker-content" style="width: 100%; margin: auto; padding: 25px; border-radius: 16px; text-align: center; background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                        <h3 style="margin-bottom:5px; color:var(--primary-blue); font-size: 1.5rem;"><i class="fa-solid fa-bus"></i> Live Speed Tracker</h3>
-                        <p style="font-size:0.85rem; color:#777; margin-bottom: 20px;">Tracks real-time speed via GPS.</p>
+                        <h3 style="margin-bottom:5px; color:var(--primary-blue); font-size: 1.5rem;"><i class="fa-solid fa-bus"></i> Device Speed Tracker</h3>
+                        <p style="font-size:0.85rem; color:#777; margin-bottom: 20px;">Tracks real-time speed via your device GPS.</p>
                         
                         <div class="gauge-container" id="speedGauge" style="position:relative; width:170px; height:170px; margin:10px auto 20px; border-radius:50%; background:conic-gradient(#e0e0e0 100%, transparent 0); display:flex; align-items:center; justify-content:center; box-shadow:inset 0 0 15px rgba(0,0,0,0.05);">
                             <div class="gauge-inner" style="width:140px; height:140px; background:var(--white); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 5px 10px rgba(0,0,0,0.05);">
@@ -353,60 +356,6 @@
                         <i class="fa-solid fa-right-from-bracket"></i> Logout Securely
                     </button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ADMIN DASHBOARD (SECURE PAGE) -->
-    <div id="adminPage" class="settings-page" style="z-index: 999999;">
-        <header class="settings-page-header" style="background: #111;">
-            <div class="settings-header-left">
-                <button id="closeAdminBtn" class="btn-back"><i class="fa-solid fa-arrow-left"></i></button>
-                <h2>Premium Admin Dashboard</h2>
-            </div>
-        </header>
-
-        <div class="settings-body container" style="max-width: 1000px;">
-            <div class="admin-nav" style="display:flex; gap:10px; margin-bottom: 20px;">
-                <button id="tabUsersBtn" class="btn-side" style="flex:1; background:var(--primary-blue); color:white;">All Users</button>
-                <button id="tabReqBtn" class="btn-side" style="flex:1;">Requests <span id="reqCountBadge" style="background:#d9534f;color:white;padding:3px 8px;border-radius:12px;font-size:0.8rem;margin-left:5px;">0</span></button>
-            </div>
-
-            <!-- Approved Users List -->
-            <div id="adminUsersSection" class="user-details-card slide-in-bottom" style="overflow-x: auto; background: var(--white); box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 25px;">
-                <h3 style="color: var(--primary-blue); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
-                    <i class="fa-solid fa-users"></i> Approved Users: <span id="totalUsersCount" style="color: #5eb063;">0</span>
-                </h3>
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Mobile</th>
-                            <th>Email</th>
-                            <th>View</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminTableBody"></tbody>
-                </table>
-            </div>
-
-            <!-- Pending Requests -->
-            <div id="adminReqSection" class="user-details-card slide-in-bottom hidden" style="overflow-x: auto; background: var(--white); box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 25px;">
-                <h3 style="color: #d9534f; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
-                    <i class="fa-solid fa-user-clock"></i> Pending Account Requests
-                </h3>
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Mobile</th>
-                            <th>Email</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminRequestsBody"></tbody>
-                </table>
             </div>
         </div>
     </div>
