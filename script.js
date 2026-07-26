@@ -1,21 +1,15 @@
-// === PREMIUM STYLES INJECTION ===
+// === FIX FOR POPUPS HIDING BEHIND MODALS ===
 if (typeof document !== 'undefined') {
     var style = document.createElement('style');
-    style.innerHTML = `
-        .swal2-container { z-index: 9999999 !important; }
-        #acceptTncBtn { background: linear-gradient(135deg, #5eb063, #4a914f) !important; color: white !important; border: none !important; padding: 10px 24px !important; border-radius: 25px !important; font-weight: 600 !important; cursor: pointer !important; box-shadow: 0 4px 10px rgba(94, 176, 99, 0.3) !important; transition: all 0.3s ease !important; }
-        #acceptTncBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(94, 176, 99, 0.4) !important; }
-        #closeTncBtn { background: #f1f3f5 !important; color: #333 !important; border: none !important; padding: 10px 24px !important; border-radius: 25px !important; font-weight: 600 !important; cursor: pointer !important; transition: all 0.3s ease !important; }
-        #closeTncBtn:hover { background: #e2e6ea !important; }
-        [data-theme="dark"] .gauge-inner { background: #1e232d !important; }
-        [data-theme="dark"] .tracker-content { background: #1a1e23 !important; border: 1px solid rgba(255,255,255,0.1); }
-    `;
+    style.innerHTML = '.swal2-container { z-index: 9999999 !important; }';
     document.head.appendChild(style);
 }
 
 // === AUTH GUARD & AUTO-LOGOUT ===
 if (localStorage.getItem('hr_logged_in') !== 'true') {
     window.location.href = 'login.html';
+} else {
+    localStorage.setItem('hr_tnc_accepted', 'true');
 }
 
 // === THEME CHECK ===
@@ -43,7 +37,9 @@ function getDB() {
 
 document.addEventListener("DOMContentLoaded", async function() {
     
-    if (typeof emailjs !== 'undefined') { try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) { } }
+    if (typeof emailjs !== 'undefined') {
+        try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) { }
+    }
 
     if (localStorage.getItem('hr_welcome_shown') !== 'true' && typeof Swal !== 'undefined') {
         var userName = localStorage.getItem('hr_user_name') || 'USER';
@@ -66,12 +62,14 @@ document.addEventListener("DOMContentLoaded", async function() {
     
     if (db && userEmail) {
         db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle().then(function(adminRes) {
+            
             if (adminRes.data && adminRes.data.is_maintenance === true && userMob !== '7988300872') {
                 localStorage.removeItem('hr_logged_in');
                 localStorage.setItem('hr_kicked_reason', 'maintenance');
                 window.location.href = 'login.html';
                 return;
             }
+
             db.from('users').select('account_status, status').eq('email', userEmail).maybeSingle().then(function(res) {
                 if (res.error || !res.data) return; 
                 var accStat = res.data.account_status ? res.data.account_status.toLowerCase() : 'active';
@@ -150,9 +148,9 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
     }
 
+    // TAB SWITCHER LOGIC (Now includes Tracker Tab)
     navItems.forEach(function(item) {
         item.addEventListener('click', function() {
-            if (item.id === 'openTrackerBtn') return; // Speed Tracker ke liye alag logic hai
             navItems.forEach(nav => nav.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
             item.classList.add('active');
@@ -195,8 +193,12 @@ document.addEventListener("DOMContentLoaded", async function() {
                     if(settingsPage) settingsPage.classList.remove('active'); 
                     if(adminPage) adminPage.classList.add('active'); 
                     if(typeof loadAdminData === 'function') loadAdminData();
-                } else { Swal.fire('⚠️ Unauthorized Access', "Sorry! You don't have permission.", 'error'); }
-            } else { Swal.fire('Error', 'Incorrect Password.', 'error'); }
+                } else {
+                    Swal.fire({ title: '⚠️ Unauthorized Access', text: "Sorry! You don't have permission.", icon: 'error', target: document.getElementById('settingsPage') || 'body' });
+                }
+            } else { 
+                Swal.fire({ title: 'Error', text: 'Incorrect Password.', icon: 'error', target: document.getElementById('settingsPage') || 'body' }); 
+            }
             adminPinInput.value = ''; 
         });
     }
@@ -399,7 +401,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         btnSendPhoneOtp.addEventListener('click', async function() {
             var currentMobile = localStorage.getItem('hr_user_mobile');
             var currentEmail = localStorage.getItem('hr_user_email');
-            if (!currentMobile || !currentEmail || !db) { Swal.fire('Error', 'System not ready.', 'error'); return; }
+            if (!currentMobile || !currentEmail || !db) { Swal.fire({title:'Error', text:'System not ready.', icon:'error', target: document.getElementById('settingsPage') || 'body'}); return; }
             var oldPhone = document.getElementById('oldPhoneInput') ? document.getElementById('oldPhoneInput').value.trim() : '';
             var newPhone = document.getElementById('updatePhoneInput') ? document.getElementById('updatePhoneInput').value.trim() : '';
             
@@ -408,7 +410,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Checking...";
             
             var dup = await db.from('users').select('mobile').eq('mobile', newPhone).maybeSingle();
-            if (dup.data) { btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP"; return Swal.fire('Exists', 'New number already registered.', 'warning'); }
+            if (dup.data) { btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP"; return Swal.fire({title:'Exists', text:'New number already registered.', icon:'warning', target: document.getElementById('settingsPage') || 'body'}); }
             phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
             
             if(typeof emailjs !== 'undefined') {
@@ -419,7 +421,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     Swal.fire({title:'OTP Sent', text:`OTP sent to ${currentEmail}`, icon:'success', target: document.getElementById('settingsPage') || 'body'});
                 }).catch(e => {
                     btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP";
-                    Swal.fire('Error', 'Failed to send Email.', 'error');
+                    Swal.fire({title:'Error', text:'Failed to send Email.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
                 });
             }
         });
@@ -455,7 +457,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         btnSendEmailOtp.addEventListener('click', async function() {
             var currentMobile = localStorage.getItem('hr_user_mobile');
             var currentEmail = localStorage.getItem('hr_user_email');
-            if (!currentMobile || !currentEmail || !db) { Swal.fire('Error', 'System not ready.', 'error'); return; }
+            if (!currentMobile || !currentEmail || !db) { Swal.fire({title:'Error', text:'System not ready.', icon:'error', target: document.getElementById('settingsPage') || 'body'}); return; }
             var oldEmail = document.getElementById('oldEmailInput') ? document.getElementById('oldEmailInput').value.trim() : '';
             var newEmail = document.getElementById('updateEmailInput') ? document.getElementById('updateEmailInput').value.trim() : '';
             
@@ -464,7 +466,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             btnSendEmailOtp.disabled = true; btnSendEmailOtp.innerText = "Checking...";
             
             var dup = await db.from('users').select('email').eq('email', newEmail).maybeSingle();
-            if (dup.data) { btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP"; return Swal.fire('Exists', 'New email already registered.', 'warning'); }
+            if (dup.data) { btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP"; return Swal.fire({title:'Exists', text:'New email already registered.', icon:'warning', target: document.getElementById('settingsPage') || 'body'}); }
             emailUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
             
             if(typeof emailjs !== 'undefined') {
@@ -476,7 +478,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     Swal.fire({title:'OTP Sent', text:`OTP sent to ${newEmail} to verify`, icon:'success', target: document.getElementById('settingsPage') || 'body'});
                 }).catch(e => {
                     btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP";
-                    Swal.fire('Error', 'Failed to send Email.', 'error');
+                    Swal.fire({title:'Error', text:'Failed to send Email.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
                 });
             }
         });
@@ -561,17 +563,15 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // BULLETPROOF FOOTER & MODAL LOGIC (FIXED)
+    // BULLETPROOF FOOTER & MODAL LOGIC 
     // ==========================================
     document.body.addEventListener('click', function(e) {
         
-        // 1. Get the element that was clicked
         var target = e.target;
         var parentTarget = target.closest('a, button, span, div');
         var clickedText = target.innerText ? target.innerText.toLowerCase() : '';
         if(parentTarget && parentTarget.innerText) clickedText = parentTarget.innerText.toLowerCase();
 
-        // 2. Identify which modal to open based on text or ID
         if (target.id === 'openTncBtn' || (parentTarget && parentTarget.id === 'openTncBtn') || clickedText.includes('terms') || clickedText.includes('t&c')) {
             var modal = document.getElementById('tncModal');
             if(modal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); modal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
@@ -587,7 +587,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             if(dModal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); dModal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
         }
 
-        // 3. Premium Close / Accept Buttons Logic
         if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn' || e.target.closest('.glass-close')) {
             var modalClose = e.target.closest('.glass-modal-overlay');
             if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
@@ -600,23 +599,19 @@ document.addEventListener("DOMContentLoaded", async function() {
             if(termsCheck) termsCheck.checked = true;
         }
 
-        // 4. Overlay Outside Click Close
         if (e.target.classList.contains('glass-modal-overlay')) {
             e.target.classList.remove('active'); document.body.style.overflow = 'auto';
         }
     });
 
     // =========================================================
-    // 🚍 LIVE SPEED TRACKER LOGIC
+    // 🚍 LIVE SPEED TRACKER LOGIC (PREMIUM FAST SYNC)
     // =========================================================
     var watchId = null;
     var totalDistance = 0;
     var lastLat = null;
     var lastLon = null;
 
-    var openBtn = document.getElementById('openTrackerBtn');
-    var modal = document.getElementById('speedTrackerModal');
-    var closeBtn = document.getElementById('btnCloseTracker');
     var startBtn = document.getElementById('btnStartTracker');
     var pauseBtn = document.getElementById('btnPauseTracker');
     var stopBtn = document.getElementById('btnStopTracker');
@@ -629,8 +624,15 @@ document.addEventListener("DOMContentLoaded", async function() {
     var gpsDistance = document.getElementById('gpsDistance');
     var gpsTime = document.getElementById('gpsTime');
 
-    if (openBtn) { openBtn.addEventListener('click', () => { if(modal) modal.classList.add('active'); }); }
-    if (closeBtn) { closeBtn.addEventListener('click', () => { if(modal) modal.classList.remove('active'); }); }
+    // Real-Time Clock - ALWAYS RUNS regardless of GPS permission (FAST update every 1s)
+    setInterval(function() {
+        var d = new Date();
+        if(gpsTime) {
+            gpsTime.innerText = d.getHours().toString().padStart(2, '0') + ':' + 
+                                d.getMinutes().toString().padStart(2, '0') + ':' + 
+                                d.getSeconds().toString().padStart(2, '0');
+        }
+    }, 1000);
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
         var R = 6371; 
@@ -653,9 +655,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(speedVal) speedVal.innerText = speedKmH < 10 ? '0' + speedKmH.toFixed(0) : speedKmH.toFixed(0);
         if(gpsDirection) gpsDirection.innerText = getDirection(heading);
         if(gpsDistance) gpsDistance.innerText = totalDistance.toFixed(2) + ' km';
-        
-        var d = new Date();
-        if(gpsTime) gpsTime.innerText = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0') + ':' + d.getSeconds().toString().padStart(2, '0');
 
         var color = '#e0e0e0';
         var statText = 'Idle';
@@ -692,18 +691,24 @@ document.addEventListener("DOMContentLoaded", async function() {
     function error(err) {
         if(gpsStatus) { gpsStatus.innerText = "GPS Error ❌"; gpsStatus.style.color = "#d9534f"; }
         if (err.code === 1) {
-            Swal.fire({ title: 'Permission Denied', text: 'Location permission is required to use Live Speed Tracker.', icon: 'error', target: document.getElementById('speedTrackerModal') || 'body' });
+            // Target is explicitly set so it shows ONLY inside settings page
+            Swal.fire({ title: 'Permission Denied', text: 'Location permission is required to use Live Speed Tracker.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
+            stopTracking();
+        } else {
+            Swal.fire({ title: 'Error', text: 'Unable to fetch location. Check your GPS.', icon: 'warning', target: document.getElementById('settingsPage') || 'body' });
             stopTracking();
         }
     }
 
     function startTracking() {
-        if (!navigator.geolocation) { Swal.fire('Error', 'Geolocation is not supported', 'error'); return; }
+        if (!navigator.geolocation) { Swal.fire({title: 'Error', text: 'Geolocation is not supported', icon: 'error', target: document.getElementById('settingsPage') || 'body'}); return; }
         if(gpsStatus) { gpsStatus.innerText = "Searching... 📡"; gpsStatus.style.color = "#f39c12"; }
         if(startBtn) startBtn.style.display = 'none';
         if(pauseBtn) pauseBtn.style.display = 'flex';
         if(stopBtn) stopBtn.style.display = 'flex';
-        watchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        
+        // High accuracy for fast real-time 1 second updates
+        watchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
     }
 
     function stopTracking() {
