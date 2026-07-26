@@ -853,7 +853,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     // =========================================================
-    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET & OSRM) + INFO TOGGLE
+    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET & ZOOM FIXED)
     // =========================================================
     var lMap = null;
     var lRoutingControl = null;
@@ -917,12 +917,12 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(mapInfoCard) mapInfoCard.classList.remove('hidden');
         if(btnShowInfo) btnShowInfo.style.display = 'none';
 
+        // NOTE: zoomControl is set to TRUE to show + / - buttons on map
         if (!lMap) {
-            lMap = L.map('map', {zoomControl: false}).setView([29.1492, 75.7217], 8);
+            lMap = L.map('map', {zoomControl: true}).setView([29.1492, 75.7217], 8);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
             }).addTo(lMap);
-            L.control.zoom({ position: 'bottomright' }).addTo(lMap);
         }
 
         if (lRoutingControl) lMap.removeControl(lRoutingControl);
@@ -1048,7 +1048,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     var gpsDistance = document.getElementById('gpsDistance');
     var gpsTime = document.getElementById('gpsTime');
     
-    // 🔥 LIVE TIME UPDATE
     setInterval(function() {
         var d = new Date();
         if(gpsTime) {
@@ -1067,7 +1066,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         return R * c; 
     }
 
-    // Mathematical formula to calculate direction if device doesn't provide heading
     function calcHeadingManual(lat1, lon1, lat2, lon2) {
         var dLon = (lon2 - lon1) * Math.PI / 180;
         var lat1Rad = lat1 * Math.PI / 180;
@@ -1085,7 +1083,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         return arr[(val % 16)];
     }
 
-    // 🏎️ PREMIUM SMOOTH SPEED ANIMATION
     let targetSpeedKmH = 0;
     let displaySpeedKmH = 0;
     
@@ -1136,7 +1133,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             totalSpeedDist += dist;
             if(gpsDistance) gpsDistance.innerText = totalSpeedDist.toFixed(2) + ' km';
 
-            // Calculate direction manually if device fails to provide it and we have moved
             if ((currentHeading === null || isNaN(currentHeading)) && dist > 0.001) {
                 currentHeading = calcHeadingManual(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
             }
@@ -1145,7 +1141,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         lastSpeedLat = crd.latitude; 
         lastSpeedLon = crd.longitude;
         
-        // Update direction UI
         if (currentHeading !== null && !isNaN(currentHeading)) {
             lastHeading = currentHeading;
             if(gpsDirection) gpsDirection.innerText = getDeviceDir(currentHeading);
@@ -1160,13 +1155,11 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     function deviceError(err) {
-        // ONLY THROW POPUP FOR PERMISSION DENIED (Code 1)
         if (err.code === 1) { 
             if(gpsStatus) { gpsStatus.innerText = "Permission Denied"; gpsStatus.style.color = "#d9534f"; }
             Swal.fire({ title: 'Permission Denied', text: 'Please enable Location permission in your device settings.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
             stopDeviceTracking();
         } else { 
-            // Silent retry for Timeout (Code 3) or Position Unavailable (Code 2)
             if(gpsStatus) { gpsStatus.innerText = "Searching GPS..."; gpsStatus.style.color = "#f39c12"; }
         }
     }
