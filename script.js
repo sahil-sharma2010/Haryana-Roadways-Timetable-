@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🎵 PREMIUM BACKGROUND MUSIC SYSTEM (3% VOLUME AUTO-PLAY)
+    // 🎵 PREMIUM BACKGROUND MUSIC SYSTEM
     // =========================================================
     const bgMusic = document.getElementById('bgMusic');
     const musicToggle = document.getElementById('music-toggle');
@@ -444,14 +444,12 @@ document.addEventListener("DOMContentLoaded", async function() {
     
     if (db && userEmail) {
         db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle().then(function(adminRes) {
-            
             if (adminRes.data && adminRes.data.is_maintenance === true && userMob !== '7988300872') {
                 localStorage.removeItem('hr_logged_in');
                 localStorage.setItem('hr_kicked_reason', 'maintenance');
                 window.location.href = 'login.html';
                 return;
             }
-
             db.from('users').select('account_status, status').eq('email', userEmail).maybeSingle().then(function(res) {
                 if (res.error || !res.data) return; 
                 var accStat = res.data.account_status ? res.data.account_status.toLowerCase() : 'active';
@@ -460,16 +458,13 @@ document.addEventListener("DOMContentLoaded", async function() {
                 if (accStat === 'blocked' || accStat === 'suspended') {
                     localStorage.removeItem('hr_logged_in');
                     localStorage.setItem('hr_kicked_reason', accStat); 
-                    
                     Swal.fire({
                         title: 'Account ' + accStat.toUpperCase(),
                         html: `Your account has been ${accStat}.<br><br><div style="font-size:0.85rem; color:#777; text-align:left; background:#f8f9fa; padding:10px; border-radius:8px;"><strong>📞 Contact Support:</strong><br>Email: support@hrtimetable.in<br>Phone: +91 798******2</div>`,
                         icon: 'error',
                         confirmButtonColor: '#d9534f',
                         allowOutsideClick: false
-                    }).then(() => {
-                        window.location.href = 'login.html';
-                    });
+                    }).then(() => { window.location.href = 'login.html'; });
                 } else if (reqStat === 'pending' || reqStat === 'rejected' || reqStat === 'declined') {
                     localStorage.removeItem('hr_logged_in');
                     localStorage.setItem('hr_kicked_reason', reqStat); 
@@ -522,7 +517,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                             if(dispName) dispName.innerText = res.data.name;
                             if(dispMob) dispMob.innerText = "+91 " + res.data.mobile;
                             if(dispEmail) dispEmail.innerText = res.data.email;
-                            
                             if(typeof updatePhoneLimitUI === 'function') updatePhoneLimitUI(); 
                             if(typeof updateEmailLimitUI === 'function') updateEmailLimitUI(); 
                         }
@@ -568,7 +562,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // ROUTES TAB LOGIC (DYNAMIC DESTINATIONS)
+    // ROUTES TAB LOGIC 
     // =========================================================
     var cityBtns = document.querySelectorAll('.city-btn');
     var routeDetailsContainer = document.getElementById('routeDetailsContainer');
@@ -576,7 +570,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     cityBtns.forEach(function(btn) {
         btn.addEventListener('click', function() {
             var city = this.getAttribute('data-city');
-            
             cityBtns.forEach(b => { b.style.background = ''; b.style.color = ''; });
             this.style.background = 'var(--primary-blue)';
             this.style.color = 'white';
@@ -853,7 +846,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     // =========================================================
-    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET & ZOOM FIXED)
+    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET, ZOOM, & HARDWARE BACK FIXED)
     // =========================================================
     var lMap = null;
     var lRoutingControl = null;
@@ -899,10 +892,22 @@ document.addEventListener("DOMContentLoaded", async function() {
         return null;
     }
 
+    // 🔥 HANDLE HARDWARE BACK BUTTON
+    window.addEventListener('popstate', function(e) {
+        var mapPage = document.getElementById('routeMapPage');
+        if (mapPage && mapPage.style.display === 'flex') {
+            mapPage.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    });
+
     window.openRouteMap = async function(from, to, via, dep, type, op) {
         var mapPage = document.getElementById('routeMapPage');
         if(!mapPage) return;
         
+        // Push state so phone back button works
+        history.pushState({ mapOpen: true }, null, "#routeMap");
+
         document.getElementById('mapRouteTitle').innerHTML = `${from} &rarr; ${to}`;
         document.getElementById('mapDepTime').innerText = dep;
         document.getElementById('mapBusType').innerText = type;
@@ -917,7 +922,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(mapInfoCard) mapInfoCard.classList.remove('hidden');
         if(btnShowInfo) btnShowInfo.style.display = 'none';
 
-        // NOTE: zoomControl is set to TRUE to show + / - buttons on map
         if (!lMap) {
             lMap = L.map('map', {zoomControl: true}).setView([29.1492, 75.7217], 8);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -982,15 +986,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
     };
 
-    var btnBackMap = document.getElementById('btnBackFromMap');
-    if(btnBackMap) {
-        btnBackMap.addEventListener('click', function() {
-            var mapPage = document.getElementById('routeMapPage');
-            if(mapPage) mapPage.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        });
-    }
-
     var btnFit = document.getElementById('btnFitRoute');
     if(btnFit) {
         btnFit.addEventListener('click', function() {
@@ -1028,7 +1023,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚍 DEVICE SPEED TRACKER LOGIC (ERROR FIXED & DIRECTION MATH ADDED)
+    // 🚍 DEVICE SPEED TRACKER LOGIC
     // =========================================================
     var watchSpeedId = null;
     var totalSpeedDist = 0;
