@@ -562,7 +562,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // ROUTES TAB LOGIC 
+    // ROUTES TAB LOGIC
     // =========================================================
     var cityBtns = document.querySelectorAll('.city-btn');
     var routeDetailsContainer = document.getElementById('routeDetailsContainer');
@@ -846,7 +846,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     // =========================================================
-    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET, ZOOM, & HARDWARE BACK FIXED)
+    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET, ZOOM, HARDWARE BACK FIXED)
     // =========================================================
     var lMap = null;
     var lRoutingControl = null;
@@ -892,7 +892,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         return null;
     }
 
-    // 🔥 HANDLE HARDWARE BACK BUTTON
+    // 🔥 HANDLE HARDWARE BACK BUTTON TO CLOSE MAP
     window.addEventListener('popstate', function(e) {
         var mapPage = document.getElementById('routeMapPage');
         if (mapPage && mapPage.style.display === 'flex') {
@@ -923,10 +923,12 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(btnShowInfo) btnShowInfo.style.display = 'none';
 
         if (!lMap) {
-            lMap = L.map('map', {zoomControl: true}).setView([29.1492, 75.7217], 8);
+            // Zoom Controls are now handled here (Bottom-Left)
+            lMap = L.map('map', {zoomControl: false}).setView([29.1492, 75.7217], 8);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
             }).addTo(lMap);
+            L.control.zoom({ position: 'bottomleft' }).addTo(lMap);
         }
 
         if (lRoutingControl) lMap.removeControl(lRoutingControl);
@@ -985,6 +987,17 @@ document.addEventListener("DOMContentLoaded", async function() {
             document.getElementById('mapEstTime').innerText = 'N/A';
         }
     };
+
+    var btnBackMap = document.getElementById('btnBackFromMap');
+    if(btnBackMap) {
+        btnBackMap.addEventListener('click', function() {
+            var mapPage = document.getElementById('routeMapPage');
+            if(mapPage) mapPage.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            // Optional: go back in history to clean URL
+            if(window.location.hash === '#routeMap') history.back();
+        });
+    }
 
     var btnFit = document.getElementById('btnFitRoute');
     if(btnFit) {
