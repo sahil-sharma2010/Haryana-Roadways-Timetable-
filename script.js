@@ -35,6 +35,242 @@ function getDB() {
     return null;
 }
 
+// =========================================================
+// MASSIVE BUS DATA FOR MARQUEE & SEARCH
+// =========================================================
+var busData = [
+    // --- FROM USER'S ORIGINAL PROMPT ---
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "05:20 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi", departure: "07:53 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "09:30 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "10:00 AM", busType: "AC", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "10:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Ganganagar", to: "Bahadurgarh", via: "Hansi", departure: "10:45 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi", departure: "11:00 AM", busType: "AC", arr: "HR" },
+    { from: "Hisar", to: "Bahadurgarh", via: "Hansi", departure: "11:15 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Bahadurgarh", via: "Hansi", departure: "11:50 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "12:00 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi", departure: "12:04 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "12:10 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Bahadurgarh", via: "Hansi", departure: "12:20 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Palwal", via: "Hansi", departure: "12:30 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Bahadurgarh", via: "Hansi", departure: "01:00 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Bahadurgarh", via: "Hansi", departure: "01:10 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "01:30 PM", busType: "AC", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "01:40 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "02:00 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Bahadurgarh", via: "Hansi", departure: "02:10 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "02:45 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "03:10 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "03:40 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "03:45 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi", departure: "05:30 PM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi", departure: "07:00 PM", busType: "AC", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "05:10 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "06:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Ballabgarh", via: "Hansi", departure: "06:10 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Palwal", via: "Hansi", departure: "06:20 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Nathusari Chopta", to: "Gurugram", via: "Hansi", departure: "06:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Ellanabad", to: "Gurugram", via: "Hansi", departure: "06:50 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "07:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Fatehabad", to: "Gurugram", via: "Hansi", departure: "07:16 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "07:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "08:10 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "08:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "08:50 AM", busType: "Ordinary", arr: "HR" },
+    { from: "SIRSA", to: "Gurugram", via: "Hansi", departure: "09:08 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "09:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Ballabgarh", via: "Hansi", departure: "09:56 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Agra", via: "Hansi", departure: "10:10 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "10:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "11:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "11:30 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "12:04 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Palwal", via: "Hansi", departure: "12:20 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Jhajjar", via: "Hansi", departure: "01:00 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "KMP", departure: "01:20 PM", busType: "Ordinary", arr: "HR" },
+    { from: "SIRSA", to: "Ballabgarh", via: "Hansi", departure: "01:40 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Jhajjar", via: "Hansi", departure: "02:00 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "KMP", departure: "02:20 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "KMP", departure: "02:50 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "KMP", departure: "03:20 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "KMP", departure: "04:30 PM", busType: "Ordinary", arr: "HR" },
+    { from: "SIRSA", to: "Gurugram", via: "Hansi", departure: "05:20 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Ganganagar", to: "Delhi", via: "Hansi", departure: "12:50 AM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Ganganagar", to: "Delhi", via: "Hansi", departure: "01:30 AM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Ganganagar", to: "Delhi", via: "Hansi", departure: "02:03 AM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "03:50 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:10 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:18 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:36 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:44 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:10 AM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:30 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:40 AM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:48 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "06:10 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "06:32 AM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "06:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "06:55 AM", busType: "HVAC", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "07:04 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "07:12 AM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "07:28 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "07:36 AM", busType: "HVAC", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "07:44 AM", busType: "Ordinary", arr: "PRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "07:52 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "08:00 AM", busType: "HVAC", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "08:08 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "08:24 AM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "08:46 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "08:56 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "09:04 AM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "09:20 AM", busType: "HVAC", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "09:28 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "09:44 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "09:52 AM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:16 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:24 AM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:38 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:50 AM", busType: "Ordinary", arr: "PRM" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:57 AM", busType: "HVAC", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "11:12 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "11:20 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "11:36 AM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "11:42 AM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "12:08 PM", busType: "HVAC", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "12:16 PM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "12:22 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "12:30 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "12:36 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "12:44 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "12:50 PM", busType: "Ordinary", arr: "PRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "12:58 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "01:20 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "01:28 PM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "01:36 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "01:44 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "02:00 PM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "02:16 PM", busType: "HVAC", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "02:32 PM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "02:54 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "03:00 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "03:20 PM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "03:34 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "03:40 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:00 PM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:08 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:18 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:28 PM", busType: "HVAC", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:34 PM", busType: "Ordinary", arr: "PRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:40 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "04:48 PM", busType: "AC", arr: "KBS" },
+    { from: "Hisar", to: "Haldwani", via: "Hansi", departure: "04:50 PM", busType: "Ordinary", arr: "UK" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:04 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:10 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:18 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:26 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:45 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:51 PM", busType: "Ordinary", arr: "RSRTC" },
+    { from: "Hisar", to: "Tanakpur", via: "Hansi", departure: "06:10 PM", busType: "Ordinary", arr: "UK" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "06:50 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "07:05 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "07:35 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "08:05 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "08:20 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "08:50 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "09:05 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "09:40 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:20 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:40 PM", busType: "Ordinary", arr: "HR" },
+
+    // --- EXTRACTED FROM NEW IMAGES (104917 to 105747) ---
+    { from: "Hisar", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "05:10 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "06:00 AM", busType: "AC", arr: "HR" },
+    { from: "Hisar", to: "Ballabgarh", via: "Hansi, Meham, Beri, Jhajjar", departure: "06:00 AM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "06:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Chopta", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "06:54 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Fatehabad", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "07:20 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "07:30 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "07:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "07:48 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Fatehabad", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "08:12 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Dabwali", to: "Ballabgarh", via: "Hansi, Meham", departure: "09:20 AM", busType: "AC", arr: "HR" },
+    { from: "Hisar", to: "Ballabgarh", via: "Hansi, Meham, Beri, Jhajjar", departure: "09:50 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Agra", via: "Hansi, Meham, Beri, Jhajjar", departure: "10:15 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Ganganagar", to: "Bahadurgarh", via: "Hansi, Meham, Beri, Jhajjar", departure: "10:45 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Palwal", via: "Badli", departure: "12:30 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi, Rohtak", departure: "01:40 PM", busType: "AC", arr: "HR" },
+    { from: "Fatehabad", to: "Ballabgarh", via: "Hansi", departure: "01:48 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi, Rohtak", departure: "02:50 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Gurugram", via: "Hansi, Rohtak", departure: "03:50 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Fatehabad", to: "Delhi", via: "Hansi, Rohtak", departure: "04:10 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi, Meham", departure: "04:36 AM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "04:44 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Fatehabad", to: "Delhi", via: "Hansi, Rohtak", departure: "05:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "06:00 AM", busType: "AC", arr: "HR" },
+    { from: "Fatehabad", to: "Delhi", via: "Hansi", departure: "06:10 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Fatehabad", to: "Delhi", via: "Hansi, Rohtak", departure: "06:48 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi, Meham", departure: "06:54 AM", busType: "AC", arr: "HR" },
+    { from: "Fatehabad", to: "Delhi", via: "Hansi, Rohtak", departure: "07:04 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "07:30 AM", busType: "AC", arr: "HR" },
+    { from: "Dabwali", to: "Delhi", via: "Hansi, Rohtak", departure: "07:52 AM", busType: "AC", arr: "HR" },
+    { from: "Fatehabad", to: "Delhi", via: "Hansi, Rohtak", departure: "08:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi, Meham", departure: "08:08 AM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "08:45 AM", busType: "AC", arr: "HR" },
+    { from: "Fatehabad", to: "Delhi", via: "Hansi, Rohtak", departure: "09:28 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi, Meham", departure: "09:44 AM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "09:45 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "10:15 AM", busType: "AC", arr: "HR" },
+    { from: "Fatehabad", to: "Delhi", via: "Hansi, Rohtak", departure: "10:38 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi, Meham", departure: "10:57 AM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "11:20 AM", busType: "AC", arr: "HR" },
+    { from: "Ganganagar", to: "Delhi", via: "Hansi", departure: "11:52 AM", busType: "RSRTC Express", arr: "RSRTC" },
+    { from: "Hisar", to: "Delhi", via: "Hansi, Meham", departure: "12:08 PM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "12:30 PM", busType: "AC", arr: "HR" },
+    { from: "Ganganagar", to: "Delhi", via: "Hansi", departure: "12:40 PM", busType: "RSRTC Express", arr: "RSRTC" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "01:14 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Anoopgarh", to: "Delhi", via: "Hansi", departure: "02:10 PM", busType: "RSRTC Express", arr: "RSRTC" },
+    { from: "Ganganagar", to: "Delhi", via: "Hansi, Rohtak", departure: "02:34 PM", busType: "RSRTC Express", arr: "RSRTC" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "02:40 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "03:28 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Fatehabad", to: "Delhi", via: "Hansi", departure: "03:52 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi, Meham", departure: "04:28 PM", busType: "AC", arr: "HR" },
+    { from: "Dabwali", to: "Delhi", via: "Hansi, Rohtak", departure: "05:18 PM", busType: "AC", arr: "HR" },
+    { from: "Bikaner", to: "Delhi", via: "Hansi", departure: "05:20 PM", busType: "RSRTC Express", arr: "RSRTC" },
+    { from: "Dabwali", to: "Delhi", via: "Hansi, Rohtak", departure: "05:30 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "05:34 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Rohtak", departure: "06:50 PM", busType: "AC", arr: "HR" },
+    { from: "Dabwali", to: "Delhi", via: "Hansi, Rohtak", departure: "08:10 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Dabwali", to: "Delhi", via: "Hansi, Rohtak", departure: "08:25 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Delhi", via: "Hansi, Meham", departure: "04:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi, Meham", departure: "05:00 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi, Meham", departure: "05:20 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Meham", departure: "06:00 AM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Meham", departure: "07:30 AM", busType: "AC", arr: "HR" },
+    { from: "Dabwali", to: "Delhi", via: "Hansi, Meham", departure: "07:52 AM", busType: "AC", arr: "HR" },
+    { from: "Fatehabad", to: "Rohtak", via: "Hansi, Meham", departure: "08:30 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Bathinda", to: "Bahadurgarh", via: "Hansi, Meham", departure: "08:45 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi, Meham", departure: "09:30 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Meham", departure: "09:45 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi, Meham", departure: "10:00 AM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Meham", departure: "10:15 AM", busType: "AC", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi, Meham", departure: "10:30 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Rohtak", via: "Hansi, Meham", departure: "10:40 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Hisar", to: "Bahadurgarh", via: "Hansi, Meham", departure: "11:15 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Meham", departure: "11:20 AM", busType: "AC", arr: "HR" },
+    { from: "Hisar", to: "Bahadurgarh", via: "Hansi, Meham", departure: "11:50 AM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Rohtak", via: "Hansi, Meham", departure: "12:00 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Fatehabad", to: "Rohtak", via: "Hansi, Meham", departure: "12:10 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Rohtak", via: "Hansi, Meham", departure: "12:20 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Delhi", via: "Hansi, Meham", departure: "12:30 PM", busType: "AC", arr: "HR" },
+    { from: "Sirsa", to: "Rohtak", via: "Hansi, Meham", departure: "12:40 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Rohtak", via: "Hansi, Meham", departure: "01:01 PM", busType: "Ordinary", arr: "HR" },
+    { from: "Sirsa", to: "Rohtak", via: "Hansi, Meham", departure: "01:05 PM", busType: "Ordinary", arr: "HR" }
+];
+
 document.addEventListener("DOMContentLoaded", async function() {
     
     if (typeof emailjs !== 'undefined') {
@@ -52,6 +288,54 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
         localStorage.setItem('hr_welcome_shown', 'true');
     }
+
+    // =========================================================
+    // 🚨 LIVE MARQUEE ALERT LOGIC (BLACK TEXT, 30 MINS & 5 MINS) 
+    // =========================================================
+    function getMinutesToDeparture(departureStr) {
+        var now = new Date();
+        var depParts = departureStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if(!depParts) return -1;
+        
+        var h = parseInt(depParts[1], 10);
+        var m = parseInt(depParts[2], 10);
+        var ampm = depParts[3].toUpperCase();
+        
+        if (ampm === 'PM' && h < 12) h += 12;
+        if (ampm === 'AM' && h === 12) h = 0;
+        
+        var depTime = new Date();
+        depTime.setHours(h, m, 0, 0);
+        
+        var diffMs = depTime - now;
+        return Math.floor(diffMs / 60000);
+    }
+
+    function updateMarquee() {
+        var marquee = document.getElementById('marqueeText');
+        if(!marquee) return;
+        
+        // Find buses departing in the next 30 minutes
+        var upcomingBuses = busData.filter(function(b) {
+            var mins = getMinutesToDeparture(b.departure);
+            return mins >= 0 && mins <= 30; 
+        });
+
+        if(upcomingBuses.length > 0) {
+            var alertText = upcomingBuses.map(function(b) {
+                var mins = getMinutesToDeparture(b.departure);
+                var timeText = mins <= 5 ? `<span style="color:#d9534f; font-weight:900;">IN ${mins} MINS!</span>` : `in ${mins} mins`;
+                return `🚍 ${b.departure} ${b.from} to ${b.to} departing ${timeText}`;
+            }).join(' &nbsp; &nbsp; | &nbsp; &nbsp; ');
+            
+            marquee.innerHTML = `<span style="color: #000; font-weight: bold; font-size: 1.05rem;">🚨 LIVE DEPARTURES: &nbsp; ${alertText} 🚨</span>`;
+        } else {
+            marquee.innerHTML = `<span style="color: #000; font-weight: bold; font-size: 1.05rem;">🚍 Welcome to Haryana Roadways Timetable | Plan your journey easily. All timings are subject to change.</span>`;
+        }
+    }
+    
+    setInterval(updateMarquee, 30000); 
+    updateMarquee(); 
 
     // =========================================================
     // ONE-TIME SILENT BLOCK & MAINTENANCE CHECK 
@@ -148,7 +432,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
     }
 
-    // TAB SWITCHER LOGIC (Now includes Tracker Tab)
     navItems.forEach(function(item) {
         item.addEventListener('click', function() {
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -176,6 +459,41 @@ document.addEventListener("DOMContentLoaded", async function() {
             }
         });
     }
+
+    // =========================================================
+    // ROUTES TAB LOGIC (DYNAMIC DESTINATIONS)
+    // =========================================================
+    var cityBtns = document.querySelectorAll('.city-btn');
+    var routeDetailsContainer = document.getElementById('routeDetailsContainer');
+    
+    cityBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var city = this.getAttribute('data-city');
+            
+            cityBtns.forEach(b => { b.style.background = ''; b.style.color = ''; });
+            this.style.background = 'var(--primary-blue)';
+            this.style.color = 'white';
+
+            if (city === 'Hisar') {
+                var destinations = [...new Set(busData.filter(b => b.from.toLowerCase() === 'hisar').map(b => b.to))].sort();
+                var destHTML = '<h4 style="color:var(--primary-blue); margin:15px 0 10px 0;"><i class="fa-solid fa-map-location-dot"></i> Routes from Hisar Depot:</h4><div style="display:flex; flex-wrap:wrap; gap:8px;">';
+                destinations.forEach(d => {
+                    destHTML += `<span style="background:rgba(0,0,0,0.05); padding:6px 12px; border-radius:15px; font-size:0.9rem; border:1px solid rgba(0,0,0,0.1); font-weight:600; color:var(--primary-blue);">${d}</span>`;
+                });
+                destHTML += '</div>';
+                if(routeDetailsContainer) routeDetailsContainer.innerHTML = destHTML;
+            } else {
+                if(routeDetailsContainer) routeDetailsContainer.innerHTML = '';
+                // Popup error inside settings page
+                Swal.fire({
+                    title: 'Route Unavailable 🚧',
+                    text: `The routes for ${city} Depot are currently being updated. Please check back later.`,
+                    icon: 'info',
+                    target: document.getElementById('settingsPage') || 'body'
+                });
+            }
+        });
+    });
 
     // =========================================================
     // ADMIN PANEL & MAINTENANCE
@@ -511,15 +829,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     // =========================================================
     // SEARCH & TIMETABLE LOGIC
     // =========================================================
-    var busData = [
-        { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "05:10 AM", time24: "05:10", busType: "Ordinary", arr: "HR" },
-        { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "06:00 AM", time24: "06:00", busType: "Ordinary", arr: "HR" },
-        { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "06:40 AM", time24: "06:40", busType: "Ordinary", arr: "HR" },
-        { from: "Hisar", to: "Gurugram", via: "Hansi", departure: "06:50 AM", time24: "06:50", busType: "Ordinary", arr: "HR" },
-        { from: "Hisar", to: "Delhi", via: "Hansi", departure: "05:10 AM", time24: "05:10", busType: "AC", arr: "KBS" },
-        { from: "Hisar", to: "Delhi", via: "Hansi", departure: "06:10 AM", time24: "06:10", busType: "Ordinary", arr: "HR" }
-    ];
-
     var form = document.getElementById('searchForm');
     var sourceInput = document.getElementById('source');
     var destInput = document.getElementById('destination');
@@ -541,7 +850,22 @@ document.addEventListener("DOMContentLoaded", async function() {
 
             setTimeout(function() {
                 if(skeletonLoader) skeletonLoader.style.display = 'none';
-                var results = busData.filter(function(bus) { return bus.from.toLowerCase().trim() === fromVal && bus.to.toLowerCase().trim() === toVal; });
+                
+                var results = busData.filter(function(bus) {
+                    var bFrom = bus.from.toLowerCase().trim();
+                    var bTo = bus.to.toLowerCase().trim();
+                    var bVia = (bus.via || "").toLowerCase().trim();
+
+                    // MUNDHAL SPECIAL CONDITION: 
+                    if (toVal === 'mundhal') {
+                        var mundhalDestinations = ["delhi", "gurugram", "rohtak", "bahadurgarh", "palwal", "ballabgarh", "agra", "jhajjar", "fatehabad", "haldwani", "tanakpur"];
+                        var passesMundhal = (bTo === 'mundhal') || bVia.includes('mundhal') || (mundhalDestinations.includes(bTo) && bVia.includes('hansi'));
+                        return bFrom === fromVal && passesMundhal;
+                    }
+
+                    // NORMAL SEARCH
+                    return bFrom === fromVal && (bTo === toVal || bVia.includes(toVal));
+                });
 
                 if (results.length > 0) {
                     results.forEach(function(bus, index) {
@@ -587,7 +911,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             if(dModal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); dModal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
         }
 
-        if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn' || e.target.closest('.glass-close')) {
+        if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn' || e.target.closest('.glass-close') || e.target.closest('.btn-side')) {
             var modalClose = e.target.closest('.glass-modal-overlay');
             if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
         }
@@ -605,7 +929,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     // =========================================================
-    // 🚍 LIVE SPEED TRACKER LOGIC (PREMIUM FAST SYNC)
+    // 🚍 LIVE SPEED TRACKER LOGIC
     // =========================================================
     var watchId = null;
     var totalDistance = 0;
@@ -624,7 +948,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     var gpsDistance = document.getElementById('gpsDistance');
     var gpsTime = document.getElementById('gpsTime');
 
-    // Real-Time Clock - ALWAYS RUNS regardless of GPS permission (FAST update every 1s)
     setInterval(function() {
         var d = new Date();
         if(gpsTime) {
@@ -677,7 +1000,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     function success(pos) {
-        if(gpsStatus) { gpsStatus.innerText = "Connected 🛰️"; gpsStatus.style.color = "#5eb063"; }
+        if(gpsStatus) { gpsStatus.innerText = "Connected"; gpsStatus.style.color = "#5eb063"; }
         var crd = pos.coords;
         
         if (lastLat !== null && lastLon !== null) {
@@ -689,9 +1012,8 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     function error(err) {
-        if(gpsStatus) { gpsStatus.innerText = "GPS Error ❌"; gpsStatus.style.color = "#d9534f"; }
+        if(gpsStatus) { gpsStatus.innerText = "GPS Error"; gpsStatus.style.color = "#d9534f"; }
         if (err.code === 1) {
-            // Target is explicitly set so it shows ONLY inside settings page
             Swal.fire({ title: 'Permission Denied', text: 'Location permission is required to use Live Speed Tracker.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
             stopTracking();
         } else {
@@ -702,12 +1024,11 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     function startTracking() {
         if (!navigator.geolocation) { Swal.fire({title: 'Error', text: 'Geolocation is not supported', icon: 'error', target: document.getElementById('settingsPage') || 'body'}); return; }
-        if(gpsStatus) { gpsStatus.innerText = "Searching... 📡"; gpsStatus.style.color = "#f39c12"; }
+        if(gpsStatus) { gpsStatus.innerText = "Searching..."; gpsStatus.style.color = "#f39c12"; }
         if(startBtn) startBtn.style.display = 'none';
         if(pauseBtn) pauseBtn.style.display = 'flex';
         if(stopBtn) stopBtn.style.display = 'flex';
         
-        // High accuracy for fast real-time 1 second updates
         watchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
     }
 
@@ -715,7 +1036,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         if (watchId) navigator.geolocation.clearWatch(watchId);
         lastLat = null; lastLon = null; totalDistance = 0;
         updateUI(0, null);
-        if(gpsStatus) { gpsStatus.innerText = "Stopped ⏹"; gpsStatus.style.color = "#d9534f"; }
+        if(gpsStatus) { gpsStatus.innerText = "Stopped"; gpsStatus.style.color = "#d9534f"; }
         if(startBtn) startBtn.style.display = 'flex';
         if(pauseBtn) pauseBtn.style.display = 'none';
         if(stopBtn) stopBtn.style.display = 'none';
@@ -723,7 +1044,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     function pauseTracking() {
         if (watchId) navigator.geolocation.clearWatch(watchId);
-        if(gpsStatus) { gpsStatus.innerText = "Paused ⏸"; gpsStatus.style.color = "#f39c12"; }
+        if(gpsStatus) { gpsStatus.innerText = "Paused"; gpsStatus.style.color = "#f39c12"; }
         if(startBtn) startBtn.style.display = 'flex';
         if(pauseBtn) pauseBtn.style.display = 'none';
     }
