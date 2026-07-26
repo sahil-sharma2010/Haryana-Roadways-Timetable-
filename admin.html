@@ -84,7 +84,7 @@
                 <button id="btnAdminLogout" class="btn-logout"><i class="fa-solid fa-power-off"></i> Logout</button>
             </div>
 
-            <!-- Dashboard Options (Manage Routes, Stops, Login History REMOVED as requested) -->
+            <!-- Removed Extra Buttons As Requested (ONLY 3 REMAINING) -->
             <div class="admin-grid">
                 <div class="admin-box" id="tabUsers" onclick="switchTab('Users')">
                     <i class="fa-solid fa-users"></i><br><strong>Manage Users</strong>
@@ -122,16 +122,13 @@
         let timeLeft = 900; // 15 minutes
         let currentActiveTab = 'Users';
         
-        // Global Data Cache
         let allUsers = [];
         let isMaintenance = false;
 
-        // Check active session on load
         if(sessionStorage.getItem('hr_admin_active') === 'true') {
             showDashboard();
         }
 
-        // Toggle Password
         document.getElementById('togglePass').addEventListener('click', function() {
             if(passInput.type === 'password') {
                 passInput.type = 'text';
@@ -142,7 +139,6 @@
             }
         });
 
-        // Premium Login Logic
         document.getElementById('btnLogin').addEventListener('click', function() {
             let pass = passInput.value.trim();
             if(pass === '3806') {
@@ -163,7 +159,6 @@
             }
         });
 
-        // Show Dashboard & Sync Data
         function showDashboard() {
             loginScreen.style.display = 'none';
             document.body.style.background = '#f8f9fa';
@@ -172,7 +167,6 @@
             syncDatabase();
         }
 
-        // Logout Logic
         document.getElementById('btnAdminLogout').addEventListener('click', forceLogout);
 
         function forceLogout() {
@@ -181,7 +175,6 @@
             window.location.reload();
         }
 
-        // 15 Min Auto-Logout Logic
         function resetTimer() {
             timeLeft = 900;
             clearInterval(sessionTimer);
@@ -199,7 +192,6 @@
         document.addEventListener('mousemove', () => { if(sessionStorage.getItem('hr_admin_active')==='true') resetTimer(); });
         document.addEventListener('keypress', () => { if(sessionStorage.getItem('hr_admin_active')==='true') resetTimer(); });
 
-        // === FETCH REAL DATA FROM SUPABASE ===
         async function syncDatabase() {
             Swal.fire({title: 'Syncing Database...', text: 'Fetching secure data', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
             try {
@@ -216,7 +208,6 @@
             }
         }
 
-        // === TAB SWITCHER & RENDER LOGIC ===
         window.switchTab = function(tabName) {
             currentActiveTab = tabName;
             document.getElementById('adminContentArea').style.display = 'block';
