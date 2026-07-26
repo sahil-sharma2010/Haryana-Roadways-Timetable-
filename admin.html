@@ -32,6 +32,7 @@
         .pass-wrapper input { width: 100%; padding: 12px 40px 12px 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
         .pass-wrapper i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888; }
         
+        button { -webkit-tap-highlight-color: transparent; outline: none; }
         .btn-full { width: 100%; padding: 12px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-full:hover { background: #004494; box-shadow: 0 4px 10px rgba(0,86,179,0.3); }
         .btn-logout { background: #d9534f; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
@@ -84,7 +85,7 @@
                 <button id="btnAdminLogout" class="btn-logout"><i class="fa-solid fa-power-off"></i> Logout</button>
             </div>
 
-            <!-- Removed Extra Buttons As Requested (ONLY 3 REMAINING) -->
+            <!-- Dashboard Options -->
             <div class="admin-grid">
                 <div class="admin-box" id="tabUsers" onclick="switchTab('Users')">
                     <i class="fa-solid fa-users"></i><br><strong>Manage Users</strong>
