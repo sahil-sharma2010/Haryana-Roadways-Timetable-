@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚨 LIVE MARQUEE ALERT LOGIC
+    // 🚨 LIVE MARQUEE ALERT LOGIC 
     // =========================================================
     function getMinutesToDeparture(departureStr) {
         var now = new Date();
@@ -491,61 +491,10 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     // =========================================================
-    // ADMIN PANEL & MAINTENANCE
+    // GLOBAL ADMIN FUNCTIONS (KEPT FOR SAFETY - UI MOVED TO ADMIN.HTML)
     // =========================================================
-    var btnUnlockAdmin = document.getElementById('btnUnlockAdmin');
-    var adminPinInput = document.getElementById('adminPinInput');
-    var adminPage = document.getElementById('adminPage');
-
-    if (btnUnlockAdmin && adminPinInput) {
-        btnUnlockAdmin.addEventListener('click', function() {
-            var enteredPin = adminPinInput.value.trim();
-            var adminMob = localStorage.getItem('hr_user_mobile');
-            if (enteredPin === '3806') {
-                if (adminMob === '7988300872') {
-                    if(settingsPage) settingsPage.classList.remove('active'); 
-                    if(adminPage) adminPage.classList.add('active'); 
-                    if(typeof loadAdminData === 'function') loadAdminData();
-                } else {
-                    Swal.fire({ title: '⚠️ Unauthorized Access', text: "Sorry! You don't have permission.", icon: 'error', target: document.getElementById('settingsPage') || 'body' });
-                }
-            } else { 
-                Swal.fire({ title: 'Error', text: 'Incorrect Password.', icon: 'error', target: document.getElementById('settingsPage') || 'body' }); 
-            }
-            adminPinInput.value = ''; 
-        });
-    }
-
-    var closeAdminBtn = document.getElementById('closeAdminBtn');
-    if (closeAdminBtn && adminPage) {
-        closeAdminBtn.addEventListener('click', function() {
-            adminPage.classList.remove('active');
-            if(settingsPage) settingsPage.classList.add('active'); 
-        });
-    }
-
-    var tabUsersBtn = document.getElementById('tabUsersBtn');
-    var tabReqBtn = document.getElementById('tabReqBtn');
-    var adminUsersSection = document.getElementById('adminUsersSection');
-    var adminReqSection = document.getElementById('adminReqSection');
-
-    if (tabUsersBtn && tabReqBtn) {
-        tabUsersBtn.addEventListener('click', function() {
-            tabUsersBtn.style.background = 'var(--primary-blue)'; tabUsersBtn.style.color = 'white';
-            tabReqBtn.style.background = '#cdd5df'; tabReqBtn.style.color = '#333';
-            if(adminUsersSection) adminUsersSection.classList.remove('hidden'); 
-            if(adminReqSection) adminReqSection.classList.add('hidden');
-        });
-        tabReqBtn.addEventListener('click', function() {
-            tabReqBtn.style.background = 'var(--primary-blue)'; tabReqBtn.style.color = 'white';
-            tabUsersBtn.style.background = '#cdd5df'; tabUsersBtn.style.color = '#333';
-            if(adminReqSection) adminReqSection.classList.remove('hidden'); 
-            if(adminUsersSection) adminUsersSection.classList.add('hidden');
-        });
-    }
-
     window.loadAdminData = async function() {
-        if (!db) { Swal.fire('Error','Database not ready','error'); return; }
+        if (!db) return;
         var adminTableBody = document.getElementById('adminTableBody');
         var adminRequestsBody = document.getElementById('adminRequestsBody');
         if(!adminTableBody || !adminRequestsBody) return;
@@ -555,38 +504,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         try {
             var adminRow = await db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle();
             var isMaint = adminRow.data ? adminRow.data.is_maintenance : false;
-
-            var maintContainer = document.getElementById('devMaintContainer');
-            if (!maintContainer) {
-                maintContainer = document.createElement('div');
-                maintContainer.id = 'devMaintContainer';
-                maintContainer.style.padding = '15px';
-                maintContainer.style.margin = '10px 20px';
-                maintContainer.style.borderRadius = '8px';
-                maintContainer.style.textAlign = 'center';
-                maintContainer.style.boxShadow = '0 4px 10px rgba(0,0,0,0.1)';
-                var adminHeader = document.querySelector('.admin-header') || document.getElementById('adminPage');
-                if (document.querySelector('.admin-header')) { adminHeader.parentNode.insertBefore(maintContainer, adminHeader.nextSibling); } 
-                else { adminHeader.insertBefore(maintContainer, adminHeader.firstChild); }
-            }
-
-            maintContainer.style.background = isMaint ? '#f8d7da' : '#d4edda';
-            maintContainer.style.border = `2px solid ${isMaint ? '#f5c6cb' : '#c3e6cb'}`;
-            maintContainer.innerHTML = `
-                <h4 style="margin: 0 0 10px 0; color: ${isMaint ? '#721c24' : '#155724'}; font-weight: bold;">
-                    <i class="fa-solid fa-server"></i> Web Status: ${isMaint ? 'MAINTENANCE (OFF) 🔴' : 'NORMAL (ON) 🟢'}
-                </h4>
-                <button id="toggleMaintBtn" style="padding: 8px 20px; font-weight:bold; cursor: pointer; border: none; border-radius: 5px; background: ${isMaint ? '#5eb063' : '#d9534f'}; color: white;">
-                    ${isMaint ? 'Turn App ON (Normal)' : 'Turn App OFF (Maintenance)'}
-                </button>
-            `;
-
-            document.getElementById('toggleMaintBtn').onclick = async function() {
-                Swal.fire({title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
-                var res = await db.from('users').update({ is_maintenance: !isMaint }).eq('mobile', '7988300872');
-                if (!res.error) { Swal.fire({title:'Success', text:'Website status updated.', icon:'success', target: document.getElementById('adminPage') || 'body'}); loadAdminData(); } 
-                else { Swal.fire('Error', res.error.message, 'error'); }
-            };
 
             var response = await db.from('users').select('*').order('id', {ascending: false});
             if (response.error) throw response.error;
@@ -877,7 +794,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                             <td>${bus.via || 'Direct'}</td>
                             <td><span style="color: #4a914f; font-weight: 600;">${bus.busType}</span></td>
                             <td>${bus.arr || 'TBD'}</td>
-                            <td><button class="btn-track-route" onclick="openRouteMap('${safeFrom}', '${safeTo}', '${safeVia}', '${safeDep}', '${safeType}', '${safeOp}')"><i class="fa-solid fa-map-location-dot"></i> Map</button></td>
+                            <td><button class="btn-track-route" onclick="openRouteMap('${safeFrom}', '${safeTo}', '${safeVia}', '${safeDep}', '${safeType}', '${safeOp}')"><i class="fa-solid fa-map-location-dot"></i> Track</button></td>
                         `;
                         tableBody.appendChild(tr);
                     });
@@ -929,13 +846,30 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     // =========================================================
-    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET & OSRM)
+    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET & OSRM) + INFO TOGGLE
     // =========================================================
     var lMap = null;
     var lRoutingControl = null;
     var lUserMarker = null;
 
-    // Hardcoded Coordinates for Fast, Free Map loading (No limits)
+    // Toggle Floating Info Card
+    var btnCloseInfo = document.getElementById('btnCloseMapInfo');
+    var btnShowInfo = document.getElementById('btnShowMapInfo');
+    var mapInfoCard = document.getElementById('mapInfoCard');
+
+    if(btnCloseInfo && btnShowInfo && mapInfoCard) {
+        btnCloseInfo.addEventListener('click', function() {
+            mapInfoCard.classList.add('hidden');
+            setTimeout(() => { btnShowInfo.style.display = 'flex'; }, 300);
+        });
+        
+        btnShowInfo.addEventListener('click', function() {
+            btnShowInfo.style.display = 'none';
+            mapInfoCard.classList.remove('hidden');
+        });
+    }
+
+    // Fast coordinate dictionary for Haryana routes
     var cityCoords = {
         "hisar": [29.1492, 75.7217], "delhi": [28.6139, 77.2090], "sirsa": [29.5336, 75.0177],
         "gurugram": [28.4595, 77.0266], "rohtak": [28.8955, 76.5892], "hansi": [29.1009, 75.9684],
@@ -948,17 +882,14 @@ document.addEventListener("DOMContentLoaded", async function() {
         "anoopgarh": [29.1911, 73.2086], "bikaner": [28.0229, 73.3119]
     };
 
-    // Helper to get Coordinates (Fast dictionary lookup or fallback to API)
     async function getCoordinates(cityStr) {
         var cleanCity = cityStr.trim().toLowerCase();
         if (cityCoords[cleanCity]) return L.latLng(cityCoords[cleanCity][0], cityCoords[cleanCity][1]);
         
         try {
-            var response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityStr)}, Haryana, India`);
+            var response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityStr)}, India`);
             var data = await response.json();
-            if (data && data.length > 0) {
-                return L.latLng(data[0].lat, data[0].lon);
-            }
+            if (data && data.length > 0) return L.latLng(data[0].lat, data[0].lon);
         } catch (e) { console.error("Geocoding failed for " + cityStr); }
         return null;
     }
@@ -978,23 +909,21 @@ document.addEventListener("DOMContentLoaded", async function() {
         mapPage.style.display = 'flex';
         document.body.style.overflow = 'hidden';
 
+        // Reset Info card UI
+        if(mapInfoCard) mapInfoCard.classList.remove('hidden');
+        if(btnShowInfo) btnShowInfo.style.display = 'none';
+
         if (!lMap) {
             lMap = L.map('map', {zoomControl: false}).setView([29.1492, 75.7217], 8);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
             }).addTo(lMap);
-            L.control.zoom({ position: 'topleft' }).addTo(lMap);
+            L.control.zoom({ position: 'bottomright' }).addTo(lMap);
         }
 
-        if (lRoutingControl) {
-            lMap.removeControl(lRoutingControl);
-        }
-        if (lUserMarker) {
-            lMap.removeLayer(lUserMarker);
-            lUserMarker = null;
-        }
+        if (lRoutingControl) lMap.removeControl(lRoutingControl);
+        if (lUserMarker) { lMap.removeLayer(lUserMarker); lUserMarker = null; }
 
-        // Gather all stops
         var stopNames = [from];
         if (via && via.trim() !== '' && via.trim().toLowerCase() !== 'direct') {
             stopNames = stopNames.concat(via.split(',').map(s => s.trim()));
@@ -1017,10 +946,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                 routeWhileDragging: false,
                 addWaypoints: false,
                 fitSelectedRoutes: true,
-                show: false, // Hides the instruction panel
-                lineOptions: {
-                    styles: [{color: '#0056b3', opacity: 0.8, weight: 6}]
-                },
+                show: false, // Clean UI, no instruction panel
+                lineOptions: { styles: [{color: '#0056b3', opacity: 0.8, weight: 6}] },
                 createMarker: function(i, wp, nWps) {
                     var iconToUse = viaIcon;
                     if (i === 0) iconToUse = startIcon;
@@ -1030,19 +957,12 @@ document.addEventListener("DOMContentLoaded", async function() {
             }).addTo(lMap);
 
             lRoutingControl.on('routesfound', function(e) {
-                var routes = e.routes;
-                var summary = routes[0].summary;
-                
+                var summary = e.routes[0].summary;
                 document.getElementById('mapEstDist').innerText = (summary.totalDistance / 1000).toFixed(1) + " km";
-                
                 var totalTime = summary.totalTime;
                 var hrs = Math.floor(totalTime / 3600);
                 var mins = Math.floor((totalTime % 3600) / 60);
-                var timeStr = "";
-                if(hrs > 0) timeStr += hrs + " hr ";
-                timeStr += mins + " min";
-                
-                document.getElementById('mapEstTime').innerText = timeStr;
+                document.getElementById('mapEstTime').innerText = (hrs > 0 ? hrs + " hr " : "") + mins + " min";
             });
             
             lRoutingControl.on('routingerror', function() {
@@ -1073,10 +993,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             if(lMap && lRoutingControl) {
                 var waypoints = lRoutingControl.getWaypoints();
                 var latlngs = waypoints.map(wp => wp.latLng).filter(ll => ll != null);
-                if(latlngs.length > 0) {
-                    var bounds = L.latLngBounds(latlngs);
-                    lMap.fitBounds(bounds, {padding: [50, 50]});
-                }
+                if(latlngs.length > 0) lMap.fitBounds(L.latLngBounds(latlngs), {padding: [50, 50]});
             }
         });
     }
@@ -1089,12 +1006,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     Swal.close();
                     var loc = L.latLng(pos.coords.latitude, pos.coords.longitude);
-                    
                     if(!lUserMarker) {
-                        var userIcon = L.divIcon({
-                            html: '<i class="fa-solid fa-street-view fa-2x" style="color:#0056b3; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));"></i>',
-                            className: 'custom-div-icon', iconSize: [24,24]
-                        });
+                        var userIcon = L.divIcon({ html: '<i class="fa-solid fa-street-view fa-2x" style="color:#0056b3; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));"></i>', className: 'custom-div-icon', iconSize: [24,24] });
                         lUserMarker = L.marker(loc, {icon: userIcon, zIndexOffset: 1000}).addTo(lMap);
                     } else {
                         lUserMarker.setLatLng(loc);
