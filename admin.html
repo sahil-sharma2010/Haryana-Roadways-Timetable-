@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Admin Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary-blue: #0056b3; }
+        body { background: #f1f3f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; font-family: 'Roboto', sans-serif; margin: 0; }
+        
+        .admin-login-card { background: white; width: 90%; max-width: 400px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .admin-logo { background: var(--primary-blue); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin: 0 auto 15px; }
+        
+        .admin-dashboard { display: none; width: 100%; min-height: 100vh; background: #f8f9fa; align-items: flex-start; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .dashboard-container { width: 100%; max-width: 1000px; background: white; border-radius: 16px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .admin-box { background: #f8f9fa; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #eee; cursor: pointer; transition: 0.3s; }
+        .admin-box:hover { background: var(--primary-blue); color: white; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,86,179,0.2); }
+        .admin-box i { font-size: 2rem; margin-bottom: 10px; color: #5eb063; transition: 0.3s; }
+        .admin-box:hover i { color: white; }
+        .admin-box.active { background: var(--primary-blue); color: white; }
+        .admin-box.active i { color: white; }
+
+        .pass-wrapper { position: relative; width: 100%; margin: 20px 0; }
+        .pass-wrapper input { width: 100%; padding: 12px 40px 12px 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        .pass-wrapper i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888; }
+        
+        .btn-full { width: 100%; padding: 12px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-full:hover { background: #004494; box-shadow: 0 4px 10px rgba(0,86,179,0.3); }
+        .btn-logout { background: #d9534f; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-logout:hover { background: #c9302c; }
+
+        /* Premium Table Styles */
+        .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; background: white; text-align: left; white-space: nowrap; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+        th { background: var(--primary-blue); color: white; font-weight: 500; }
+        
+        .action-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 5px; font-size: 0.85rem; transition: 0.2s; }
+        .action-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+        .btn-green { background: #5eb063; color: white; }
+        .btn-red { background: #d9534f; color: white; }
+        .btn-blue { background: var(--primary-blue); color: white; }
+        
+        .status-badge { font-size: 0.75rem; font-weight: bold; display: block; margin-top: 4px; }
+        .stat-blocked { color: #d9534f; }
+        .stat-suspended { color: #f39c12; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-in { animation: slideIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="admin-login-card slide-in">
+        <div class="admin-logo">HR</div>
+        <h2 style="color: var(--primary-blue); margin-bottom: 5px;">🔐 Secure Admin Portal</h2>
+        <p style="color: #777; font-size: 0.9rem;">Haryana Roadways Timetable</p>
+        
+        <div class="pass-wrapper">
+            <input type="password" id="adminPass" placeholder="Enter Administrator Password" autocomplete="off">
+            <i class="fa-solid fa-eye" id="togglePass"></i>
+        </div>
+        
+        <button id="btnLogin" class="btn-full">Secure Login <i class="fa-solid fa-arrow-right-to-bracket"></i></button>
+    </div>
+
+    <!-- DASHBOARD SCREEN -->
+    <div id="dashboardScreen" class="admin-dashboard">
+        <div class="dashboard-container slide-in">
+            <div class="dashboard-header">
+                <div>
+                    <h2 style="color: var(--primary-blue); margin: 0 0 5px 0;"><i class="fa-solid fa-shield-halved"></i> Admin Control Panel</h2>
+                    <p style="font-size: 0.85rem; color: #777; margin: 0;">Auto-logout in <span id="timerText" style="color:#d9534f; font-weight:bold;">15:00</span></p>
+                </div>
+                <button id="btnAdminLogout" class="btn-logout"><i class="fa-solid fa-power-off"></i> Logout</button>
+            </div>
+
+            <!-- Dashboard Options (Manage Routes, Stops, Login History REMOVED as requested) -->
+            <div class="admin-grid">
+                <div class="admin-box" id="tabUsers" onclick="switchTab('Users')">
+                    <i class="fa-solid fa-users"></i><br><strong>Manage Users</strong>
+                </div>
+                <div class="admin-box" id="tabReqs" onclick="switchTab('Reqs')">
+                    <i class="fa-solid fa-user-clock"></i><br><strong>Pending Requests</strong>
+                </div>
+                <div class="admin-box" id="tabSettings" onclick="switchTab('Settings')">
+                    <i class="fa-solid fa-server"></i><br><strong>Website Settings</strong>
+                </div>
+            </div>
+
+            <!-- Dynamic Content Area -->
+            <div id="adminContentArea" style="background: white; padding: 0; display: none;">
+                <h3 id="contentTitle" style="margin-bottom: 15px; color: var(--primary-blue);">Loading...</h3>
+                <div class="table-responsive" id="tableContainer">
+                    <!-- Tables will be injected here via JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // === SUPABASE CONNECTION ===
+        const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU';
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const loginScreen = document.getElementById('loginScreen');
+        const dashboardScreen = document.getElementById('dashboardScreen');
+        const passInput = document.getElementById('adminPass');
+        
+        let sessionTimer;
+        let timeLeft = 900; // 15 minutes
+        let currentActiveTab = 'Users';
+        
+        // Global Data Cache
+        let allUsers = [];
+        let isMaintenance = false;
+
+        // Check active session on load
+        if(sessionStorage.getItem('hr_admin_active') === 'true') {
+            showDashboard();
+        }
+
+        // Toggle Password
+        document.getElementById('togglePass').addEventListener('click', function() {
+            if(passInput.type === 'password') {
+                passInput.type = 'text';
+                this.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passInput.type = 'password';
+                this.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+
+        // Premium Login Logic
+        document.getElementById('btnLogin').addEventListener('click', function() {
+            let pass = passInput.value.trim();
+            if(pass === '3806') {
+                sessionStorage.setItem('hr_admin_active', 'true');
+                Swal.fire({
+                    title: 'Authentication Successful', 
+                    text: 'Welcome to the Secure Portal.', 
+                    icon: 'success', 
+                    timer: 1500, 
+                    showConfirmButton: false,
+                    backdrop: `rgba(0,0,0,0.8)`
+                }).then(() => {
+                    showDashboard();
+                });
+            } else {
+                Swal.fire({title: 'Access Denied', text: 'Invalid Administrator Password.', icon: 'error', backdrop: `rgba(0,0,0,0.8)`});
+                passInput.value = '';
+            }
+        });
+
+        // Show Dashboard & Sync Data
+        function showDashboard() {
+            loginScreen.style.display = 'none';
+            document.body.style.background = '#f8f9fa';
+            dashboardScreen.style.display = 'flex';
+            resetTimer();
+            syncDatabase();
+        }
+
+        // Logout Logic
+        document.getElementById('btnAdminLogout').addEventListener('click', forceLogout);
+
+        function forceLogout() {
+            sessionStorage.removeItem('hr_admin_active');
+            clearInterval(sessionTimer);
+            window.location.reload();
+        }
+
+        // 15 Min Auto-Logout Logic
+        function resetTimer() {
+            timeLeft = 900;
+            clearInterval(sessionTimer);
+            sessionTimer = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                let s = (timeLeft % 60).toString().padStart(2, '0');
+                document.getElementById('timerText').innerText = `${m}:${s}`;
+                if(timeLeft <= 0) {
+                    Swal.fire('Session Expired', 'You have been logged out due to inactivity.', 'info').then(() => forceLogout());
+                }
+            }, 1000);
+        }
+
+        document.addEventListener('mousemove', () => { if(sessionStorage.getItem('hr_admin_active')==='true') resetTimer(); });
+        document.addEventListener('keypress', () => { if(sessionStorage.getItem('hr_admin_active')==='true') resetTimer(); });
+
+        // === FETCH REAL DATA FROM SUPABASE ===
+        async function syncDatabase() {
+            Swal.fire({title: 'Syncing Database...', text: 'Fetching secure data', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            try {
+                // Fetch Settings
+                let maintRes = await db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle();
+                if(maintRes.data) isMaintenance = maintRes.data.is_maintenance;
+
+                // Fetch All Users
+                let userRes = await db.from('users').select('*').order('id', {ascending: false});
+                if(userRes.data) allUsers = userRes.data;
+
+                Swal.close();
+                switchTab(currentActiveTab); // Reload the current tab with new data
+            } catch(e) {
+                Swal.fire('Connection Error', 'Failed to fetch data from Supabase.', 'error');
+            }
+        }
+
+        // === TAB SWITCHER & RENDER LOGIC ===
+        window.switchTab = function(tabName) {
+            currentActiveTab = tabName;
+            document.getElementById('adminContentArea').style.display = 'block';
+            
+            // Reset active classes
+            document.getElementById('tabUsers').classList.remove('active');
+            document.getElementById('tabReqs').classList.remove('active');
+            document.getElementById('tabSettings').classList.remove('active');
+            document.getElementById('tab' + tabName).classList.add('active');
+
+            let container = document.getElementById('tableContainer');
+            
+            if (tabName === 'Users') {
+                document.getElementById('contentTitle').innerHTML = '<i class="fa-solid fa-users"></i> Manage Approved Users';
+                let approvedUsers = allUsers.filter(u => (u.status || 'approved').toLowerCase() === 'approved');
+                
+                let html = `<table><thead><tr><th>Name</th><th>Mobile</th><th>Email</th><th>Password</th><th>Actions</th></tr></thead><tbody>`;
+                if(approvedUsers.length === 0) {
+                    html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">No active users found.</td></tr>`;
+                } else {
+                    approvedUsers.forEach(u => {
+                        let accStat = (u.account_status || 'active').toLowerCase();
+                        let badge = accStat === 'blocked' ? '<span class="status-badge stat-blocked">[BLOCKED]</span>' : (accStat === 'suspended' ? '<span class="status-badge stat-suspended">[SUSPENDED]</span>' : '');
+                        html += `
+                            <tr>
+                                <td><strong>${u.name}</strong> ${badge}</td>
+                                <td>${u.mobile}</td>
+                                <td>${u.email}</td>
+                                <td>
+                                    <button class="action-btn btn-blue" id="btn-show-${u.id}" onclick="revealPass('${u.id}', '${u.password}')">View</button>
+                                    <span id="pass-${u.id}" style="display:none; font-weight:bold; color:var(--primary-blue);"></span>
+                                </td>
+                                <td><button class="action-btn btn-red" onclick="manageUserStatus('${u.email}', '${accStat}')">Manage</button></td>
+                            </tr>
+                        `;
+                    });
+                }
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+            } 
+            else if (tabName === 'Reqs') {
+                document.getElementById('contentTitle').innerHTML = '<i class="fa-solid fa-user-clock"></i> Pending Account Requests';
+                let pendingUsers = allUsers.filter(u => (u.status || '').toLowerCase() === 'pending');
+                
+                let html = `<table><thead><tr><th>Name</th><th>Mobile</th><th>Email</th><th>Actions</th></tr></thead><tbody>`;
+                if(pendingUsers.length === 0) {
+                    html += `<tr><td colspan="4" style="text-align:center; padding: 20px;">No pending requests.</td></tr>`;
+                } else {
+                    pendingUsers.forEach(u => {
+                        html += `
+                            <tr>
+                                <td><strong>${u.name}</strong></td>
+                                <td>${u.mobile}</td>
+                                <td>${u.email}</td>
+                                <td>
+                                    <button class="action-btn btn-green" onclick="acceptUser('${u.email}')">Approve</button>
+                                    <button class="action-btn btn-red" onclick="rejectUser('${u.email}')">Reject</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+            }
+            else if (tabName === 'Settings') {
+                document.getElementById('contentTitle').innerHTML = '<i class="fa-solid fa-server"></i> Website Settings';
+                
+                let boxColor = isMaintenance ? '#f8d7da' : '#d4edda';
+                let borderColor = isMaintenance ? '#f5c6cb' : '#c3e6cb';
+                let textColor = isMaintenance ? '#721c24' : '#155724';
+                let statusText = isMaintenance ? 'MAINTENANCE (OFF) 🔴' : 'NORMAL (ON) 🟢';
+                let btnColor = isMaintenance ? '#5eb063' : '#d9534f';
+                let btnText = isMaintenance ? 'Turn Website ON' : 'Turn Website OFF (Maintenance)';
+
+                let html = `
+                    <div style="background:${boxColor}; border:2px solid ${borderColor}; padding: 25px; border-radius: 12px; text-align: center;">
+                        <h2 style="color:${textColor}; margin-top:0;"><i class="fa-solid fa-globe"></i> Website Status: ${statusText}</h2>
+                        <p style="color:#555; margin-bottom: 20px;">If maintenance mode is ON, users will be logged out and unable to access the timetable.</p>
+                        <button class="action-btn" style="background:${btnColor}; color:white; padding: 12px 24px; font-size: 1.1rem;" onclick="toggleMaintenance()">${btnText}</button>
+                    </div>
+                `;
+                container.innerHTML = html;
+            }
+        };
+
+        // === ACTION FUNCTIONS (WITH PREMIUM SWEETALERTS) ===
+
+        window.revealPass = function(id, pass) {
+            document.getElementById(`btn-show-${id}`).style.display = 'none';
+            document.getElementById(`pass-${id}`).style.display = 'inline';
+            document.getElementById(`pass-${id}`).innerText = pass;
+        };
+
+        window.manageUserStatus = function(email, currentStatus) {
+            Swal.fire({
+                title: 'Manage Account Status',
+                html: `Current Status: <strong>${currentStatus.toUpperCase()}</strong><br><br>Select Action:`,
+                showDenyButton: true, showCancelButton: true,
+                confirmButtonText: 'Block', denyButtonText: 'Suspend', cancelButtonText: 'Active / Unblock',
+                confirmButtonColor: '#d9534f', denyButtonColor: '#f39c12', cancelButtonColor: '#5eb063',
+            }).then(async function(result) {
+                let newStatus = null;
+                if (result.isConfirmed) newStatus = 'Blocked';
+                else if (result.isDenied) newStatus = 'Suspended';
+                else if (result.dismiss === Swal.DismissReason.cancel) newStatus = 'Active';
+
+                if (newStatus) {
+                    Swal.fire({title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                    let res = await db.from('users').update({ account_status: newStatus }).eq('email', email);
+                    if (!res.error) { 
+                        Swal.fire('Success', `Account updated to ${newStatus}`, 'success').then(()=> syncDatabase());
+                    } else { 
+                        Swal.fire('Error', res.error.message, 'error'); 
+                    }
+                }
+            });
+        };
+
+        window.acceptUser = async function(email) {
+            Swal.fire({title: 'Approving...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            let res = await db.from('users').update({ status: 'Approved', account_status: 'Active' }).eq('email', email);
+            if (!res.error) { 
+                Swal.fire('Approved!', 'The user now has full access.', 'success').then(()=> syncDatabase());
+            } else { 
+                Swal.fire('Error', res.error.message, 'error'); 
+            }
+        };
+
+        window.rejectUser = async function(email) {
+            Swal.fire({
+                title: 'Are you sure?', text: "This will permanently delete the request.", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#d9534f', confirmButtonText: 'Yes, Delete'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({title: 'Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                    let res = await db.from('users').delete().eq('email', email);
+                    if (!res.error) { 
+                        Swal.fire('Deleted!', 'Request has been rejected.', 'success').then(()=> syncDatabase());
+                    } else { 
+                        Swal.fire('Error', res.error.message, 'error'); 
+                    }
+                }
+            });
+        };
+
+        window.toggleMaintenance = async function() {
+            Swal.fire({
+                title: isMaintenance ? 'Turn ON Website?' : 'Turn ON Maintenance?', 
+                text: isMaintenance ? "Users will be able to login." : "All users will be blocked and kicked out.",
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#0056b3'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({title: 'Updating Status...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                    let res = await db.from('users').update({ is_maintenance: !isMaintenance }).eq('mobile', '7988300872');
+                    if (!res.error) { 
+                        Swal.fire('Success', 'Website status has been changed.', 'success').then(()=> syncDatabase());
+                    } else { 
+                        Swal.fire('Error', res.error.message, 'error'); 
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
