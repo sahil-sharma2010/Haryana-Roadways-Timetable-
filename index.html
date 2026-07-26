@@ -18,7 +18,7 @@
     
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Custom Premium Overrides - ADMIN BUTTON REMOVED (Grid is now 2 columns) */
+        /* Custom Premium Overrides - ADMIN BUTTON REMOVED */
         .settings-nav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; } 
         
         #acceptTncBtn {
@@ -28,6 +28,7 @@
         #acceptTncBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(94, 176, 99, 0.4); }
         
         .tnc-content-scroll { max-height: 400px; overflow-y: auto; text-align: left; padding-right: 15px; margin-top: 15px; font-size: 0.95rem; line-height: 1.6; color: #444; }
+        .tnc-content-scroll h2 { color: var(--primary-blue); font-size: 1.3rem; margin-top: 20px; margin-bottom: 10px; }
         .tnc-content-scroll h3 { color: var(--primary-blue); margin-top: 20px; margin-bottom: 10px; font-size: 1.1rem; }
         .tnc-content-scroll ul { padding-left: 20px; margin-bottom: 15px; }
         .tnc-content-scroll li { margin-bottom: 6px; }
@@ -38,7 +39,7 @@
         .tnc-content-scroll::-webkit-scrollbar { width: 6px; }
         .tnc-content-scroll::-webkit-scrollbar-thumb { background: #999; border-radius: 10px; }
 
-        /* LIVE MARQUEE - SLOWED DOWN TO 45 SECONDS AS REQUESTED */
+        /* LIVE MARQUEE - SLOWED DOWN TO 45 SECONDS */
         .marquee-wrapper { overflow: hidden; white-space: nowrap; background: #f8f9fa !important; padding: 10px 0; border-bottom: 1px solid #ddd; }
         .marquee-content { display: inline-block; animation: marquee 45s linear infinite; padding-left: 100%; color: #000 !important; font-weight: bold; font-size: 1.05rem; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
@@ -65,32 +66,7 @@
         #mapInfoCard { transition: opacity 0.3s ease, transform 0.3s ease; }
         #mapInfoCard.hidden { opacity: 0; pointer-events: none; transform: translate(-50%, 20px); }
 
-        /* 🎵 PREMIUM FLOATING MUSIC BUTTON */
-        #musicToggleBtn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: rgba(0, 86, 179, 0.9);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 55px;
-            height: 55px;
-            font-size: 1.3rem;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-            z-index: 999999;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(8px);
-            border: 2px solid rgba(255,255,255,0.2);
-        }
-        #musicToggleBtn:hover { transform: scale(1.1); background: var(--primary-blue); }
-        @media (max-width: 768px) {
-            #musicToggleBtn { right: auto; left: 20px; bottom: 20px; }
-        }
+        .footer-contact { margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem; line-height: 1.5; color: #ddd; }
     </style>
 </head>
 <body>
@@ -99,11 +75,6 @@
     <audio id="bgMusic" loop preload="auto">
         <source src="assets/music/winner.mp3" type="audio/mpeg">
     </audio>
-
-    <!-- 🎵 FLOATING MUSIC BUTTON -->
-    <button id="musicToggleBtn" title="Toggle Background Music">
-        <i class="fa-solid fa-music" id="musicIcon"></i>
-    </button>
 
     <!-- 🗺️ FULL PAGE ROUTE MAP (FREE OPENSTREETMAP VERSION) -->
     <div id="routeMapPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f1f3f5; z-index: 9999999; flex-direction: column;">
@@ -243,6 +214,14 @@
             <span class="link-separator">|</span>
             <a href="#" id="openDisclaimerBtn" class="footer-link"><i class="fa-solid fa-triangle-exclamation"></i> Disclaimer</a>
         </div>
+        
+        <div class="footer-contact">
+            <strong><i class="fa-solid fa-envelope"></i> CONTACT INFORMATION</strong><br>
+            Haryana Roadways Timetable (Educational Project)<br>
+            Hisar, Haryana, India<br>
+            Phone: +91 798******2 | Email: support@hrtimetable.in<br>
+            Office Hours: Monday – Saturday, 09:00 AM – 06:00 PM
+        </div>
     </footer>
 
     <!-- SETTINGS PAGE (ADMIN REMOVED COMPLETELY) -->
@@ -262,14 +241,13 @@
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
                     <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
                     <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update</button>
-                    <!-- HIDDEN ADMIN TAB REMOVED AS REQUESTED -->
                     <button class="setting-nav-item" data-tab="tab-tracker" id="openTrackerTabBtn" style="grid-column: span 2;">
                         <i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> Speed Tracker
                         <span style="font-size:10px; background:#f39c12; color:white; padding:2px 5px; border-radius:10px; margin-left:5px;">PRO</span>
                     </button>
                 </div>
 
-                <!-- Theme Tab -->
+                <!-- Theme Tab (MUSIC TOGGLE ADDED HERE) -->
                 <div id="tab-theme" class="settings-tab-content active slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 10px;">App Theme Preference</h3>
                     <div class="theme-switch-wrapper" id="theme-toggle">
@@ -277,6 +255,14 @@
                         <div class="theme-switch" style="background: var(--primary-blue); border-radius: 20px; padding: 6px 12px; display: flex; gap: 12px; cursor: pointer;">
                             <i class="fa-solid fa-sun" id="icon-sun" style="color: white;"></i>
                             <i class="fa-solid fa-moon" id="icon-moon" style="color: white; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="theme-switch-wrapper" id="music-toggle" style="margin-top: 15px;">
+                        <span style="font-weight: 600;">Background Music: <strong id="musicStatusText">ON</strong></span>
+                        <div class="theme-switch" style="background: var(--primary-blue); border-radius: 20px; padding: 6px 12px; display: flex; gap: 12px; cursor: pointer;">
+                            <i class="fa-solid fa-music" id="icon-music-on" style="color: white;"></i>
+                            <i class="fa-solid fa-volume-xmark" id="icon-music-off" style="color: white; opacity: 0.5;"></i>
                         </div>
                     </div>
                 </div>
@@ -399,25 +385,44 @@
     <!-- PRIVACY POLICY MODAL -->
     <div id="privacyModal" class="glass-modal-overlay">
         <div class="glass-modal-box" style="padding-bottom: 25px;">
-            <span class="glass-close" onclick="document.getElementById('privacyModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
+            <span class="glass-close" id="closePrivacyBtnTop">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-lock"></i> PRIVACY POLICY</h2>
             <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
             <div class="tnc-content-scroll">
-                <p><strong>Last Updated: July 2026</strong><br>Welcome to Haryana Roadways Timetable.<br>We value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and protect your information while using this website.</p>
-                <h3>1. Information We Collect</h3>
+                <p><strong>Last Updated:</strong> July 2026</p>
+                <p>Your privacy is important to us.</p>
+                <h2>Information We Collect</h2>
                 <ul>
                     <li>Full Name</li>
                     <li>Mobile Number</li>
                     <li>Email Address</li>
                     <li>Secure Password</li>
                     <li>Login History</li>
-                    <li>Device & Browser Information</li>
-                    <li>IP Address (if available)</li>
-                    <li>Account Status (Pending, Approved, Rejected, Suspended, Blocked)</li>
+                    <li>Device Information</li>
+                    <li>Browser Information</li>
+                    <li>Registration Date</li>
+                    <li>Account Status</li>
                 </ul>
+                <h2>Purpose of Data Collection</h2>
+                <p>We collect information to:</p>
+                <ul>
+                    <li>Verify user identity</li>
+                    <li>Manage user accounts</li>
+                    <li>Improve website security</li>
+                    <li>Prevent unauthorized access</li>
+                    <li>Maintain login history</li>
+                    <li>Enhance overall user experience</li>
+                </ul>
+                <h2>Data Protection</h2>
+                <p>Reasonable security measures are implemented to help protect your personal information. However, no online service can guarantee absolute security.</p>
+                <p>We do <strong>not intentionally sell, rent, or share</strong> your personal information with third parties except where required by applicable law.</p>
+                <h2>Browser Storage</h2>
+                <p>This website may use Local Storage or Session Storage to remember user preferences and improve functionality.</p>
+                <h2>Policy Updates</h2>
+                <p>This Privacy Policy may be updated periodically without prior notice. Continued use of this website indicates acceptance of the latest version.</p>
             </div>
             <div style="margin-top: 20px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
-                <button class="btn-side" onclick="document.getElementById('privacyModal').classList.remove('active'); document.body.style.overflow = 'auto';">Close</button>
+                <button class="btn-side" id="closePrivacyBtnBottom">Close</button>
             </div>
         </div>
     </div>
@@ -425,15 +430,40 @@
     <!-- T&C MODAL -->
     <div id="tncModal" class="glass-modal-overlay">
         <div class="glass-modal-box" style="padding-bottom: 25px;">
-            <span class="glass-close" id="closeTncBtnTop" onclick="document.getElementById('tncModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
+            <span class="glass-close" id="closeTncBtnTop">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-file-contract"></i> TERMS & CONDITIONS</h2>
             <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
             <div class="tnc-content-scroll">
-                <p><strong>Last Updated: July 2026</strong><br>By using Haryana Roadways Timetable, you agree to the following terms:</p>
+                <p><strong>Last Updated:</strong> July 2026</p>
+                <h2>Welcome to Haryana Roadways Timetable</h2>
+                <p>By accessing or using this website, you agree to the following Terms & Conditions.</p>
+                
                 <h3>1. Educational Purpose</h3>
-                <p>This website has been developed solely for educational, informational, and project demonstration purposes.</p>
-                <h3>2. Unofficial Project</h3>
-                <p>This website is NOT the official Haryana Roadways website.</p>
+                <p>This website is an <strong>independent educational and software development project</strong> created for learning, portfolio presentation, research, and demonstration purposes only.</p>
+                
+                <h3>2. No Government Affiliation</h3>
+                <p>This website is <strong>NOT</strong> the official website of Haryana Roadways, the Government of Haryana, or any government authority.</p>
+                
+                <h3>3. Route & Timetable Information</h3>
+                <p>The routes, stops, departure times, bus types, operators, and related information available on this website are provided <strong>only for educational, informational, and demonstration purposes</strong>.</p>
+                
+                <h3>4. Limited Data</h3>
+                <p>Only a limited number of routes have been added to demonstrate the functionality of the project. This website does <strong>not</strong> represent the complete Haryana Roadways timetable or route network.</p>
+                
+                <h3>5. Travel Responsibility</h3>
+                <p>Users should always verify the latest route, departure time, fare, and other travel information through the official Haryana Roadways enquiry before planning any journey.</p>
+                
+                <h3>6. User Conduct</h3>
+                <p>Users agree not to misuse this website for unlawful, fraudulent, unauthorized, harmful, or malicious activities.</p>
+                
+                <h3>7. User Accounts</h3>
+                <p>Account registration may require administrator approval. Accounts may be approved, rejected, suspended, blocked, or removed if misuse or policy violations are detected.</p>
+                
+                <h3>8. Intellectual Property</h3>
+                <p>All trademarks, logos, organization names, and brand identities belong to their respective owners.</p>
+                
+                <h3>9. Updates</h3>
+                <p>These Terms & Conditions may be updated at any time without prior notice. Continued use of this website indicates acceptance of the latest version.</p>
             </div>
             <div style="margin-top: 25px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
                 <button id="acceptTncBtn">Accept & Close</button>
@@ -444,20 +474,44 @@
     <!-- DISCLAIMER MODAL -->
     <div id="disclaimerModal" class="glass-modal-overlay">
         <div class="glass-modal-box" style="padding-bottom: 25px;">
-            <span class="glass-close" onclick="document.getElementById('disclaimerModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
+            <span class="glass-close" id="closeDisclaimerBtnTop">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-triangle-exclamation"></i> DISCLAIMER</h2>
             <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
             <div class="tnc-content-scroll">
-                <p><strong>Last Updated: July 2026</strong></p>
-                <p><strong>Haryana Roadways Timetable – Educational Project</strong></p>
+                <p><strong>Last Updated:</strong> July 2026</p>
+                <h2>Educational Project</h2>
+                <p>Haryana Roadways Timetable is an <strong>independent educational, research, and software development project</strong> created for learning, portfolio presentation, and demonstration purposes.</p>
+                
+                <h2>Not an Official Website</h2>
+                <p>This website is <strong>NOT affiliated with, authorized by, endorsed by, sponsored by, or operated by Haryana Roadways or the Government of Haryana.</strong></p>
+                
+                <h2>Demonstration Data</h2>
+                <p>The routes, departure times, operators, bus types, fares, and other information available on this website are provided only for educational demonstration.</p>
+                <p>The developer has manually added only selected routes required to demonstrate the functionality of this software project. This website <strong>does not contain the complete Haryana Roadways timetable database</strong>.</p>
+                
+                <h2>Accuracy</h2>
+                <p>Although every reasonable effort is made to keep information accurate, routes, timings, operators, bus availability, and related information may change without notice. Users should always verify travel information through official Haryana Roadways sources before travelling.</p>
+                
+                <h2>Limitation of Liability</h2>
+                <p>The website owner shall not be responsible for:</p>
                 <ul>
-                    <li>This website is an independent educational and informational project.</li>
-                    <li>This is NOT the official website of Haryana Roadways.</li>
-                    <li>This project has no affiliation, authorization, sponsorship, or endorsement from Haryana Roadways or the Government of Haryana.</li>
+                    <li>Bus delays</li>
+                    <li>Route changes</li>
+                    <li>Timetable updates</li>
+                    <li>Incorrect third-party information</li>
+                    <li>Missed journeys</li>
+                    <li>Financial loss</li>
+                    <li>Travel inconvenience</li>
+                    <li>Service interruptions</li>
+                    <li>Technical issues</li>
+                    <li>Any direct or indirect damages resulting from the use of this website</li>
                 </ul>
+                
+                <h2>Acceptance</h2>
+                <p>By accessing or using this website, you acknowledge that you have read, understood, and accepted this Disclaimer.</p>
             </div>
             <div style="margin-top: 20px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
-                <button class="btn-side" onclick="document.getElementById('disclaimerModal').classList.remove('active'); document.body.style.overflow = 'auto';">Close</button>
+                <button class="btn-side" id="closeDisclaimerBtnBottom">Close</button>
             </div>
         </div>
     </div>
