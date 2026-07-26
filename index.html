@@ -11,7 +11,7 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Custom Premium Overrides for New Elements */
+        /* Custom Premium Overrides */
         .settings-nav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         
         #acceptTncBtn {
@@ -20,10 +20,14 @@
         }
         #acceptTncBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(94, 176, 99, 0.4); }
         
-        .tnc-content-scroll { max-height: 350px; overflow-y: auto; text-align: left; padding-right: 15px; margin-top: 15px; font-size: 0.95rem; line-height: 1.6; }
-        .tnc-content-scroll h3 { color: var(--primary-blue); margin-top: 20px; font-size: 1.1rem; }
+        .tnc-content-scroll { max-height: 400px; overflow-y: auto; text-align: left; padding-right: 15px; margin-top: 15px; font-size: 0.95rem; line-height: 1.6; color: #444; }
+        .tnc-content-scroll h3 { color: var(--primary-blue); margin-top: 20px; margin-bottom: 10px; font-size: 1.1rem; }
+        .tnc-content-scroll ul { padding-left: 20px; margin-bottom: 15px; }
+        .tnc-content-scroll li { margin-bottom: 6px; }
         
-        /* Custom scrollbar for T&C */
+        [data-theme="dark"] .tnc-content-scroll { color: #ccc; }
+        [data-theme="dark"] .gauge-inner { background: #1e232d !important; }
+        
         .tnc-content-scroll::-webkit-scrollbar { width: 6px; }
         .tnc-content-scroll::-webkit-scrollbar-thumb { background: #999; border-radius: 10px; }
     </style>
@@ -142,8 +146,9 @@
                     <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
                     <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update</button>
                     <button class="setting-nav-item" data-tab="tab-admin" id="btnAdminTab"><i class="fa-solid fa-user-shield"></i> Admin</button>
-                    <!-- NEW LIVE SPEED TRACKER BUTTON ADDED HERE -->
-                    <button class="setting-nav-item" id="openTrackerBtn">
+                    
+                    <!-- 🚍 LIVE SPEED TRACKER TAB BUTTON -->
+                    <button class="setting-nav-item" data-tab="tab-tracker" id="openTrackerTabBtn">
                         <i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> Tracker
                         <span style="font-size:10px; background:#f39c12; color:white; padding:2px 5px; border-radius:10px; margin-left:5px;">PRO</span>
                     </button>
@@ -182,7 +187,7 @@
                     </div>
                 </div>
 
-                <!-- Update Tab with Live Limit Check -->
+                <!-- Update Tab -->
                 <div id="tab-update" class="settings-tab-content slide-in-bottom">
                     <h3 style="color: var(--primary-blue); margin-bottom: 15px;">Update Profile Data</h3>
                     
@@ -235,6 +240,46 @@
                         <div class="flex-row" style="margin-top: 5px;">
                             <input type="password" id="adminPinInput" class="custom-input" placeholder="Enter Password" autocomplete="off">
                             <button id="btnUnlockAdmin" class="btn-premium-blue" style="padding: 8px 15px; border-radius: 6px; background:#d9534f;">Unlock Dashboard</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🚍 NEW SPEED TRACKER TAB CONTENT -->
+                <div id="tab-tracker" class="settings-tab-content slide-in-bottom">
+                    <div class="tracker-content" style="width: 100%; margin: auto; padding: 25px; border-radius: 16px; text-align: center; background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                        <h3 style="margin-bottom:5px; color:var(--primary-blue); font-size: 1.5rem;"><i class="fa-solid fa-bus"></i> Live Speed Tracker</h3>
+                        <p style="font-size:0.85rem; color:#777; margin-bottom: 20px;">Tracks real-time speed via GPS.</p>
+                        
+                        <div class="gauge-container" id="speedGauge" style="position:relative; width:170px; height:170px; margin:10px auto 20px; border-radius:50%; background:conic-gradient(#e0e0e0 100%, transparent 0); display:flex; align-items:center; justify-content:center; box-shadow:inset 0 0 15px rgba(0,0,0,0.05);">
+                            <div class="gauge-inner" style="width:140px; height:140px; background:var(--white); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 5px 10px rgba(0,0,0,0.05);">
+                                <span class="speed-value" id="speedVal" style="font-size:3rem; font-weight:800; color:var(--primary-blue); line-height:1;">00</span>
+                                <span class="speed-unit" style="font-size:1rem; font-weight:600; color:#777;">km/h</span>
+                            </div>
+                        </div>
+                        <div style="margin-top:-10px; margin-bottom:20px;">
+                            <span class="status-badge" id="speedStatusBadge" style="display:inline-block; padding:6px 15px; border-radius:20px; font-size:0.85rem; font-weight:600; background:#e0e0e0; color:#333;">Idle</span>
+                        </div>
+
+                        <div class="tracker-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; text-align:left;">
+                            <div class="track-box" style="background:var(--white); padding:12px; border-radius:12px; font-size:0.85rem; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                                <i class="fa-solid fa-location-dot" style="color:var(--primary-blue); font-size: 1.1rem; margin-bottom: 5px;"></i> <br><span style="font-size:10px;color:#777">GPS Status</span><br><strong id="gpsStatus" style="font-size:0.95rem;">Not Started</strong>
+                            </div>
+                            <div class="track-box" style="background:var(--white); padding:12px; border-radius:12px; font-size:0.85rem; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                                <i class="fa-regular fa-compass" style="color:var(--primary-blue); font-size: 1.1rem; margin-bottom: 5px;"></i> <br><span style="font-size:10px;color:#777">Direction</span><br><strong id="gpsDirection" style="font-size:0.95rem;">--</strong>
+                            </div>
+                            <div class="track-box" style="background:var(--white); padding:12px; border-radius:12px; font-size:0.85rem; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                                <i class="fa-solid fa-road" style="color:var(--primary-blue); font-size: 1.1rem; margin-bottom: 5px;"></i> <br><span style="font-size:10px;color:#777">Distance</span><br><strong id="gpsDistance" style="font-size:0.95rem;">0.00 km</strong>
+                            </div>
+                            <div class="track-box" style="background:var(--white); padding:12px; border-radius:12px; font-size:0.85rem; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                                <i class="fa-regular fa-clock" style="color:var(--primary-blue); font-size: 1.1rem; margin-bottom: 5px;"></i> <br><span style="font-size:10px;color:#777">Live Time</span><br><strong id="gpsTime" style="font-size:0.95rem;">--:--:--</strong>
+                            </div>
+                        </div>
+
+                        <!-- 🚍 FIXED ICONS & SPACING FOR TRACKER BUTTONS -->
+                        <div class="tracker-btns" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                            <button class="t-btn" id="btnStartTracker" style="flex:1; padding:12px; border:none; border-radius:10px; font-weight:bold; font-size: 0.95rem; cursor:pointer; color:white; background:#5eb063;"><i class="fa-solid fa-play"></i> Start</button>
+                            <button class="t-btn" id="btnPauseTracker" style="flex:1; padding:12px; border:none; border-radius:10px; font-weight:bold; font-size: 0.95rem; cursor:pointer; color:white; background:#f39c12; display:none;"><i class="fa-solid fa-pause"></i> Pause</button>
+                            <button class="t-btn" id="btnStopTracker" style="flex:1; padding:12px; border:none; border-radius:10px; font-weight:bold; font-size: 0.95rem; cursor:pointer; color:white; background:#d9534f; display:none;"><i class="fa-solid fa-stop"></i> Stop</button>
                         </div>
                     </div>
                 </div>
@@ -302,24 +347,125 @@
         </div>
     </div>
 
-    <!-- T&C MODAL WITH PREMIUM SCROLL AND BUTTONS -->
-    <div id="tncModal" class="glass-modal-overlay">
+    <!-- PRIVACY POLICY MODAL -->
+    <div id="privacyModal" class="glass-modal-overlay">
         <div class="glass-modal-box" style="padding-bottom: 25px;">
-            <span class="glass-close" id="closeTncBtnTop" onclick="document.getElementById('tncModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
-            <h2 class="glass-title"><i class="fa-solid fa-file-contract"></i> Terms & Conditions</h2>
+            <span class="glass-close" onclick="document.getElementById('privacyModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
+            <h2 class="glass-title"><i class="fa-solid fa-lock"></i> PRIVACY POLICY</h2>
             <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
             
             <div class="tnc-content-scroll">
-                <p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully before using this website. By accessing or using this website, you acknowledge that you have read, understood, and agreed to the following terms.</p>
+                <p><strong>Last Updated: July 2026</strong><br>Welcome to Haryana Roadways Timetable.<br>We value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and protect your information while using this website.</p>
                 
-                <h3>1. Educational Study Project</h3>
-                <p>This website is an independent, unofficial educational study project developed by the developer for learning, portfolio, research, and software development practice. It has been created to improve programming skills and demonstrate web development concepts.</p>
+                <h3>1. Information We Collect</h3>
+                <ul>
+                    <li>Full Name</li>
+                    <li>Mobile Number</li>
+                    <li>Email Address</li>
+                    <li>Secure Password</li>
+                    <li>Login History</li>
+                    <li>Device & Browser Information</li>
+                    <li>IP Address (if available)</li>
+                    <li>Account Status (Pending, Approved, Rejected, Suspended, Blocked)</li>
+                </ul>
                 
-                <h3>2. Demonstration Purpose Only</h3>
-                <p>The bus routes, timetable, fare details, and other information available on this website are demo/sample data created only for project demonstration. Only a limited number of routes have been added by the developer for testing and educational purposes. This website does not provide the complete or official Haryana Roadways timetable.</p>
+                <h3>2. Why We Collect Your Information</h3>
+                <ul>
+                    <li>To create and manage your account.</li>
+                    <li>To verify user identity.</li>
+                    <li>To provide secure login and authentication.</li>
+                    <li>To approve or reject user registrations.</li>
+                    <li>To improve website security and performance.</li>
+                    <li>To prevent unauthorized access and misuse.</li>
+                    <li>To maintain login history for security purposes.</li>
+                </ul>
                 
-                <h3>3. Not an Official Website</h3>
-                <p>This website is not affiliated with, authorized by, sponsored by, endorsed by, or operated by Haryana Roadways, the Government of Haryana, or any government department.</p>
+                <h3>3. Data Security</h3>
+                <ul>
+                    <li>Your information is stored securely.</li>
+                    <li>Passwords are protected and never intentionally shared with other users.</li>
+                    <li>We implement reasonable security measures to protect your account and personal information. (aiEDU)</li>
+                </ul>
+                
+                <h3>4. Information Sharing</h3>
+                <ul>
+                    <li>We do NOT sell your personal information.</li>
+                    <li>We do NOT rent your personal information.</li>
+                    <li>We do NOT intentionally share your personal information with third parties except where required for the functioning of this project or by law.</li>
+                </ul>
+                
+                <h3>5. User Responsibilities</h3>
+                <ul>
+                    <li>Keep your login credentials confidential.</li>
+                    <li>Do not share your password with anyone.</li>
+                    <li>You are responsible for all activity performed using your account.</li>
+                </ul>
+                
+                <h3>6. Account Management</h3>
+                <p>Your account may be:</p>
+                <ul>
+                    <li>Pending Approval</li>
+                    <li>Approved</li>
+                    <li>Rejected</li>
+                    <li>Suspended</li>
+                    <li>Blocked</li>
+                </ul>
+                <p>Any misuse of the website may result in temporary suspension or permanent blocking of your account.</p>
+                
+                <h3>7. Educational Project Notice</h3>
+                <p>This website is an independent educational project created for learning, demonstration, and personal convenience. It is not affiliated with Haryana Roadways or the Government of Haryana.</p>
+            </div>
+            <div style="margin-top: 20px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
+                <button class="btn-side" onclick="document.getElementById('privacyModal').classList.remove('active'); document.body.style.overflow = 'auto';">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- T&C MODAL -->
+    <div id="tncModal" class="glass-modal-overlay">
+        <div class="glass-modal-box" style="padding-bottom: 25px;">
+            <span class="glass-close" id="closeTncBtnTop" onclick="document.getElementById('tncModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
+            <h2 class="glass-title"><i class="fa-solid fa-file-contract"></i> TERMS & CONDITIONS</h2>
+            <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
+            
+            <div class="tnc-content-scroll">
+                <p><strong>Last Updated: July 2026</strong><br>By using Haryana Roadways Timetable, you agree to the following terms:</p>
+                
+                <h3>1. Educational Purpose</h3>
+                <p>This website has been developed solely for educational, informational, and project demonstration purposes.</p>
+                
+                <h3>2. Unofficial Project</h3>
+                <p>This website is NOT the official Haryana Roadways website and has no affiliation, authorization, or endorsement from Haryana Roadways or the Government of Haryana.</p>
+                
+                <h3>3. Timetable Information</h3>
+                <p>The routes and timetable information available on this website are provided for demonstration and educational purposes. Only selected routes have been included by the developer as part of this academic project.</p>
+                
+                <h3>4. User Conduct</h3>
+                <p>Users must not:</p>
+                <ul>
+                    <li>Attempt unauthorized access.</li>
+                    <li>Misuse the website.</li>
+                    <li>Upload malicious content.</li>
+                    <li>Use automated tools to attack or abuse the service.</li>
+                    <li>Copy or misuse project content without permission.</li>
+                </ul>
+                
+                <h3>5. Account Approval</h3>
+                <p>Registration does not guarantee access. Accounts may be approved, rejected, suspended, or blocked at the administrator's discretion.</p>
+                
+                <h3>6. Limitation of Liability</h3>
+                <p>The developer is not responsible for:</p>
+                <ul>
+                    <li>Incorrect timetable information.</li>
+                    <li>Travel delays.</li>
+                    <li>Route changes.</li>
+                    <li>Missed buses.</li>
+                    <li>Financial loss.</li>
+                    <li>Any inconvenience resulting from use of this website.</li>
+                </ul>
+                
+                <h3>7. Verification</h3>
+                <p>Users should always verify travel information through official Haryana Roadways sources before making travel decisions. (Diksha)</p>
             </div>
             
             <div style="margin-top: 25px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
@@ -328,66 +474,39 @@
         </div>
     </div>
 
-    <!-- PRIVACY POLICY MODAL -->
-    <div id="privacyModal" class="glass-modal-overlay">
-        <div class="glass-modal-box">
-            <span class="glass-close" onclick="document.getElementById('privacyModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
-            <h2 class="glass-title"><i class="fa-solid fa-user-shield"></i> Privacy Policy</h2>
-            <div class="glass-content" style="text-align: left; margin-top:15px; line-height: 1.6;">
-                <p>Your privacy is important to us. This is an educational project, and any data (like email or mobile number) collected during registration is used purely for demo authentication and testing purposes.</p>
-                <p style="margin-top: 10px;">We do not share, sell, or misuse your personal data. All data is securely stored in our cloud database for demonstration.</p>
-            </div>
-        </div>
-    </div>
-
     <!-- DISCLAIMER MODAL -->
     <div id="disclaimerModal" class="glass-modal-overlay">
-        <div class="glass-modal-box">
+        <div class="glass-modal-box" style="padding-bottom: 25px;">
             <span class="glass-close" onclick="document.getElementById('disclaimerModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
-            <h2 class="glass-title"><i class="fa-solid fa-triangle-exclamation"></i> Disclaimer</h2>
-            <div class="glass-content" style="text-align: left; margin-top:15px; line-height: 1.6;">
-                <p>This portal is strictly a personal project created for development learning. The timetables and routes shown here are completely fictional and intended for UI/UX demonstration only.</p>
-                <p style="margin-top: 10px; color: #d9534f; font-weight: bold;">Please do not rely on this timetable for planning actual travel. Always consult the official Haryana Roadways website or local bus stand for accurate information.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- LIVE SPEED TRACKER MODAL -->
-    <div id="speedTrackerModal" class="glass-modal-overlay">
-        <div class="tracker-content glass-swal" style="width: 90%; max-width: 400px; margin: auto; padding: 25px; border-radius: 20px; text-align: center; position: relative; top: 50%; transform: translateY(-50%); background: var(--white); box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-            <h3 style="margin-bottom:15px; color:var(--primary-blue); font-size: 1.5rem;"><i class="fa-solid fa-bus"></i> Live Speed Tracker</h3>
+            <h2 class="glass-title"><i class="fa-solid fa-triangle-exclamation"></i> DISCLAIMER</h2>
+            <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
             
-            <div class="gauge-container" id="speedGauge" style="position:relative; width:180px; height:180px; margin:20px auto; border-radius:50%; background:conic-gradient(#e0e0e0 100%, transparent 0); display:flex; align-items:center; justify-content:center; box-shadow:inset 0 0 20px rgba(0,0,0,0.1);">
-                <div class="gauge-inner" style="width:150px; height:150px; background:var(--white); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
-                    <span class="speed-value" id="speedVal" style="font-size:3rem; font-weight:800; color:var(--primary-blue); line-height:1;">00</span>
-                    <span class="speed-unit" style="font-size:1rem; font-weight:600; color:#777;">km/h</span>
-                </div>
+            <div class="tnc-content-scroll">
+                <p><strong>Last Updated: July 2026</strong></p>
+                <p><strong>Haryana Roadways Timetable – Educational Project</strong></p>
+                <ul>
+                    <li>This website is an independent educational and informational project.</li>
+                    <li>This is NOT the official website of Haryana Roadways.</li>
+                    <li>This project has no affiliation, authorization, sponsorship, or endorsement from Haryana Roadways or the Government of Haryana.</li>
+                    <li>The routes, bus timings, fares, and other information are provided only for learning, testing, demonstration, and project purposes.</li>
+                    <li>Only selected routes have been added by the developer for project demonstration.</li>
+                    <li>Information may be incomplete, outdated, or subject to change.</li>
+                    <li>Users should always verify travel details through official Haryana Roadways enquiry services before travelling.</li>
+                </ul>
+                <p>The developer shall not be liable for:</p>
+                <ul>
+                    <li>Bus delays</li>
+                    <li>Route changes</li>
+                    <li>Timetable updates</li>
+                    <li>Financial loss</li>
+                    <li>Travel inconvenience</li>
+                    <li>Incorrect third-party information</li>
+                </ul>
+                <p>All trademarks, logos, and brand names belong to their respective owners.<br>By using this website, you acknowledge that it is an unofficial educational project and agree to use it at your own discretion. (Kailvex Technologies)</p>
             </div>
-            <div style="margin-top:-10px; margin-bottom:15px;">
-                <span class="status-badge" id="speedStatusBadge" style="display:inline-block; padding:6px 15px; border-radius:20px; font-size:0.9rem; font-weight:600; background:#e0e0e0; color:#333;">Idle</span>
+            <div style="margin-top: 20px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
+                <button class="btn-side" onclick="document.getElementById('disclaimerModal').classList.remove('active'); document.body.style.overflow = 'auto';">Close</button>
             </div>
-
-            <div class="tracker-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px; text-align:left;">
-                <div class="track-box" style="background:rgba(0,0,0,0.05); padding:12px; border-radius:12px; font-size:0.85rem;">
-                    <i class="fa-solid fa-location-dot" style="color:var(--primary-blue); font-size: 1.2rem; margin-bottom: 5px;"></i> <br><span style="font-size:11px;color:#777">GPS Status</span><br><strong id="gpsStatus" style="font-size:1rem;">Not Started</strong>
-                </div>
-                <div class="track-box" style="background:rgba(0,0,0,0.05); padding:12px; border-radius:12px; font-size:0.85rem;">
-                    <i class="fa-regular fa-compass" style="color:var(--primary-blue); font-size: 1.2rem; margin-bottom: 5px;"></i> <br><span style="font-size:11px;color:#777">Direction</span><br><strong id="gpsDirection" style="font-size:1rem;">--</strong>
-                </div>
-                <div class="track-box" style="background:rgba(0,0,0,0.05); padding:12px; border-radius:12px; font-size:0.85rem;">
-                    <i class="fa-solid fa-road" style="color:var(--primary-blue); font-size: 1.2rem; margin-bottom: 5px;"></i> <br><span style="font-size:11px;color:#777">Distance</span><br><strong id="gpsDistance" style="font-size:1rem;">0.00 km</strong>
-                </div>
-                <div class="track-box" style="background:rgba(0,0,0,0.05); padding:12px; border-radius:12px; font-size:0.85rem;">
-                    <i class="fa-regular fa-clock" style="color:var(--primary-blue); font-size: 1.2rem; margin-bottom: 5px;"></i> <br><span style="font-size:11px;color:#777">Live Time</span><br><strong id="gpsTime" style="font-size:1rem;">--:--:--</strong>
-                </div>
-            </div>
-
-            <div class="tracker-btns" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                <button class="t-btn" id="btnStartTracker" style="flex:1; padding:12px; border:none; border-radius:12px; font-weight:bold; font-size: 1rem; cursor:pointer; color:white; background:#5eb063;"><i class="fa-solid fa-play"></i> Start</button>
-                <button class="t-btn" id="btnPauseTracker" style="flex:1; padding:12px; border:none; border-radius:12px; font-weight:bold; font-size: 1rem; cursor:pointer; color:white; background:#f39c12; display:none;"><i class="fa-solid fa-pause"></i> Pause</button>
-                <button class="t-btn" id="btnStopTracker" style="flex:1; padding:12px; border:none; border-radius:12px; font-weight:bold; font-size: 1rem; cursor:pointer; color:white; background:#d9534f; display:none;"><i class="fa-solid fa-stop"></i> Stop</button>
-            </div>
-            <button id="btnCloseTracker" style="width:100%; margin-top:10px; padding:12px; border:none; border-radius:12px; font-weight:bold; font-size: 1rem; cursor:pointer; color:white; background:#6c757d;">Close Tracker</button>
         </div>
     </div>
 
