@@ -296,7 +296,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     const musicStatusText = document.getElementById('musicStatusText');
     
     let musicStarted = false;
-    let targetVolume = 0.03; // Exactly 3% Volume
+    let targetVolume = 0.03; 
     let fadeInterval;
 
     function fadeAudio(targetVol, duration) {
@@ -389,7 +389,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚨 LIVE MARQUEE ALERT LOGIC (SUPER SLOW)
+    // 🚨 LIVE MARQUEE ALERT LOGIC
     // =========================================================
     function getMinutesToDeparture(departureStr) {
         var now = new Date();
@@ -1028,12 +1028,13 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚍 DEVICE SPEED TRACKER LOGIC (NO-HANG SMOOTH FIX)
+    // 🚍 DEVICE SPEED TRACKER LOGIC (ERROR FIXED & DIRECTION MATH ADDED)
     // =========================================================
     var watchSpeedId = null;
     var totalSpeedDist = 0;
     var lastSpeedLat = null;
     var lastSpeedLon = null;
+    var lastHeading = null;
 
     var startBtn = document.getElementById('btnStartTracker');
     var pauseBtn = document.getElementById('btnPauseTracker');
@@ -1045,15 +1046,15 @@ document.addEventListener("DOMContentLoaded", async function() {
     var gpsStatus = document.getElementById('gpsStatus');
     var gpsDirection = document.getElementById('gpsDirection');
     var gpsDistance = document.getElementById('gpsDistance');
+    var gpsTime = document.getElementById('gpsTime');
     
-    // 🔥 LIVE TIME FIX: Placed inside DOMContentLoaded so it accurately updates real-time
+    // 🔥 LIVE TIME UPDATE
     setInterval(function() {
         var d = new Date();
-        var gt = document.getElementById('gpsTime');
-        if(gt) {
-            gt.innerText = d.getHours().toString().padStart(2, '0') + ':' + 
-                           d.getMinutes().toString().padStart(2, '0') + ':' + 
-                           d.getSeconds().toString().padStart(2, '0');
+        if(gpsTime) {
+            gpsTime.innerText = d.getHours().toString().padStart(2, '0') + ':' + 
+                                d.getMinutes().toString().padStart(2, '0') + ':' + 
+                                d.getSeconds().toString().padStart(2, '0');
         }
     }, 1000);
 
@@ -1066,6 +1067,17 @@ document.addEventListener("DOMContentLoaded", async function() {
         return R * c; 
     }
 
+    // Mathematical formula to calculate direction if device doesn't provide heading
+    function calcHeadingManual(lat1, lon1, lat2, lon2) {
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+        var lat1Rad = lat1 * Math.PI / 180;
+        var lat2Rad = lat2 * Math.PI / 180;
+        var y = Math.sin(dLon) * Math.cos(lat2Rad);
+        var x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+        var brng = Math.atan2(y, x) * 180 / Math.PI;
+        return (brng + 360) % 360;
+    }
+
     function getDeviceDir(heading) {
         if (heading === null || isNaN(heading)) return '--';
         var val = Math.floor((heading / 22.5) + 0.5);
@@ -1073,13 +1085,13 @@ document.addEventListener("DOMContentLoaded", async function() {
         return arr[(val % 16)];
     }
 
-    // 🏎️ PREMIUM SMOOTH SPEED ANIMATION (LERP ALGORITHM)
+    // 🏎️ PREMIUM SMOOTH SPEED ANIMATION
     let targetSpeedKmH = 0;
     let displaySpeedKmH = 0;
     
     function animateSpeedGauge() {
         if (Math.abs(targetSpeedKmH - displaySpeedKmH) > 0.1) {
-            displaySpeedKmH += (targetSpeedKmH - displaySpeedKmH) * 0.08; // 8% smoothness factor per frame
+            displaySpeedKmH += (targetSpeedKmH - displaySpeedKmH) * 0.08; 
             
             let roundedSpeed = Math.round(displaySpeedKmH);
             let speedStr = roundedSpeed < 10 ? '0' + roundedSpeed : roundedSpeed.toString();
@@ -1109,7 +1121,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
         requestAnimationFrame(animateSpeedGauge);
     }
-    requestAnimationFrame(animateSpeedGauge); // Start animation loop once
+    requestAnimationFrame(animateSpeedGauge);
 
     function deviceSuccess(pos) {
         if(gpsStatus) { gpsStatus.innerText = "Connected"; gpsStatus.style.color = "#5eb063"; }
@@ -1117,32 +1129,45 @@ document.addEventListener("DOMContentLoaded", async function() {
         
         if (lastSpeedLat === crd.latitude && lastSpeedLon === crd.longitude) return;
 
+        let currentHeading = crd.heading;
+
         if (lastSpeedLat !== null && lastSpeedLon !== null) {
-            totalSpeedDist += calcDeviceDist(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
+            let dist = calcDeviceDist(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
+            totalSpeedDist += dist;
             if(gpsDistance) gpsDistance.innerText = totalSpeedDist.toFixed(2) + ' km';
+
+            // Calculate direction manually if device fails to provide it and we have moved
+            if ((currentHeading === null || isNaN(currentHeading)) && dist > 0.001) {
+                currentHeading = calcHeadingManual(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
+            }
         }
         
-        lastSpeedLat = crd.latitude; lastSpeedLon = crd.longitude;
+        lastSpeedLat = crd.latitude; 
+        lastSpeedLon = crd.longitude;
+        
+        // Update direction UI
+        if (currentHeading !== null && !isNaN(currentHeading)) {
+            lastHeading = currentHeading;
+            if(gpsDirection) gpsDirection.innerText = getDeviceDir(currentHeading);
+        } else if (lastHeading !== null) {
+            if(gpsDirection) gpsDirection.innerText = getDeviceDir(lastHeading);
+        }
         
         var speed = crd.speed ? (crd.speed * 3.6) : 0; 
-        if (speed < 2) speed = 0; // Remove walking/stationary GPS noise
+        if (speed < 2) speed = 0; 
         
-        targetSpeedKmH = speed; // Update target for smooth animation
-        
-        if(gpsDirection) gpsDirection.innerText = getDeviceDir(crd.heading);
+        targetSpeedKmH = speed; 
     }
 
     function deviceError(err) {
-        // MOBILE FIX: Ignore timeouts so it doesn't hang or stop tracking randomly
-        if (err.code === 1) { // PERMISSION_DENIED
+        // ONLY THROW POPUP FOR PERMISSION DENIED (Code 1)
+        if (err.code === 1) { 
             if(gpsStatus) { gpsStatus.innerText = "Permission Denied"; gpsStatus.style.color = "#d9534f"; }
-            Swal.fire({ title: 'Permission Denied', text: 'Please enable Location permission.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
+            Swal.fire({ title: 'Permission Denied', text: 'Please enable Location permission in your device settings.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
             stopDeviceTracking();
-        } else if (err.code === 3) { // TIMEOUT
+        } else { 
+            // Silent retry for Timeout (Code 3) or Position Unavailable (Code 2)
             if(gpsStatus) { gpsStatus.innerText = "Searching GPS..."; gpsStatus.style.color = "#f39c12"; }
-            // Do nothing, let it keep trying.
-        } else {
-            if(gpsStatus) { gpsStatus.innerText = "Weak Signal"; gpsStatus.style.color = "#f39c12"; }
         }
     }
 
@@ -1153,18 +1178,18 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(pauseBtn) pauseBtn.style.display = 'flex';
         if(stopBtn) stopBtn.style.display = 'flex';
         
-        // Timeout 30s & maximumAge 3s for smooth mobile tracking without failing
         watchSpeedId = navigator.geolocation.watchPosition(deviceSuccess, deviceError, { 
             enableHighAccuracy: true, 
-            timeout: 30000, 
-            maximumAge: 3000 
+            timeout: 10000, 
+            maximumAge: 0 
         });
     }
 
     function stopDeviceTracking() {
         if (watchSpeedId) navigator.geolocation.clearWatch(watchSpeedId);
         lastSpeedLat = null; lastSpeedLon = null; totalSpeedDist = 0;
-        targetSpeedKmH = 0; // Reset animation
+        lastHeading = null;
+        targetSpeedKmH = 0; 
         if(gpsDistance) gpsDistance.innerText = '0.00 km';
         if(gpsDirection) gpsDirection.innerText = '--';
         if(gpsStatus) { gpsStatus.innerText = "Stopped"; gpsStatus.style.color = "#d9534f"; }
