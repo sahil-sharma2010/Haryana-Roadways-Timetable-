@@ -39,9 +39,9 @@
         .tnc-content-scroll::-webkit-scrollbar { width: 6px; }
         .tnc-content-scroll::-webkit-scrollbar-thumb { background: #999; border-radius: 10px; }
 
-        /* LIVE MARQUEE - SLOWED DOWN TO 45 SECONDS */
+        /* LIVE MARQUEE - SPEED SLOWED DOWN TO 75 SECONDS (Very Smooth) */
         .marquee-wrapper { overflow: hidden; white-space: nowrap; background: #f8f9fa !important; padding: 10px 0; border-bottom: 1px solid #ddd; }
-        .marquee-content { display: inline-block; animation: marquee 45s linear infinite; padding-left: 100%; color: #000 !important; font-weight: bold; font-size: 1.05rem; }
+        .marquee-content { display: inline-block; animation: marquee 75s linear infinite; padding-left: 100%; color: #000 !important; font-weight: bold; font-size: 1.05rem; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         /* TRACK BUTTON */
@@ -65,8 +65,10 @@
         /* Glassmorphism Info Card */
         #mapInfoCard { transition: opacity 0.3s ease, transform 0.3s ease; }
         #mapInfoCard.hidden { opacity: 0; pointer-events: none; transform: translate(-50%, 20px); }
-
-        .footer-contact { margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem; line-height: 1.5; color: #ddd; }
+        
+        /* Contact Block inside Modals */
+        .modal-contact-block { margin-top: 25px; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); font-size: 0.9rem; }
+        [data-theme="dark"] .modal-contact-block { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
@@ -203,28 +205,20 @@
         </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Footer (Contact info removed from here) -->
     <footer>
         <p class="footer-credits">&copy; 2026 HR Haryana Roadways | Unofficial Portal By Sahil Sharma</p>
         <div class="footer-warning">This is an independent personal project created for educational and informational purposes.</div>
         <div class="footer-links-container">
-            <a href="#" id="openPrivacyBtn" class="footer-link"><i class="fa-solid fa-user-shield"></i> Privacy Policy</a>
+            <button id="openPrivacyBtn" class="footer-link" style="background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:inherit;"><i class="fa-solid fa-user-shield"></i> Privacy Policy</button>
             <span class="link-separator">|</span>
-            <a href="#" id="openTncBtn" class="footer-link"><i class="fa-solid fa-file-contract"></i> Terms & Conditions</a>
+            <button id="openTncBtn" class="footer-link" style="background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:inherit;"><i class="fa-solid fa-file-contract"></i> Terms & Conditions</button>
             <span class="link-separator">|</span>
-            <a href="#" id="openDisclaimerBtn" class="footer-link"><i class="fa-solid fa-triangle-exclamation"></i> Disclaimer</a>
-        </div>
-        
-        <div class="footer-contact">
-            <strong><i class="fa-solid fa-envelope"></i> CONTACT INFORMATION</strong><br>
-            Haryana Roadways Timetable (Educational Project)<br>
-            Hisar, Haryana, India<br>
-            Phone: +91 798******2 | Email: support@hrtimetable.in<br>
-            Office Hours: Monday – Saturday, 09:00 AM – 06:00 PM
+            <button id="openDisclaimerBtn" class="footer-link" style="background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:inherit;"><i class="fa-solid fa-triangle-exclamation"></i> Disclaimer</button>
         </div>
     </footer>
 
-    <!-- SETTINGS PAGE (ADMIN REMOVED COMPLETELY) -->
+    <!-- SETTINGS PAGE -->
     <div id="settingsPage" class="settings-page">
         <header class="settings-page-header">
             <div class="settings-header-left">
@@ -241,6 +235,7 @@
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
                     <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
                     <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update</button>
+                    <!-- HIDDEN ADMIN TAB REMOVED AS REQUESTED -->
                     <button class="setting-nav-item" data-tab="tab-tracker" id="openTrackerTabBtn" style="grid-column: span 2;">
                         <i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> Speed Tracker
                         <span style="font-size:10px; background:#f39c12; color:white; padding:2px 5px; border-radius:10px; margin-left:5px;">PRO</span>
@@ -420,6 +415,14 @@
                 <p>This website may use Local Storage or Session Storage to remember user preferences and improve functionality.</p>
                 <h2>Policy Updates</h2>
                 <p>This Privacy Policy may be updated periodically without prior notice. Continued use of this website indicates acceptance of the latest version.</p>
+                
+                <div class="modal-contact-block">
+                    <strong><i class="fa-solid fa-envelope"></i> CONTACT INFORMATION</strong><br><br>
+                    Haryana Roadways Timetable (Educational Project)<br>
+                    Hisar, Haryana, India<br>
+                    Phone: +91 798******2 | Email: support@hrtimetable.in<br>
+                    Office Hours: Monday – Saturday, 09:00 AM – 06:00 PM
+                </div>
             </div>
             <div style="margin-top: 20px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
                 <button class="btn-side" id="closePrivacyBtnBottom">Close</button>
@@ -464,6 +467,14 @@
                 
                 <h3>9. Updates</h3>
                 <p>These Terms & Conditions may be updated at any time without prior notice. Continued use of this website indicates acceptance of the latest version.</p>
+
+                <div class="modal-contact-block">
+                    <strong><i class="fa-solid fa-envelope"></i> CONTACT INFORMATION</strong><br><br>
+                    Haryana Roadways Timetable (Educational Project)<br>
+                    Hisar, Haryana, India<br>
+                    Phone: +91 798******2 | Email: support@hrtimetable.in<br>
+                    Office Hours: Monday – Saturday, 09:00 AM – 06:00 PM
+                </div>
             </div>
             <div style="margin-top: 25px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
                 <button id="acceptTncBtn">Accept & Close</button>
@@ -509,6 +520,14 @@
                 
                 <h2>Acceptance</h2>
                 <p>By accessing or using this website, you acknowledge that you have read, understood, and accepted this Disclaimer.</p>
+
+                <div class="modal-contact-block">
+                    <strong><i class="fa-solid fa-envelope"></i> CONTACT INFORMATION</strong><br><br>
+                    Haryana Roadways Timetable (Educational Project)<br>
+                    Hisar, Haryana, India<br>
+                    Phone: +91 798******2 | Email: support@hrtimetable.in<br>
+                    Office Hours: Monday – Saturday, 09:00 AM – 06:00 PM
+                </div>
             </div>
             <div style="margin-top: 20px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
                 <button class="btn-side" id="closeDisclaimerBtnBottom">Close</button>
