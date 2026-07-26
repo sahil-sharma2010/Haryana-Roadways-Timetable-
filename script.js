@@ -287,7 +287,96 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚨 LIVE MARQUEE ALERT LOGIC 
+    // 🎵 PREMIUM BACKGROUND MUSIC SYSTEM
+    // =========================================================
+    const bgMusic = document.getElementById('bgMusic');
+    const musicBtn = document.getElementById('musicToggleBtn');
+    const musicIcon = document.getElementById('musicIcon');
+    let musicStarted = false;
+    let targetVolume = 0.15;
+    let fadeInterval;
+
+    function fadeAudio(targetVol, duration) {
+        if (!bgMusic) return;
+        clearInterval(fadeInterval);
+        let steps = 20;
+        let stepTime = duration / steps;
+        let volStep = (targetVol - bgMusic.volume) / steps;
+        
+        fadeInterval = setInterval(() => {
+            let newVol = bgMusic.volume + volStep;
+            if (newVol < 0) newVol = 0;
+            if (newVol > 1) newVol = 1;
+            bgMusic.volume = newVol;
+            
+            if ((volStep > 0 && bgMusic.volume >= targetVol) || (volStep < 0 && bgMusic.volume <= targetVol)) {
+                bgMusic.volume = targetVol;
+                clearInterval(fadeInterval);
+                if (targetVol === 0) bgMusic.pause();
+            }
+        }, stepTime);
+    }
+
+    if (bgMusic && musicBtn) {
+        bgMusic.volume = 0; 
+        
+        const musicPref = localStorage.getItem('hr_music_pref');
+        if (musicPref === 'muted') {
+            musicIcon.className = 'fa-solid fa-volume-xmark';
+        } else {
+            musicIcon.className = 'fa-solid fa-music';
+        }
+
+        const startMusicOnInteraction = () => {
+            if (musicStarted) return;
+            
+            if (musicPref !== 'muted') {
+                bgMusic.play().then(() => {
+                    musicStarted = true;
+                    fadeAudio(targetVolume, 2000); // 2 second fade in
+                    
+                    if (!localStorage.getItem('hr_music_popup_shown') && typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: '🎵 Background Music Enabled',
+                            text: 'You can turn music ON/OFF anytime.',
+                            icon: 'info',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 4000,
+                            customClass: { popup: 'glass-swal' }
+                        });
+                        localStorage.setItem('hr_music_popup_shown', 'true');
+                    }
+                }).catch((e) => {
+                    // Silent fail if audio is missing or blocked
+                    musicBtn.style.display = 'none';
+                });
+            }
+            document.body.removeEventListener('click', startMusicOnInteraction);
+        };
+
+        document.body.addEventListener('click', startMusicOnInteraction);
+
+        musicBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            if (bgMusic.paused || bgMusic.volume === 0) {
+                musicIcon.className = 'fa-solid fa-music';
+                localStorage.setItem('hr_music_pref', 'playing');
+                bgMusic.play().then(() => {
+                    fadeAudio(targetVolume, 2000);
+                    musicStarted = true;
+                }).catch(err => { musicBtn.style.display = 'none'; });
+            } else {
+                musicIcon.className = 'fa-solid fa-volume-xmark';
+                localStorage.setItem('hr_music_pref', 'muted');
+                fadeAudio(0, 2000); // 2 second fade out
+            }
+        });
+    }
+
+    // =========================================================
+    // 🚨 LIVE MARQUEE ALERT LOGIC
     // =========================================================
     function getMinutesToDeparture(departureStr) {
         var now = new Date();
@@ -491,112 +580,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     // =========================================================
-    // GLOBAL ADMIN FUNCTIONS (KEPT FOR SAFETY - UI MOVED TO ADMIN.HTML)
-    // =========================================================
-    window.loadAdminData = async function() {
-        if (!db) return;
-        var adminTableBody = document.getElementById('adminTableBody');
-        var adminRequestsBody = document.getElementById('adminRequestsBody');
-        if(!adminTableBody || !adminRequestsBody) return;
-        adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
-        adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
-        
-        try {
-            var adminRow = await db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle();
-            var isMaint = adminRow.data ? adminRow.data.is_maintenance : false;
-
-            var response = await db.from('users').select('*').order('id', {ascending: false});
-            if (response.error) throw response.error;
-            
-            adminTableBody.innerHTML = ''; adminRequestsBody.innerHTML = '';
-            var approvedCount = 0; var pendingCount = 0;
-
-            response.data.forEach(function(user) {
-                var reqStatus = user.status ? user.status.toLowerCase() : 'approved';
-                var accStatus = user.account_status ? user.account_status.toLowerCase() : 'active';
-
-                if (reqStatus === 'pending') {
-                    pendingCount++;
-                    var tr1 = document.createElement('tr');
-                    tr1.innerHTML = `
-                        <td>${user.name}</td><td>${user.mobile}</td><td>${user.email}</td>
-                        <td style="white-space:nowrap;">
-                            <button class="btn-accept-req" onclick="acceptUserReq('${user.email}')">Accept</button>
-                            <button class="btn-reject-req" onclick="rejectUserReq('${user.email}')">Reject</button>
-                        </td>
-                    `;
-                    adminRequestsBody.appendChild(tr1);
-                } else if (reqStatus === 'approved') {
-                    approvedCount++;
-                    var statBadge = accStatus === 'blocked' ? '<span style="color:#d9534f;font-size:0.75rem;display:block;">[BLOCKED]</span>' : (accStatus === 'suspended' ? '<span style="color:#f39c12;font-size:0.75rem;display:block;">[SUSPENDED]</span>' : '');
-                    var tr2 = document.createElement('tr');
-                    tr2.innerHTML = `
-                        <td>${user.name} ${statBadge}</td><td>${user.mobile}</td><td>${user.email}</td>
-                        <td>
-                            <button class="btn-show-pass" id="btn-show-${user.id}" onclick="revealPassword('${user.id}', '${user.password}')">VIEW</button>
-                            <span id="pass-${user.id}" style="display:none;font-weight:bold;"></span>
-                        </td>
-                        <td><button class="btn-action-manage" onclick="manageUser('${user.email}', '${accStatus}')">Manage</button></td>
-                    `;
-                    adminTableBody.appendChild(tr2);
-                }
-            });
-            document.getElementById('totalUsersCount').innerText = approvedCount;
-            document.getElementById('reqCountBadge').innerText = pendingCount;
-            if(pendingCount === 0) adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No pending requests.</td></tr>';
-            if(approvedCount === 0) adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No active users.</td></tr>';
-        } catch (err) { }
-    };
-
-    window.revealPassword = function(id, pass) {
-        if (localStorage.getItem('hr_user_mobile') === '7988300872') {
-            document.getElementById(`btn-show-${id}`).style.display = 'none';
-            document.getElementById(`pass-${id}`).style.display = 'inline';
-            document.getElementById(`pass-${id}`).innerText = pass;
-        } else { Swal.fire('Error', 'Unauthorized action!', 'error'); }
-    };
-
-    window.manageUser = function(email, currentStatus) {
-        if (!db) return;
-        Swal.fire({
-            title: 'Manage Account Status',
-            html: `Current Status: <strong>${currentStatus.toUpperCase()}</strong><br><br>Select Action:`,
-            showDenyButton: true, showCancelButton: true,
-            confirmButtonText: 'Block', denyButtonText: 'Suspend', cancelButtonText: 'Unblock / Restore',
-            confirmButtonColor: '#d9534f', denyButtonColor: '#f39c12', cancelButtonColor: '#5eb063',
-            target: document.getElementById('adminPage') || 'body'
-        }).then(async function(result) {
-            var newStatus = null;
-            if (result.isConfirmed) newStatus = 'Blocked';
-            else if (result.isDenied) newStatus = 'Suspended';
-            else if (result.dismiss === Swal.DismissReason.cancel) newStatus = 'Active';
-
-            if (newStatus) {
-                Swal.fire({title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
-                var res = await db.from('users').update({ account_status: newStatus }).eq('email', email);
-                if (!res.error) { Swal.fire({title:'Success', text:`Account updated to ${newStatus}`, icon:'success', target: document.getElementById('adminPage') || 'body'}); loadAdminData(); } 
-                else { Swal.fire('Error', res.error.message, 'error'); }
-            }
-        });
-    };
-
-    window.acceptUserReq = async function(email) {
-        if(!db) return;
-        Swal.fire({title: 'Approving...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
-        var res = await db.from('users').update({ status: 'Approved', account_status: 'Active' }).eq('email', email);
-        if (!res.error) { Swal.fire({title:'Success', text:'User Approved.', icon:'success', target: document.getElementById('adminPage') || 'body'}); loadAdminData(); } 
-        else { Swal.fire('Error', res.error.message, 'error'); }
-    };
-
-    window.rejectUserReq = async function(email) {
-        if(!db) return;
-        Swal.fire({title: 'Rejecting...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
-        var res = await db.from('users').delete().eq('email', email);
-        if (!res.error) { Swal.fire({title:'Declined', text:'User request rejected and deleted.', icon:'info', target: document.getElementById('adminPage') || 'body'}); loadAdminData(); } 
-        else { Swal.fire('Error', res.error.message, 'error'); }
-    };
-
-    // =========================================================
     // PHONE & EMAIL UPDATES
     // =========================================================
     window.updatePhoneLimitUI = function() {
@@ -794,7 +777,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                             <td>${bus.via || 'Direct'}</td>
                             <td><span style="color: #4a914f; font-weight: 600;">${bus.busType}</span></td>
                             <td>${bus.arr || 'TBD'}</td>
-                            <td><button class="btn-track-route" onclick="openRouteMap('${safeFrom}', '${safeTo}', '${safeVia}', '${safeDep}', '${safeType}', '${safeOp}')"><i class="fa-solid fa-map-location-dot"></i> Track</button></td>
+                            <td><button class="btn-track-route" onclick="openRouteMap('${safeFrom}', '${safeTo}', '${safeVia}', '${safeDep}', '${safeType}', '${safeOp}')"><i class="fa-solid fa-map-location-dot"></i> Map</button></td>
                         `;
                         tableBody.appendChild(tr);
                     });
@@ -852,7 +835,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     var lRoutingControl = null;
     var lUserMarker = null;
 
-    // Toggle Floating Info Card
     var btnCloseInfo = document.getElementById('btnCloseMapInfo');
     var btnShowInfo = document.getElementById('btnShowMapInfo');
     var mapInfoCard = document.getElementById('mapInfoCard');
@@ -869,7 +851,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
     }
 
-    // Fast coordinate dictionary for Haryana routes
     var cityCoords = {
         "hisar": [29.1492, 75.7217], "delhi": [28.6139, 77.2090], "sirsa": [29.5336, 75.0177],
         "gurugram": [28.4595, 77.0266], "rohtak": [28.8955, 76.5892], "hansi": [29.1009, 75.9684],
@@ -909,7 +890,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         mapPage.style.display = 'flex';
         document.body.style.overflow = 'hidden';
 
-        // Reset Info card UI
         if(mapInfoCard) mapInfoCard.classList.remove('hidden');
         if(btnShowInfo) btnShowInfo.style.display = 'none';
 
@@ -946,7 +926,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                 routeWhileDragging: false,
                 addWaypoints: false,
                 fitSelectedRoutes: true,
-                show: false, // Clean UI, no instruction panel
+                show: false,
                 lineOptions: { styles: [{color: '#0056b3', opacity: 0.8, weight: 6}] },
                 createMarker: function(i, wp, nWps) {
                     var iconToUse = viaIcon;
