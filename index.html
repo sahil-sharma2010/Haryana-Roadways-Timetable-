@@ -10,6 +10,23 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Custom Premium Overrides for New Elements */
+        .settings-nav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        
+        #acceptTncBtn {
+            background: linear-gradient(135deg, #5eb063, #4a914f); color: white; border: none; padding: 10px 24px; 
+            border-radius: 25px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(94, 176, 99, 0.3); transition: all 0.3s ease;
+        }
+        #acceptTncBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(94, 176, 99, 0.4); }
+        
+        .tnc-content-scroll { max-height: 350px; overflow-y: auto; text-align: left; padding-right: 15px; margin-top: 15px; font-size: 0.95rem; line-height: 1.6; }
+        .tnc-content-scroll h3 { color: var(--primary-blue); margin-top: 20px; font-size: 1.1rem; }
+        
+        /* Custom scrollbar for T&C */
+        .tnc-content-scroll::-webkit-scrollbar { width: 6px; }
+        .tnc-content-scroll::-webkit-scrollbar-thumb { background: #999; border-radius: 10px; }
+    </style>
 </head>
 <body>
 
@@ -119,12 +136,17 @@
         <div class="settings-body container">
             <div class="settings-card glass-modal-box" style="width: 100%; max-width: 100%; box-shadow: none; border: none; background: transparent; padding: 0;">
                 
-                <div class="settings-nav-grid" style="grid-template-columns: repeat(5, 1fr);">
+                <div class="settings-nav-grid">
                     <button class="setting-nav-item active" data-tab="tab-theme"><i class="fa-solid fa-circle-half-stroke"></i> Theme</button>
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
                     <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
                     <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update</button>
                     <button class="setting-nav-item" data-tab="tab-admin" id="btnAdminTab"><i class="fa-solid fa-user-shield"></i> Admin</button>
+                    <!-- NEW LIVE SPEED TRACKER BUTTON ADDED HERE -->
+                    <button class="setting-nav-item" id="openTrackerBtn">
+                        <i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> Tracker
+                        <span style="font-size:10px; background:#f39c12; color:white; padding:2px 5px; border-radius:10px; margin-left:5px;">PRO</span>
+                    </button>
                 </div>
 
                 <!-- Theme Tab -->
@@ -190,10 +212,13 @@
                     <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
                     
                     <div class="update-block">
-                        <label><strong>Update Email Address</strong></label>
-                        <div class="flex-row" style="margin-top: 5px;">
-                            <input type="email" id="updateEmailInput" class="custom-input" placeholder="New Email Address">
-                            <button id="btnSendEmailOtp" class="btn-side">Send OTP</button>
+                        <label><strong>Update Email Address</strong> <span id="emailLimitText" style="color:#d9534f; font-weight:bold;">(Limit: 2 Edits / Month)</span></label>
+                        <div class="flex-row" style="margin-top: 5px; flex-direction:column; align-items:stretch;">
+                            <input type="email" id="oldEmailInput" class="custom-input" placeholder="Enter Old Email Address" style="margin-bottom:5px;">
+                            <div class="flex-row" style="width:100%;">
+                                <input type="email" id="updateEmailInput" class="custom-input" placeholder="Enter New Email Address">
+                                <button id="btnSendEmailOtp" class="btn-side">Send OTP</button>
+                            </div>
                         </div>
                         <div class="flex-row hidden" id="emailOtpBox" style="margin-top: 10px;">
                             <input type="text" id="emailOtpInput" class="custom-input" placeholder="Enter OTP" maxlength="4">
@@ -277,12 +302,92 @@
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- T&C MODAL WITH PREMIUM SCROLL AND BUTTONS -->
     <div id="tncModal" class="glass-modal-overlay">
-        <div class="glass-modal-box">
-            <span class="glass-close" id="closeTncBtn">&times;</span>
+        <div class="glass-modal-box" style="padding-bottom: 25px;">
+            <span class="glass-close" id="closeTncBtnTop" onclick="document.getElementById('tncModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
             <h2 class="glass-title"><i class="fa-solid fa-file-contract"></i> Terms & Conditions</h2>
-            <div class="glass-content"><p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully before using this website.</p></div>
+            <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
+            
+            <div class="tnc-content-scroll">
+                <p>Welcome to Haryana Roadways Timetable. Please read these Terms & Conditions carefully before using this website. By accessing or using this website, you acknowledge that you have read, understood, and agreed to the following terms.</p>
+                
+                <h3>1. Educational Study Project</h3>
+                <p>This website is an independent, unofficial educational study project developed by the developer for learning, portfolio, research, and software development practice. It has been created to improve programming skills and demonstrate web development concepts.</p>
+                
+                <h3>2. Demonstration Purpose Only</h3>
+                <p>The bus routes, timetable, fare details, and other information available on this website are demo/sample data created only for project demonstration. Only a limited number of routes have been added by the developer for testing and educational purposes. This website does not provide the complete or official Haryana Roadways timetable.</p>
+                
+                <h3>3. Not an Official Website</h3>
+                <p>This website is not affiliated with, authorized by, sponsored by, endorsed by, or operated by Haryana Roadways, the Government of Haryana, or any government department.</p>
+            </div>
+            
+            <div style="margin-top: 25px; text-align: right; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
+                <button id="acceptTncBtn">Accept & Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRIVACY POLICY MODAL -->
+    <div id="privacyModal" class="glass-modal-overlay">
+        <div class="glass-modal-box">
+            <span class="glass-close" onclick="document.getElementById('privacyModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
+            <h2 class="glass-title"><i class="fa-solid fa-user-shield"></i> Privacy Policy</h2>
+            <div class="glass-content" style="text-align: left; margin-top:15px; line-height: 1.6;">
+                <p>Your privacy is important to us. This is an educational project, and any data (like email or mobile number) collected during registration is used purely for demo authentication and testing purposes.</p>
+                <p style="margin-top: 10px;">We do not share, sell, or misuse your personal data. All data is securely stored in our cloud database for demonstration.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- DISCLAIMER MODAL -->
+    <div id="disclaimerModal" class="glass-modal-overlay">
+        <div class="glass-modal-box">
+            <span class="glass-close" onclick="document.getElementById('disclaimerModal').classList.remove('active'); document.body.style.overflow = 'auto';">&times;</span>
+            <h2 class="glass-title"><i class="fa-solid fa-triangle-exclamation"></i> Disclaimer</h2>
+            <div class="glass-content" style="text-align: left; margin-top:15px; line-height: 1.6;">
+                <p>This portal is strictly a personal project created for development learning. The timetables and routes shown here are completely fictional and intended for UI/UX demonstration only.</p>
+                <p style="margin-top: 10px; color: #d9534f; font-weight: bold;">Please do not rely on this timetable for planning actual travel. Always consult the official Haryana Roadways website or local bus stand for accurate information.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE SPEED TRACKER MODAL -->
+    <div id="speedTrackerModal" class="glass-modal-overlay">
+        <div class="tracker-content glass-swal" style="width: 90%; max-width: 400px; margin: auto; padding: 25px; border-radius: 20px; text-align: center; position: relative; top: 50%; transform: translateY(-50%); background: var(--white); box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <h3 style="margin-bottom:15px; color:var(--primary-blue); font-size: 1.5rem;"><i class="fa-solid fa-bus"></i> Live Speed Tracker</h3>
+            
+            <div class="gauge-container" id="speedGauge" style="position:relative; width:180px; height:180px; margin:20px auto; border-radius:50%; background:conic-gradient(#e0e0e0 100%, transparent 0); display:flex; align-items:center; justify-content:center; box-shadow:inset 0 0 20px rgba(0,0,0,0.1);">
+                <div class="gauge-inner" style="width:150px; height:150px; background:var(--white); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+                    <span class="speed-value" id="speedVal" style="font-size:3rem; font-weight:800; color:var(--primary-blue); line-height:1;">00</span>
+                    <span class="speed-unit" style="font-size:1rem; font-weight:600; color:#777;">km/h</span>
+                </div>
+            </div>
+            <div style="margin-top:-10px; margin-bottom:15px;">
+                <span class="status-badge" id="speedStatusBadge" style="display:inline-block; padding:6px 15px; border-radius:20px; font-size:0.9rem; font-weight:600; background:#e0e0e0; color:#333;">Idle</span>
+            </div>
+
+            <div class="tracker-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px; text-align:left;">
+                <div class="track-box" style="background:rgba(0,0,0,0.05); padding:12px; border-radius:12px; font-size:0.85rem;">
+                    <i class="fa-solid fa-location-dot" style="color:var(--primary-blue); font-size: 1.2rem; margin-bottom: 5px;"></i> <br><span style="font-size:11px;color:#777">GPS Status</span><br><strong id="gpsStatus" style="font-size:1rem;">Not Started</strong>
+                </div>
+                <div class="track-box" style="background:rgba(0,0,0,0.05); padding:12px; border-radius:12px; font-size:0.85rem;">
+                    <i class="fa-regular fa-compass" style="color:var(--primary-blue); font-size: 1.2rem; margin-bottom: 5px;"></i> <br><span style="font-size:11px;color:#777">Direction</span><br><strong id="gpsDirection" style="font-size:1rem;">--</strong>
+                </div>
+                <div class="track-box" style="background:rgba(0,0,0,0.05); padding:12px; border-radius:12px; font-size:0.85rem;">
+                    <i class="fa-solid fa-road" style="color:var(--primary-blue); font-size: 1.2rem; margin-bottom: 5px;"></i> <br><span style="font-size:11px;color:#777">Distance</span><br><strong id="gpsDistance" style="font-size:1rem;">0.00 km</strong>
+                </div>
+                <div class="track-box" style="background:rgba(0,0,0,0.05); padding:12px; border-radius:12px; font-size:0.85rem;">
+                    <i class="fa-regular fa-clock" style="color:var(--primary-blue); font-size: 1.2rem; margin-bottom: 5px;"></i> <br><span style="font-size:11px;color:#777">Live Time</span><br><strong id="gpsTime" style="font-size:1rem;">--:--:--</strong>
+                </div>
+            </div>
+
+            <div class="tracker-btns" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <button class="t-btn" id="btnStartTracker" style="flex:1; padding:12px; border:none; border-radius:12px; font-weight:bold; font-size: 1rem; cursor:pointer; color:white; background:#5eb063;"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="t-btn" id="btnPauseTracker" style="flex:1; padding:12px; border:none; border-radius:12px; font-weight:bold; font-size: 1rem; cursor:pointer; color:white; background:#f39c12; display:none;"><i class="fa-solid fa-pause"></i> Pause</button>
+                <button class="t-btn" id="btnStopTracker" style="flex:1; padding:12px; border:none; border-radius:12px; font-weight:bold; font-size: 1rem; cursor:pointer; color:white; background:#d9534f; display:none;"><i class="fa-solid fa-stop"></i> Stop</button>
+            </div>
+            <button id="btnCloseTracker" style="width:100%; margin-top:10px; padding:12px; border:none; border-radius:12px; font-weight:bold; font-size: 1rem; cursor:pointer; color:white; background:#6c757d;">Close Tracker</button>
         </div>
     </div>
 
