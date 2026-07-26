@@ -287,13 +287,16 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🎵 PREMIUM BACKGROUND MUSIC SYSTEM
+    // 🎵 PREMIUM BACKGROUND MUSIC SYSTEM (3% VOLUME)
     // =========================================================
     const bgMusic = document.getElementById('bgMusic');
-    const musicBtn = document.getElementById('musicToggleBtn');
-    const musicIcon = document.getElementById('musicIcon');
+    const musicToggle = document.getElementById('music-toggle');
+    const musicIconOn = document.getElementById('icon-music-on');
+    const musicIconOff = document.getElementById('icon-music-off');
+    const musicStatusText = document.getElementById('musicStatusText');
+    
     let musicStarted = false;
-    let targetVolume = 0.15;
+    let targetVolume = 0.03; // Exactly 3% Volume
     let fadeInterval;
 
     function fadeAudio(targetVol, duration) {
@@ -317,28 +320,46 @@ document.addEventListener("DOMContentLoaded", async function() {
         }, stepTime);
     }
 
-    if (bgMusic && musicBtn) {
+    function setMusicUI(isPlaying) {
+        if (isPlaying) {
+            musicStatusText.innerText = "ON";
+            musicIconOn.style.opacity = '1';
+            musicIconOff.style.opacity = '0.5';
+        } else {
+            musicStatusText.innerText = "OFF";
+            musicIconOn.style.opacity = '0.5';
+            musicIconOff.style.opacity = '1';
+        }
+    }
+
+    if (bgMusic) {
         bgMusic.volume = 0; 
         
-        const musicPref = localStorage.getItem('hr_music_pref');
+        // Loop fallback to ensure continuous play
+        bgMusic.addEventListener('ended', function() {
+            this.currentTime = 0;
+            this.play();
+        });
+
+        const musicPref = localStorage.getItem('hr_music_pref') || 'playing'; // Default ON
+        
         if (musicPref === 'muted') {
-            musicIcon.className = 'fa-solid fa-volume-xmark';
+            setMusicUI(false);
         } else {
-            musicIcon.className = 'fa-solid fa-music';
+            setMusicUI(true);
         }
 
         const startMusicOnInteraction = () => {
             if (musicStarted) return;
-            
             if (musicPref !== 'muted') {
                 bgMusic.play().then(() => {
                     musicStarted = true;
-                    fadeAudio(targetVolume, 2000); // 2 second fade in
+                    fadeAudio(targetVolume, 2000); 
                     
                     if (!localStorage.getItem('hr_music_popup_shown') && typeof Swal !== 'undefined') {
                         Swal.fire({
                             title: '🎵 Background Music Enabled',
-                            text: 'You can turn music ON/OFF anytime.',
+                            text: 'You can turn music ON/OFF anytime in Settings.',
                             icon: 'info',
                             toast: true,
                             position: 'top-end',
@@ -349,34 +370,37 @@ document.addEventListener("DOMContentLoaded", async function() {
                         localStorage.setItem('hr_music_popup_shown', 'true');
                     }
                 }).catch((e) => {
-                    // Silent fail if audio is missing or blocked
-                    musicBtn.style.display = 'none';
+                    // Silent fail
                 });
             }
             document.body.removeEventListener('click', startMusicOnInteraction);
         };
 
+        // Trigger on any interaction
         document.body.addEventListener('click', startMusicOnInteraction);
 
-        musicBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); 
-            if (bgMusic.paused || bgMusic.volume === 0) {
-                musicIcon.className = 'fa-solid fa-music';
-                localStorage.setItem('hr_music_pref', 'playing');
-                bgMusic.play().then(() => {
-                    fadeAudio(targetVolume, 2000);
-                    musicStarted = true;
-                }).catch(err => { musicBtn.style.display = 'none'; });
-            } else {
-                musicIcon.className = 'fa-solid fa-volume-xmark';
-                localStorage.setItem('hr_music_pref', 'muted');
-                fadeAudio(0, 2000); // 2 second fade out
-            }
-        });
+        // Settings Toggle Logic
+        if (musicToggle) {
+            musicToggle.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                if (bgMusic.paused || bgMusic.volume === 0) {
+                    setMusicUI(true);
+                    localStorage.setItem('hr_music_pref', 'playing');
+                    bgMusic.play().then(() => {
+                        fadeAudio(targetVolume, 2000);
+                        musicStarted = true;
+                    }).catch(err => { console.log("Music blocked"); });
+                } else {
+                    setMusicUI(false);
+                    localStorage.setItem('hr_music_pref', 'muted');
+                    fadeAudio(0, 2000); 
+                }
+            });
+        }
     }
 
     // =========================================================
-    // 🚨 LIVE MARQUEE ALERT LOGIC
+    // 🚨 LIVE MARQUEE ALERT LOGIC (SLOWED DOWN)
     // =========================================================
     function getMinutesToDeparture(departureStr) {
         var now = new Date();
@@ -777,7 +801,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                             <td>${bus.via || 'Direct'}</td>
                             <td><span style="color: #4a914f; font-weight: 600;">${bus.busType}</span></td>
                             <td>${bus.arr || 'TBD'}</td>
-                            <td><button class="btn-track-route" onclick="openRouteMap('${safeFrom}', '${safeTo}', '${safeVia}', '${safeDep}', '${safeType}', '${safeOp}')"><i class="fa-solid fa-map-location-dot"></i> Map</button></td>
+                            <td><button class="btn-track-route" onclick="openRouteMap('${safeFrom}', '${safeTo}', '${safeVia}', '${safeDep}', '${safeType}', '${safeOp}')"><i class="fa-solid fa-map-location-dot"></i> Track</button></td>
                         `;
                         tableBody.appendChild(tr);
                     });
@@ -788,36 +812,40 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // BULLETPROOF FOOTER & MODAL LOGIC 
+    // BULLETPROOF FOOTER & MODAL LOGIC (CLICK BUG FIXED)
     // ==========================================
     document.body.addEventListener('click', function(e) {
-        var target = e.target;
-        var parentTarget = target.closest('a, button, span, div');
-        var clickedText = target.innerText ? target.innerText.toLowerCase() : '';
-        if(parentTarget && parentTarget.innerText) clickedText = parentTarget.innerText.toLowerCase();
-
-        if (target.id === 'openTncBtn' || (parentTarget && parentTarget.id === 'openTncBtn') || clickedText.includes('terms') || clickedText.includes('t&c')) {
+        
+        // Strictly check for Button IDs to prevent false triggering on any text click
+        if (e.target.closest('#openTncBtn')) {
+            e.preventDefault(); 
             var modal = document.getElementById('tncModal');
-            if(modal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); modal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
+            if(modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+            return;
         }
         
-        if (target.id === 'openPrivacyBtn' || (parentTarget && parentTarget.id === 'openPrivacyBtn') || clickedText.includes('privacy')) {
+        if (e.target.closest('#openPrivacyBtn')) {
+            e.preventDefault(); 
             var pModal = document.getElementById('privacyModal');
-            if(pModal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); pModal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
+            if(pModal) { pModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+            return;
         }
         
-        if (target.id === 'openDisclaimerBtn' || (parentTarget && parentTarget.id === 'openDisclaimerBtn') || clickedText.includes('disclaimer')) {
+        if (e.target.closest('#openDisclaimerBtn')) {
+            e.preventDefault(); 
             var dModal = document.getElementById('disclaimerModal');
-            if(dModal && !target.closest('.glass-modal-overlay')) { e.preventDefault(); dModal.classList.add('active'); document.body.style.overflow = 'hidden'; return; }
+            if(dModal) { dModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+            return;
         }
 
-        if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn' || e.target.closest('.glass-close') || e.target.closest('.btn-side')) {
+        // Close Logic
+        if (e.target.closest('#closeTncBtnTop') || e.target.closest('#closePrivacyBtnTop') || e.target.closest('#closeDisclaimerBtnTop') || e.target.closest('.btn-side')) {
             var modalClose = e.target.closest('.glass-modal-overlay');
             if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
         }
 
-        if (e.target.closest('#acceptTncBtn') || e.target.id === 'acceptTncBtn') {
-            var modalAcc = e.target.closest('.glass-modal-overlay') || document.getElementById('tncModal');
+        if (e.target.closest('#acceptTncBtn')) {
+            var modalAcc = e.target.closest('.glass-modal-overlay');
             if(modalAcc) { modalAcc.classList.remove('active'); document.body.style.overflow = 'auto'; }
             var termsCheck = document.getElementById('termsCheck');
             if(termsCheck) termsCheck.checked = true;
