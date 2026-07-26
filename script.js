@@ -335,6 +335,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     if (bgMusic) {
         bgMusic.volume = 0; 
+        bgMusic.loop = true; 
         
         bgMusic.addEventListener('ended', function() {
             this.currentTime = 0;
@@ -347,44 +348,25 @@ document.addEventListener("DOMContentLoaded", async function() {
             setMusicUI(false);
         } else {
             setMusicUI(true);
-        }
-
-        const startMusicOnInteraction = () => {
-            if (musicStarted) return;
-            if (musicPref !== 'muted') {
-                bgMusic.play().then(() => {
+            
+            let playPromise = bgMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
                     musicStarted = true;
                     fadeAudio(targetVolume, 2000); 
-                    
-                    if (!localStorage.getItem('hr_music_popup_shown') && typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            title: '🎵 Background Music Enabled',
-                            text: 'You can turn music ON/OFF anytime in Settings.',
-                            icon: 'info',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 4000,
-                            customClass: { popup: 'glass-swal' }
-                        });
-                        localStorage.setItem('hr_music_popup_shown', 'true');
-                    }
-                }).catch((e) => {
-                    // Silent fail
+                }).catch(error => {
+                    const forcePlayOnInteract = () => {
+                        if (!musicStarted) {
+                            bgMusic.play().then(() => {
+                                musicStarted = true;
+                                fadeAudio(targetVolume, 2000);
+                            }).catch(e => console.log("Still blocked"));
+                        }
+                        ['click', 'touchstart', 'scroll', 'mousemove', 'keydown'].forEach(evt => document.removeEventListener(evt, forcePlayOnInteract));
+                    };
+                    ['click', 'touchstart', 'scroll', 'mousemove', 'keydown'].forEach(evt => document.addEventListener(evt, forcePlayOnInteract, {once: true}));
                 });
             }
-            // Remove listeners after first interaction
-            ['click', 'touchstart', 'scroll', 'keydown'].forEach(evt => document.removeEventListener(evt, startMusicOnInteraction));
-        };
-
-        // Try playing immediately if browser allows, otherwise wait for interaction
-        if (musicPref !== 'muted') {
-            bgMusic.play().then(() => {
-                musicStarted = true;
-                fadeAudio(targetVolume, 2000);
-            }).catch(e => {
-                ['click', 'touchstart', 'scroll', 'keydown'].forEach(evt => document.addEventListener(evt, startMusicOnInteraction, {once: true}));
-            });
         }
 
         if (musicToggle) {
@@ -828,11 +810,10 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // BULLETPROOF FOOTER & MODAL LOGIC (BUG FIXED)
+    // BULLETPROOF FOOTER & MODAL LOGIC 
     // ==========================================
     document.body.addEventListener('click', function(e) {
         
-        // Strict button ID check to prevent clicking anywhere else opening the modal
         if (e.target.closest('#openTncBtn')) {
             e.preventDefault(); 
             var modal = document.getElementById('tncModal');
@@ -1047,7 +1028,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚍 DEVICE SPEED TRACKER LOGIC (SMOOTH NO-HANG FIX)
+    // 🚍 DEVICE SPEED TRACKER LOGIC (NO-HANG SMOOTH FIX)
     // =========================================================
     var watchSpeedId = null;
     var totalSpeedDist = 0;
@@ -1064,7 +1045,17 @@ document.addEventListener("DOMContentLoaded", async function() {
     var gpsStatus = document.getElementById('gpsStatus');
     var gpsDirection = document.getElementById('gpsDirection');
     var gpsDistance = document.getElementById('gpsDistance');
-    var gpsTime = document.getElementById('gpsTime');
+    
+    // 🔥 LIVE TIME FIX: Placed inside DOMContentLoaded so it accurately updates real-time
+    setInterval(function() {
+        var d = new Date();
+        var gt = document.getElementById('gpsTime');
+        if(gt) {
+            gt.innerText = d.getHours().toString().padStart(2, '0') + ':' + 
+                           d.getMinutes().toString().padStart(2, '0') + ':' + 
+                           d.getSeconds().toString().padStart(2, '0');
+        }
+    }, 1000);
 
     function calcDeviceDist(lat1, lon1, lat2, lon2) {
         var R = 6371; 
@@ -1082,59 +1073,76 @@ document.addEventListener("DOMContentLoaded", async function() {
         return arr[(val % 16)];
     }
 
-    function updateDeviceUI(speedKmH, heading) {
-        speedKmH = Math.max(0, speedKmH);
-        if(speedVal) speedVal.innerText = speedKmH < 10 ? '0' + speedKmH.toFixed(0) : speedKmH.toFixed(0);
-        if(gpsDirection) gpsDirection.innerText = getDeviceDir(heading);
-        if(gpsDistance) gpsDistance.innerText = totalSpeedDist.toFixed(2) + ' km';
+    // 🏎️ PREMIUM SMOOTH SPEED ANIMATION (LERP ALGORITHM)
+    let targetSpeedKmH = 0;
+    let displaySpeedKmH = 0;
+    
+    function animateSpeedGauge() {
+        if (Math.abs(targetSpeedKmH - displaySpeedKmH) > 0.1) {
+            displaySpeedKmH += (targetSpeedKmH - displaySpeedKmH) * 0.08; // 8% smoothness factor per frame
+            
+            let roundedSpeed = Math.round(displaySpeedKmH);
+            let speedStr = roundedSpeed < 10 ? '0' + roundedSpeed : roundedSpeed.toString();
+            
+            if (speedVal && speedVal.innerText !== speedStr) {
+                speedVal.innerText = speedStr;
+            }
 
-        var color = '#e0e0e0';
-        var statText = 'Idle';
-        
-        if (speedKmH > 0 && speedKmH <= 20) { color = '#5eb063'; statText = 'Low Speed 🟢'; }
-        else if (speedKmH > 20 && speedKmH <= 50) { color = '#f39c12'; statText = 'Medium 🟡'; }
-        else if (speedKmH > 50 && speedKmH <= 80) { color = '#e67e22'; statText = 'High 🟠'; }
-        else if (speedKmH > 80) { color = '#d9534f'; statText = 'Very High 🔴'; }
+            let color = '#e0e0e0';
+            let statText = 'Idle';
+            
+            if (roundedSpeed > 0 && roundedSpeed <= 20) { color = '#5eb063'; statText = 'Low Speed 🟢'; }
+            else if (roundedSpeed > 20 && roundedSpeed <= 50) { color = '#f39c12'; statText = 'Medium 🟡'; }
+            else if (roundedSpeed > 50 && roundedSpeed <= 80) { color = '#e67e22'; statText = 'High 🟠'; }
+            else if (roundedSpeed > 80) { color = '#d9534f'; statText = 'Very High 🔴'; }
 
-        if(speedStatusBadge) {
-            speedStatusBadge.style.background = color;
-            speedStatusBadge.style.color = 'white';
-            speedStatusBadge.innerText = statText;
+            if (speedStatusBadge && speedStatusBadge.innerText !== statText) {
+                speedStatusBadge.style.background = color;
+                speedStatusBadge.style.color = 'white';
+                speedStatusBadge.innerText = statText;
+            }
+
+            if (speedGauge) {
+                let percentage = Math.min(displaySpeedKmH / 120 * 100, 100);
+                speedGauge.style.background = `conic-gradient(${color} ${percentage}%, transparent 0)`;
+            }
         }
-
-        if(speedGauge) {
-            var percentage = Math.min(speedKmH / 120 * 100, 100);
-            speedGauge.style.background = `conic-gradient(${color} ${percentage}%, transparent 0)`;
-        }
+        requestAnimationFrame(animateSpeedGauge);
     }
+    requestAnimationFrame(animateSpeedGauge); // Start animation loop once
 
     function deviceSuccess(pos) {
         if(gpsStatus) { gpsStatus.innerText = "Connected"; gpsStatus.style.color = "#5eb063"; }
         var crd = pos.coords;
         
-        // Prevent hang by rejecting duplicate coordinates
         if (lastSpeedLat === crd.latitude && lastSpeedLon === crd.longitude) return;
 
         if (lastSpeedLat !== null && lastSpeedLon !== null) {
             totalSpeedDist += calcDeviceDist(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
+            if(gpsDistance) gpsDistance.innerText = totalSpeedDist.toFixed(2) + ' km';
         }
+        
         lastSpeedLat = crd.latitude; lastSpeedLon = crd.longitude;
         
         var speed = crd.speed ? (crd.speed * 3.6) : 0; 
-        if (speed < 2) speed = 0; // Filter out GPS noise (walking speed bounce)
+        if (speed < 2) speed = 0; // Remove walking/stationary GPS noise
         
-        // Use requestAnimationFrame for smooth UI update without hanging browser
-        window.requestAnimationFrame(() => updateDeviceUI(speed, crd.heading));
+        targetSpeedKmH = speed; // Update target for smooth animation
+        
+        if(gpsDirection) gpsDirection.innerText = getDeviceDir(crd.heading);
     }
 
     function deviceError(err) {
-        if(gpsStatus) { gpsStatus.innerText = "GPS Error"; gpsStatus.style.color = "#d9534f"; }
-        if (err.code === 1) {
-            Swal.fire({ title: 'Permission Denied', text: 'Location permission is required to use Device Speed Tracker.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
+        // MOBILE FIX: Ignore timeouts so it doesn't hang or stop tracking randomly
+        if (err.code === 1) { // PERMISSION_DENIED
+            if(gpsStatus) { gpsStatus.innerText = "Permission Denied"; gpsStatus.style.color = "#d9534f"; }
+            Swal.fire({ title: 'Permission Denied', text: 'Please enable Location permission.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
             stopDeviceTracking();
+        } else if (err.code === 3) { // TIMEOUT
+            if(gpsStatus) { gpsStatus.innerText = "Searching GPS..."; gpsStatus.style.color = "#f39c12"; }
+            // Do nothing, let it keep trying.
         } else {
-            Swal.fire({ title: 'Error', text: 'Unable to fetch location. Check your GPS.', icon: 'warning', target: document.getElementById('settingsPage') || 'body' });
-            stopDeviceTracking();
+            if(gpsStatus) { gpsStatus.innerText = "Weak Signal"; gpsStatus.style.color = "#f39c12"; }
         }
     }
 
@@ -1145,18 +1153,20 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(pauseBtn) pauseBtn.style.display = 'flex';
         if(stopBtn) stopBtn.style.display = 'flex';
         
-        // maximumAge 2000 & timeout 10000 ensures smooth tracking without thread locking/hanging
+        // Timeout 30s & maximumAge 3s for smooth mobile tracking without failing
         watchSpeedId = navigator.geolocation.watchPosition(deviceSuccess, deviceError, { 
             enableHighAccuracy: true, 
-            timeout: 10000, 
-            maximumAge: 2000 
+            timeout: 30000, 
+            maximumAge: 3000 
         });
     }
 
     function stopDeviceTracking() {
         if (watchSpeedId) navigator.geolocation.clearWatch(watchSpeedId);
         lastSpeedLat = null; lastSpeedLon = null; totalSpeedDist = 0;
-        updateDeviceUI(0, null);
+        targetSpeedKmH = 0; // Reset animation
+        if(gpsDistance) gpsDistance.innerText = '0.00 km';
+        if(gpsDirection) gpsDirection.innerText = '--';
         if(gpsStatus) { gpsStatus.innerText = "Stopped"; gpsStatus.style.color = "#d9534f"; }
         if(startBtn) startBtn.style.display = 'flex';
         if(pauseBtn) pauseBtn.style.display = 'none';
