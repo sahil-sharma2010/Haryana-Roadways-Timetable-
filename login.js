@@ -227,7 +227,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             btnLoginSubmit.disabled = true; btnLoginSubmit.innerText = "Checking...";
 
             try {
-                // Check Global Maintenance Status From Admin
                 var adminRes = await db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle();
                 if (adminRes.data && adminRes.data.is_maintenance === true && mobVal !== '7988300872') {
                     Swal.fire({ title: 'Site Under Maintenance', html: "You can't login now because the site is under maintenance", icon: 'warning', confirmButtonText: 'Okk', confirmButtonColor: '#d9534f' });
@@ -235,7 +234,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                     return;
                 }
 
-                // Normal Login Proceed
                 var res = await db.from('users').select('*').eq('mobile', mobVal).maybeSingle();
                 var user = res.data;
                 
