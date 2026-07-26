@@ -61,10 +61,8 @@ document.addEventListener("DOMContentLoaded", async function() {
     var db = getDB();
     
     if (db && userEmail) {
-        // 1. Check Maintenance Mode First
         db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle().then(function(adminRes) {
             
-            // If maintenance is true (App is OFF) and user is NOT dev
             if (adminRes.data && adminRes.data.is_maintenance === true && userMob !== '7988300872') {
                 localStorage.removeItem('hr_logged_in');
                 localStorage.setItem('hr_kicked_reason', 'maintenance');
@@ -72,7 +70,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                 return;
             }
 
-            // 2. Normal User Kick Logic
             db.from('users').select('account_status, status').eq('email', userEmail).maybeSingle().then(function(res) {
                 if (res.error || !res.data) return; 
                 var accStat = res.data.account_status ? res.data.account_status.toLowerCase() : 'active';
@@ -135,7 +132,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                             if(dispMob) dispMob.innerText = "+91 " + res.data.mobile;
                             if(dispEmail) dispEmail.innerText = res.data.email;
                             
-                            // Initialize limits UI
                             if(typeof updatePhoneLimitUI === 'function') updatePhoneLimitUI(); 
                             if(typeof updateEmailLimitUI === 'function') updateEmailLimitUI(); 
                         }
@@ -248,7 +244,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         adminRequestsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
         
         try {
-            // DYNAMIC MAINTENANCE TOGGLE UI
             var adminRow = await db.from('users').select('is_maintenance').eq('mobile', '7988300872').maybeSingle();
             var isMaint = adminRow.data ? adminRow.data.is_maintenance : false;
 
@@ -270,7 +265,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                 }
             }
 
-            // Logic visual: App ON means false, App OFF means true
             maintContainer.style.background = isMaint ? '#f8d7da' : '#d4edda';
             maintContainer.style.border = `2px solid ${isMaint ? '#f5c6cb' : '#c3e6cb'}`;
             maintContainer.innerHTML = `
@@ -293,7 +287,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                 }
             };
 
-            // Fetch User Data
             var response = await db.from('users').select('*').order('id', {ascending: false});
             if (response.error) throw response.error;
             
@@ -345,20 +338,21 @@ document.addEventListener("DOMContentLoaded", async function() {
         } else { Swal.fire('Error', 'Unauthorized action!', 'error'); }
     };
 
+    // FIX: ADDED UNSUSPEND / UNBLOCK LOGIC HERE
     window.manageUser = function(email, currentStatus) {
         if (!db) return;
         Swal.fire({
             title: 'Manage Account Status',
-            html: `Current Status: <strong>${currentStatus}</strong><br><br>Select Action:`,
+            html: `Current Status: <strong>${currentStatus.toUpperCase()}</strong><br><br>Select Action:`,
             showDenyButton: true, showCancelButton: true,
-            confirmButtonText: 'Block', denyButtonText: 'Suspend', cancelButtonText: 'Unblock',
+            confirmButtonText: 'Block', denyButtonText: 'Suspend', cancelButtonText: 'Unblock / Restore',
             confirmButtonColor: '#d9534f', denyButtonColor: '#f39c12', cancelButtonColor: '#5eb063',
             target: document.getElementById('adminPage') || 'body'
         }).then(async function(result) {
             var newStatus = null;
             if (result.isConfirmed) newStatus = 'Blocked';
             else if (result.isDenied) newStatus = 'Suspended';
-            else if (result.dismiss === Swal.DismissReason.cancel) newStatus = 'Active';
+            else if (result.dismiss === Swal.DismissReason.cancel) newStatus = 'Active'; // This UNSUSPENDS or UNBLOCKS
 
             if (newStatus) {
                 Swal.fire({title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('adminPage') || 'body'});
