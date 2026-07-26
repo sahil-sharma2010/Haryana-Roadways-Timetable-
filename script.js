@@ -36,10 +36,9 @@ function getDB() {
 }
 
 // =========================================================
-// MASSIVE BUS DATA FOR MARQUEE & SEARCH
+// MASSIVE BUS DATA (110+ ROUTES - 100% SAFE)
 // =========================================================
 var busData = [
-    // --- FROM USER'S ORIGINAL PROMPT ---
     { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "05:20 AM", busType: "Ordinary", arr: "HR" },
     { from: "Sirsa", to: "Gurugram", via: "Hansi", departure: "07:53 AM", busType: "Ordinary", arr: "HR" },
     { from: "Hisar", to: "Rohtak", via: "Hansi", departure: "09:30 AM", busType: "Ordinary", arr: "HR" },
@@ -185,8 +184,6 @@ var busData = [
     { from: "Hisar", to: "Delhi", via: "Hansi", departure: "09:40 PM", busType: "Ordinary", arr: "HR" },
     { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:20 PM", busType: "Ordinary", arr: "HR" },
     { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:40 PM", busType: "Ordinary", arr: "HR" },
-
-    // --- EXTRACTED FROM NEW IMAGES (104917 to 105747) ---
     { from: "Hisar", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "05:10 AM", busType: "Ordinary", arr: "HR" },
     { from: "Hisar", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "06:00 AM", busType: "AC", arr: "HR" },
     { from: "Hisar", to: "Ballabgarh", via: "Hansi, Meham, Beri, Jhajjar", departure: "06:00 AM", busType: "AC", arr: "HR" },
@@ -290,7 +287,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚨 LIVE MARQUEE ALERT LOGIC (BLACK TEXT, 30 MINS & 5 MINS) 
+    // 🚨 LIVE MARQUEE ALERT LOGIC
     // =========================================================
     function getMinutesToDeparture(departureStr) {
         var now = new Date();
@@ -315,7 +312,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         var marquee = document.getElementById('marqueeText');
         if(!marquee) return;
         
-        // Find buses departing in the next 30 minutes
         var upcomingBuses = busData.filter(function(b) {
             var mins = getMinutesToDeparture(b.departure);
             return mins >= 0 && mins <= 30; 
@@ -325,10 +321,10 @@ document.addEventListener("DOMContentLoaded", async function() {
             var alertText = upcomingBuses.map(function(b) {
                 var mins = getMinutesToDeparture(b.departure);
                 var timeText = mins <= 5 ? `<span style="color:#d9534f; font-weight:900;">IN ${mins} MINS!</span>` : `in ${mins} mins`;
-                return `🚍 ${b.departure} ${b.from} to ${b.to} departing ${timeText}`;
+                return `🚍 ${b.from} to ${b.to} departing ${timeText} (${b.departure})`;
             }).join(' &nbsp; &nbsp; | &nbsp; &nbsp; ');
             
-            marquee.innerHTML = `<span style="color: #000; font-weight: bold; font-size: 1.05rem;">🚨 LIVE DEPARTURES: &nbsp; ${alertText} 🚨</span>`;
+            marquee.innerHTML = `<span style="color: #000; font-weight: bold; font-size: 1.05rem;">🚨 UPCOMING DEPARTURES: &nbsp; ${alertText} 🚨</span>`;
         } else {
             marquee.innerHTML = `<span style="color: #000; font-weight: bold; font-size: 1.05rem;">🚍 Welcome to Haryana Roadways Timetable | Plan your journey easily. All timings are subject to change.</span>`;
         }
@@ -484,7 +480,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                 if(routeDetailsContainer) routeDetailsContainer.innerHTML = destHTML;
             } else {
                 if(routeDetailsContainer) routeDetailsContainer.innerHTML = '';
-                // Popup error inside settings page
                 Swal.fire({
                     title: 'Route Unavailable 🚧',
                     text: `The routes for ${city} Depot are currently being updated. Please check back later.`,
@@ -856,27 +851,33 @@ document.addEventListener("DOMContentLoaded", async function() {
                     var bTo = bus.to.toLowerCase().trim();
                     var bVia = (bus.via || "").toLowerCase().trim();
 
-                    // MUNDHAL SPECIAL CONDITION: 
                     if (toVal === 'mundhal') {
                         var mundhalDestinations = ["delhi", "gurugram", "rohtak", "bahadurgarh", "palwal", "ballabgarh", "agra", "jhajjar", "fatehabad", "haldwani", "tanakpur"];
                         var passesMundhal = (bTo === 'mundhal') || bVia.includes('mundhal') || (mundhalDestinations.includes(bTo) && bVia.includes('hansi'));
                         return bFrom === fromVal && passesMundhal;
                     }
 
-                    // NORMAL SEARCH
                     return bFrom === fromVal && (bTo === toVal || bVia.includes(toVal));
                 });
 
                 if (results.length > 0) {
                     results.forEach(function(bus, index) {
                         var tr = document.createElement('tr');
+                        var safeFrom = bus.from.replace(/'/g, "\\'");
+                        var safeTo = bus.to.replace(/'/g, "\\'");
+                        var safeVia = (bus.via || "Direct").replace(/'/g, "\\'");
+                        var safeDep = bus.departure.replace(/'/g, "\\'");
+                        var safeType = bus.busType.replace(/'/g, "\\'");
+                        var safeOp = (bus.arr || 'TBD').replace(/'/g, "\\'");
+
                         tr.innerHTML = `
                             <td>${index + 1}</td>
                             <td><i class="fa-regular fa-clock"></i> <strong style="color: var(--primary-blue);">${bus.departure}</strong></td>
                             <td>${bus.from} &rarr; ${bus.to}</td>
-                            <td>${bus.via}</td>
+                            <td>${bus.via || 'Direct'}</td>
                             <td><span style="color: #4a914f; font-weight: 600;">${bus.busType}</span></td>
                             <td>${bus.arr || 'TBD'}</td>
+                            <td><button class="btn-track-route" onclick="openRouteMap('${safeFrom}', '${safeTo}', '${safeVia}', '${safeDep}', '${safeType}', '${safeOp}')"><i class="fa-solid fa-map-location-dot"></i> Map</button></td>
                         `;
                         tableBody.appendChild(tr);
                     });
@@ -890,7 +891,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     // BULLETPROOF FOOTER & MODAL LOGIC 
     // ==========================================
     document.body.addEventListener('click', function(e) {
-        
         var target = e.target;
         var parentTarget = target.closest('a, button, span, div');
         var clickedText = target.innerText ? target.innerText.toLowerCase() : '';
@@ -929,12 +929,194 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     // =========================================================
-    // 🚍 LIVE SPEED TRACKER LOGIC
+    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET & OSRM)
     // =========================================================
-    var watchId = null;
-    var totalDistance = 0;
-    var lastLat = null;
-    var lastLon = null;
+    var lMap = null;
+    var lRoutingControl = null;
+    var lUserMarker = null;
+
+    // Hardcoded Coordinates for Fast, Free Map loading (No limits)
+    var cityCoords = {
+        "hisar": [29.1492, 75.7217], "delhi": [28.6139, 77.2090], "sirsa": [29.5336, 75.0177],
+        "gurugram": [28.4595, 77.0266], "rohtak": [28.8955, 76.5892], "hansi": [29.1009, 75.9684],
+        "mundhal": [28.9427, 76.1738], "bahadurgarh": [28.6811, 76.9242], "fatehabad": [29.5112, 75.4536],
+        "palwal": [28.1487, 77.3320], "ballabgarh": [28.3359, 77.3271], "agra": [27.1767, 78.0081],
+        "jhajjar": [28.6111, 76.6548], "haldwani": [29.2183, 79.5130], "tanakpur": [29.0725, 80.1130],
+        "ganganagar": [29.9167, 73.8771], "ellanabad": [29.4500, 74.6500], "nathusari chopta": [29.3565, 75.0594],
+        "chopta": [29.3565, 75.0594], "meham": [28.9592, 76.2947], "beri": [28.6998, 76.5772],
+        "badli": [28.5833, 76.8167], "dabwali": [29.9576, 74.7088], "bathinda": [30.2110, 74.9455],
+        "anoopgarh": [29.1911, 73.2086], "bikaner": [28.0229, 73.3119]
+    };
+
+    // Helper to get Coordinates (Fast dictionary lookup or fallback to API)
+    async function getCoordinates(cityStr) {
+        var cleanCity = cityStr.trim().toLowerCase();
+        if (cityCoords[cleanCity]) return L.latLng(cityCoords[cleanCity][0], cityCoords[cleanCity][1]);
+        
+        try {
+            var response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityStr)}, Haryana, India`);
+            var data = await response.json();
+            if (data && data.length > 0) {
+                return L.latLng(data[0].lat, data[0].lon);
+            }
+        } catch (e) { console.error("Geocoding failed for " + cityStr); }
+        return null;
+    }
+
+    window.openRouteMap = async function(from, to, via, dep, type, op) {
+        var mapPage = document.getElementById('routeMapPage');
+        if(!mapPage) return;
+        
+        document.getElementById('mapRouteTitle').innerHTML = `${from} &rarr; ${to}`;
+        document.getElementById('mapDepTime').innerText = dep;
+        document.getElementById('mapBusType').innerText = type;
+        document.getElementById('mapOp').innerText = op;
+        document.getElementById('mapViaStops').innerText = via || 'Direct';
+        document.getElementById('mapEstDist').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Calculating...';
+        document.getElementById('mapEstTime').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Calculating...';
+        
+        mapPage.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        if (!lMap) {
+            lMap = L.map('map', {zoomControl: false}).setView([29.1492, 75.7217], 8);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            }).addTo(lMap);
+            L.control.zoom({ position: 'topleft' }).addTo(lMap);
+        }
+
+        if (lRoutingControl) {
+            lMap.removeControl(lRoutingControl);
+        }
+        if (lUserMarker) {
+            lMap.removeLayer(lUserMarker);
+            lUserMarker = null;
+        }
+
+        // Gather all stops
+        var stopNames = [from];
+        if (via && via.trim() !== '' && via.trim().toLowerCase() !== 'direct') {
+            stopNames = stopNames.concat(via.split(',').map(s => s.trim()));
+        }
+        stopNames.push(to);
+
+        var waypoints = [];
+        for (var i = 0; i < stopNames.length; i++) {
+            var latLng = await getCoordinates(stopNames[i]);
+            if (latLng) waypoints.push(latLng);
+        }
+
+        if (waypoints.length >= 2) {
+            var startIcon = L.divIcon({html: '<i class="fa-solid fa-circle-dot fa-2x" style="color:#5eb063; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));"></i>', className: 'custom-div-icon', iconSize: [24,24]});
+            var endIcon = L.divIcon({html: '<i class="fa-solid fa-location-dot fa-2x" style="color:#d9534f; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));"></i>', className: 'custom-div-icon', iconSize: [24,24]});
+            var viaIcon = L.divIcon({html: '<i class="fa-solid fa-circle fa-sm" style="color:#f39c12; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></i>', className: 'custom-div-icon', iconSize: [12,12]});
+
+            lRoutingControl = L.Routing.control({
+                waypoints: waypoints,
+                routeWhileDragging: false,
+                addWaypoints: false,
+                fitSelectedRoutes: true,
+                show: false, // Hides the instruction panel
+                lineOptions: {
+                    styles: [{color: '#0056b3', opacity: 0.8, weight: 6}]
+                },
+                createMarker: function(i, wp, nWps) {
+                    var iconToUse = viaIcon;
+                    if (i === 0) iconToUse = startIcon;
+                    if (i === nWps - 1) iconToUse = endIcon;
+                    return L.marker(wp.latLng, {icon: iconToUse});
+                }
+            }).addTo(lMap);
+
+            lRoutingControl.on('routesfound', function(e) {
+                var routes = e.routes;
+                var summary = routes[0].summary;
+                
+                document.getElementById('mapEstDist').innerText = (summary.totalDistance / 1000).toFixed(1) + " km";
+                
+                var totalTime = summary.totalTime;
+                var hrs = Math.floor(totalTime / 3600);
+                var mins = Math.floor((totalTime % 3600) / 60);
+                var timeStr = "";
+                if(hrs > 0) timeStr += hrs + " hr ";
+                timeStr += mins + " min";
+                
+                document.getElementById('mapEstTime').innerText = timeStr;
+            });
+            
+            lRoutingControl.on('routingerror', function() {
+                document.getElementById('mapEstDist').innerText = 'N/A';
+                document.getElementById('mapEstTime').innerText = 'N/A';
+                Swal.fire('Route Error', 'Could not calculate the route. Network issue or invalid locations.', 'error');
+            });
+
+        } else {
+            Swal.fire('Error', 'Could not locate the route destinations.', 'warning');
+            document.getElementById('mapEstDist').innerText = 'N/A';
+            document.getElementById('mapEstTime').innerText = 'N/A';
+        }
+    };
+
+    var btnBackMap = document.getElementById('btnBackFromMap');
+    if(btnBackMap) {
+        btnBackMap.addEventListener('click', function() {
+            var mapPage = document.getElementById('routeMapPage');
+            if(mapPage) mapPage.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        });
+    }
+
+    var btnFit = document.getElementById('btnFitRoute');
+    if(btnFit) {
+        btnFit.addEventListener('click', function() {
+            if(lMap && lRoutingControl) {
+                var waypoints = lRoutingControl.getWaypoints();
+                var latlngs = waypoints.map(wp => wp.latLng).filter(ll => ll != null);
+                if(latlngs.length > 0) {
+                    var bounds = L.latLngBounds(latlngs);
+                    lMap.fitBounds(bounds, {padding: [50, 50]});
+                }
+            }
+        });
+    }
+
+    var btnMyLoc = document.getElementById('btnMyLocation');
+    if(btnMyLoc) {
+        btnMyLoc.addEventListener('click', function() {
+            if(navigator.geolocation) {
+                Swal.fire({title: 'Locating...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), target: document.getElementById('routeMapPage')});
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    Swal.close();
+                    var loc = L.latLng(pos.coords.latitude, pos.coords.longitude);
+                    
+                    if(!lUserMarker) {
+                        var userIcon = L.divIcon({
+                            html: '<i class="fa-solid fa-street-view fa-2x" style="color:#0056b3; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));"></i>',
+                            className: 'custom-div-icon', iconSize: [24,24]
+                        });
+                        lUserMarker = L.marker(loc, {icon: userIcon, zIndexOffset: 1000}).addTo(lMap);
+                    } else {
+                        lUserMarker.setLatLng(loc);
+                    }
+                    lMap.flyTo(loc, 15);
+                }, function(err) {
+                    Swal.close();
+                    Swal.fire({title: 'Error', text: 'Location permission denied.', icon: 'error', target: document.getElementById('routeMapPage')});
+                });
+            } else {
+                Swal.fire({title: 'Error', text: 'Geolocation is not supported.', icon: 'error', target: document.getElementById('routeMapPage')});
+            }
+        });
+    }
+
+    // =========================================================
+    // 🚍 DEVICE SPEED TRACKER LOGIC (SETTINGS TAB)
+    // =========================================================
+    var watchSpeedId = null;
+    var totalSpeedDist = 0;
+    var lastSpeedLat = null;
+    var lastSpeedLon = null;
 
     var startBtn = document.getElementById('btnStartTracker');
     var pauseBtn = document.getElementById('btnPauseTracker');
@@ -948,16 +1130,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     var gpsDistance = document.getElementById('gpsDistance');
     var gpsTime = document.getElementById('gpsTime');
 
-    setInterval(function() {
-        var d = new Date();
-        if(gpsTime) {
-            gpsTime.innerText = d.getHours().toString().padStart(2, '0') + ':' + 
-                                d.getMinutes().toString().padStart(2, '0') + ':' + 
-                                d.getSeconds().toString().padStart(2, '0');
-        }
-    }, 1000);
-
-    function calculateDistance(lat1, lon1, lat2, lon2) {
+    function calcDeviceDist(lat1, lon1, lat2, lon2) {
         var R = 6371; 
         var dLat = (lat2 - lat1) * Math.PI / 180;
         var dLon = (lon2 - lon1) * Math.PI / 180;
@@ -966,18 +1139,18 @@ document.addEventListener("DOMContentLoaded", async function() {
         return R * c; 
     }
 
-    function getDirection(heading) {
+    function getDeviceDir(heading) {
         if (heading === null || isNaN(heading)) return '--';
         var val = Math.floor((heading / 22.5) + 0.5);
         var arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
         return arr[(val % 16)];
     }
 
-    function updateUI(speedKmH, heading) {
+    function updateDeviceUI(speedKmH, heading) {
         speedKmH = Math.max(0, speedKmH);
         if(speedVal) speedVal.innerText = speedKmH < 10 ? '0' + speedKmH.toFixed(0) : speedKmH.toFixed(0);
-        if(gpsDirection) gpsDirection.innerText = getDirection(heading);
-        if(gpsDistance) gpsDistance.innerText = totalDistance.toFixed(2) + ' km';
+        if(gpsDirection) gpsDirection.innerText = getDeviceDir(heading);
+        if(gpsDistance) gpsDistance.innerText = totalSpeedDist.toFixed(2) + ' km';
 
         var color = '#e0e0e0';
         var statText = 'Idle';
@@ -999,58 +1172,58 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
     }
 
-    function success(pos) {
+    function deviceSuccess(pos) {
         if(gpsStatus) { gpsStatus.innerText = "Connected"; gpsStatus.style.color = "#5eb063"; }
         var crd = pos.coords;
         
-        if (lastLat !== null && lastLon !== null) {
-            totalDistance += calculateDistance(lastLat, lastLon, crd.latitude, crd.longitude);
+        if (lastSpeedLat !== null && lastSpeedLon !== null) {
+            totalSpeedDist += calcDeviceDist(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
         }
-        lastLat = crd.latitude; lastLon = crd.longitude;
+        lastSpeedLat = crd.latitude; lastSpeedLon = crd.longitude;
         var speed = crd.speed ? (crd.speed * 3.6) : 0; 
-        updateUI(speed, crd.heading);
+        updateDeviceUI(speed, crd.heading);
     }
 
-    function error(err) {
+    function deviceError(err) {
         if(gpsStatus) { gpsStatus.innerText = "GPS Error"; gpsStatus.style.color = "#d9534f"; }
         if (err.code === 1) {
-            Swal.fire({ title: 'Permission Denied', text: 'Location permission is required to use Live Speed Tracker.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
-            stopTracking();
+            Swal.fire({ title: 'Permission Denied', text: 'Location permission is required to use Device Speed Tracker.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
+            stopDeviceTracking();
         } else {
             Swal.fire({ title: 'Error', text: 'Unable to fetch location. Check your GPS.', icon: 'warning', target: document.getElementById('settingsPage') || 'body' });
-            stopTracking();
+            stopDeviceTracking();
         }
     }
 
-    function startTracking() {
+    function startDeviceTracking() {
         if (!navigator.geolocation) { Swal.fire({title: 'Error', text: 'Geolocation is not supported', icon: 'error', target: document.getElementById('settingsPage') || 'body'}); return; }
         if(gpsStatus) { gpsStatus.innerText = "Searching..."; gpsStatus.style.color = "#f39c12"; }
         if(startBtn) startBtn.style.display = 'none';
         if(pauseBtn) pauseBtn.style.display = 'flex';
         if(stopBtn) stopBtn.style.display = 'flex';
         
-        watchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+        watchSpeedId = navigator.geolocation.watchPosition(deviceSuccess, deviceError, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
     }
 
-    function stopTracking() {
-        if (watchId) navigator.geolocation.clearWatch(watchId);
-        lastLat = null; lastLon = null; totalDistance = 0;
-        updateUI(0, null);
+    function stopDeviceTracking() {
+        if (watchSpeedId) navigator.geolocation.clearWatch(watchSpeedId);
+        lastSpeedLat = null; lastSpeedLon = null; totalSpeedDist = 0;
+        updateDeviceUI(0, null);
         if(gpsStatus) { gpsStatus.innerText = "Stopped"; gpsStatus.style.color = "#d9534f"; }
         if(startBtn) startBtn.style.display = 'flex';
         if(pauseBtn) pauseBtn.style.display = 'none';
         if(stopBtn) stopBtn.style.display = 'none';
     }
 
-    function pauseTracking() {
-        if (watchId) navigator.geolocation.clearWatch(watchId);
+    function pauseDeviceTracking() {
+        if (watchSpeedId) navigator.geolocation.clearWatch(watchSpeedId);
         if(gpsStatus) { gpsStatus.innerText = "Paused"; gpsStatus.style.color = "#f39c12"; }
         if(startBtn) startBtn.style.display = 'flex';
         if(pauseBtn) pauseBtn.style.display = 'none';
     }
 
-    if(startBtn) startBtn.addEventListener('click', startTracking);
-    if(stopBtn) stopBtn.addEventListener('click', stopTracking);
-    if(pauseBtn) pauseBtn.addEventListener('click', pauseTracking);
+    if(startBtn) startBtn.addEventListener('click', startDeviceTracking);
+    if(stopBtn) stopBtn.addEventListener('click', stopDeviceTracking);
+    if(pauseBtn) pauseBtn.addEventListener('click', pauseDeviceTracking);
 
 });
