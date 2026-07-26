@@ -1,7 +1,13 @@
-// === FIX FOR POPUPS HIDING BEHIND MODALS ===
+// === PREMIUM STYLES INJECTION ===
 if (typeof document !== 'undefined') {
     var style = document.createElement('style');
-    style.innerHTML = '.swal2-container { z-index: 9999999 !important; }';
+    style.innerHTML = `
+        .swal2-container { z-index: 9999999 !important; }
+        #acceptTncBtn { background: linear-gradient(135deg, #5eb063, #4a914f) !important; color: white !important; border: none !important; padding: 10px 24px !important; border-radius: 25px !important; font-weight: 600 !important; cursor: pointer !important; box-shadow: 0 4px 10px rgba(94, 176, 99, 0.3) !important; transition: all 0.3s ease !important; }
+        #acceptTncBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(94, 176, 99, 0.4) !important; }
+        #closeTncBtn { background: #f1f3f5 !important; color: #333 !important; border: none !important; padding: 10px 24px !important; border-radius: 25px !important; font-weight: 600 !important; cursor: pointer !important; transition: all 0.3s ease !important; }
+        #closeTncBtn:hover { background: #e2e6ea !important; }
+    `;
     document.head.appendChild(style);
 }
 
@@ -34,11 +40,12 @@ async function hashString(str) {
 
 document.addEventListener("DOMContentLoaded", async function() {
     
+    // Redirect if already logged in
     if (localStorage.getItem('hr_logged_in') === 'true') { window.location.href = 'index.html'; }
     if (typeof emailjs !== 'undefined') { try { emailjs.init("K6cs_matxXu2begVg"); } catch (e) {} }
 
     // ==========================================
-    // SHOW BLOCKED & MAINTENANCE POPUPS (Custom UI)
+    // SHOW BLOCKED & MAINTENANCE POPUPS
     // ==========================================
     var kickedReason = localStorage.getItem('hr_kicked_reason');
     if (kickedReason) {
@@ -206,7 +213,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // LOGIN LOGIC (WITH ADMIN MAINTENANCE CHECK)
+    // LOGIN LOGIC
     // ==========================================
     var loginForm = document.getElementById('loginForm');
     var loginMobile = document.getElementById('loginMobile');
@@ -371,17 +378,19 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ==========================================
-    // FLAWLESS T&C MODAL LOGIC (PREMIUM FIX)
+    // BULLETPROOF FOOTER & MODAL LOGIC
     // ==========================================
     document.body.addEventListener('click', function(e) {
-        // Open Triggers
-        if (e.target.closest('#openTncBtn') || e.target.id === 'openTncBtn') {
-            e.preventDefault();
-            var modal = document.getElementById('tncModal');
-            if(modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
-        }
         
-        // Premium Close / Accept Buttons Logic
+        var tncTarget = e.target.closest('#openTncBtn, .open-tnc-btn, a[href="#tnc"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Terms'));
+        var privacyTarget = e.target.closest('#openPrivacyBtn, .open-privacy-btn, a[href="#privacy"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Privacy'));
+        var discTarget = e.target.closest('#openDisclaimerBtn, .open-disclaimer-btn, a[href="#disclaimer"]') || (e.target.tagName === 'A' && e.target.innerText.includes('Disclaimer'));
+
+        if (tncTarget) { e.preventDefault(); var m = document.getElementById('tncModal'); if(m) { m.classList.add('active'); document.body.style.overflow = 'hidden'; } }
+        if (privacyTarget) { e.preventDefault(); var p = document.getElementById('privacyModal'); if(p) { p.classList.add('active'); document.body.style.overflow = 'hidden'; } }
+        if (discTarget) { e.preventDefault(); var d = document.getElementById('disclaimerModal'); if(d) { d.classList.add('active'); document.body.style.overflow = 'hidden'; } }
+        
+        // Premium Close / Accept Buttons
         if (e.target.closest('#closeTncBtn') || e.target.id === 'closeTncBtn' || e.target.closest('.glass-close')) {
             var modalClose = e.target.closest('.glass-modal-overlay');
             if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
@@ -394,10 +403,8 @@ document.addEventListener("DOMContentLoaded", async function() {
             if(termsCheck) termsCheck.checked = true;
         }
 
-        // Overlay Outside Click Close
         if (e.target.classList.contains('glass-modal-overlay')) {
-            e.target.classList.remove('active');
-            document.body.style.overflow = 'auto';
+            e.target.classList.remove('active'); document.body.style.overflow = 'auto';
         }
     });
 
