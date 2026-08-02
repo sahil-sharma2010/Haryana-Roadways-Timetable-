@@ -10,25 +10,24 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --primary-blue: #0056b3; }
-        body { background: #f1f3f5; font-family: 'Roboto', sans-serif; overflow-x: hidden; margin: 0; padding: 0; transition: background-color 0.3s; }
+        
+        /* TRANSITION FOR SMOOTH DAY/NIGHT SWITCH */
+        body { background: #f1f3f5; font-family: 'Roboto', sans-serif; overflow-x: hidden; margin: 0; padding: 0; transition: background-color 0.4s ease, color 0.4s ease; }
         
         button, a, input, select { -webkit-tap-highlight-color: transparent; outline: none; box-shadow: none; }
 
         /* HEADER */
-        .page-header { background: var(--primary-blue); color: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 999; }
+        .page-header { background: var(--primary-blue); color: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 999; transition: 0.4s; }
         .btn-back { background: transparent; color: white; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
         .header-title { font-size: 1.2rem; font-weight: 500; margin: 0; }
 
         /* MAIN WRAPPER */
         .tracker-main { max-width: 100vw; margin: 0 auto; padding: 15px; box-sizing: border-box; }
         .tracker-wrapper { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.4s; }
-        [data-theme="dark"] .tracker-wrapper { background: #1e232d; border: 1px solid #2a303c; }
 
         /* CONTROLS: Light & Eye Icon */
-        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        [data-theme="dark"] .controls-row { border-color: #2a303c; }
+        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; transition: 0.4s; }
         .ctrl-btn { background: #f0f7ff; color: var(--primary-blue); border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        [data-theme="dark"] .ctrl-btn { background: rgba(0,86,179,0.2); color: #74b9ff; }
         .ctrl-btn:active { transform: scale(0.95); }
 
         /* GRID LAYOUT */
@@ -36,24 +35,12 @@
         @media (max-width: 850px) { .tracker-grid { grid-template-columns: 1fr; } }
 
         /* FOCUS MODE - HIDE DETAILS */
-        .focus-mode .info-grid, .focus-mode .trip-details-row { display: none !important; }
+        .focus-mode .info-grid, .focus-mode .trip-actions { display: none !important; }
         .focus-mode .tracker-grid { grid-template-columns: 1fr !important; }
         .focus-mode .meter-box { min-height: 50vh; transform: scale(1.05); margin-top: 20px; }
 
-        /* 🔥 4K HD REAL DASHBOARD SPEEDOMETER 🔥 */
+        /* 🔥 4K HD REAL DASHBOARD SPEEDOMETER (DAY MODE) 🔥 */
         .meter-box { background: #fcfcfc; border: 1px solid #eee; border-radius: 16px; padding: 30px 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; position: relative; min-height: 380px; transition: 0.4s; }
-        [data-theme="dark"] .meter-box { background: #151921; border-color: #2a303c; }
-
-        /* 🔥 RED/WHITE CAR NIGHT MODE 🔥 */
-        .meter-box.dash-night-mode { background: #000 !important; border-color: #111 !important; box-shadow: inset 0 0 50px rgba(0,0,0,0.9); }
-        .meter-box.dash-night-mode .dial-bg { background: conic-gradient(from 240deg, #ff3b30 0 60deg, #ff4757 60deg 120deg, #e84118 120deg 180deg, #c23616 180deg 240deg, transparent 240deg); filter: drop-shadow(0 0 15px rgba(255, 71, 87, 0.7)); }
-        .meter-box.dash-night-mode .tick::before { background: #fff; box-shadow: 0 0 5px #fff; }
-        .meter-box.dash-night-mode .tick span { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.9); }
-        .meter-box.dash-night-mode .meter-needle { background: #fff; box-shadow: 0 0 15px #fff, 0 0 20px #fff; }
-        .meter-box.dash-night-mode .meter-center { background: #111; border-color: #333; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
-        .meter-box.dash-night-mode .speed-val-wrap span.num { color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.9); }
-        .meter-box.dash-night-mode .speed-val-wrap span.unit { color: #ccc; }
-
         .analog-dial { position: relative; width: 300px; height: 280px; margin: 0 auto; }
         
         .dial-bg { 
@@ -65,63 +52,89 @@
         .tick-container { position: absolute; width: 300px; height: 300px; top: 0; left: 0; }
         .tick { position: absolute; width: 30px; height: 300px; left: 135px; top: 0; }
         .tick::before { content: ''; position: absolute; top: 0; left: 13px; width: 4px; height: 12px; background: #333; border-radius: 2px; transition: 0.4s; }
-        [data-theme="dark"] .tick::before { background: #ddd; }
-        
-        /* NO WHITE BOX - PERFECT TRANSPARENCY */
         .tick span { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; margin-top: 18px; font-size: 1.05rem; font-weight: 800; color: #333; background: transparent; transition: 0.4s; }
-        [data-theme="dark"] .tick span { color: #ddd; }
 
-        .meter-needle { width: 6px; height: 135px; background: linear-gradient(to top, #c0392b, #ff4757); position: absolute; top: 15px; left: 147px; transform-origin: bottom center; transform: rotate(-120deg); transition: transform 0.1s linear, background 0.4s; border-radius: 4px 4px 0 0; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
+        .meter-needle { width: 6px; height: 135px; background: linear-gradient(to top, #c0392b, #ff4757); position: absolute; top: 15px; left: 147px; transform-origin: bottom center; transform: rotate(-120deg); transition: transform 0.1s linear, background 0.4s, box-shadow 0.4s; border-radius: 4px 4px 0 0; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
         .meter-center { width: 36px; height: 36px; background: radial-gradient(circle, #34495e, #2c3e50); border-radius: 50%; position: absolute; top: 132px; left: 132px; z-index: 11; border: 3px solid #bdc3c7; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.4s; }
-        [data-theme="dark"] .meter-center { border-color: #1a1e27; background: #ddd; }
 
         .speed-readout { position: absolute; top: 190px; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 15; }
         .speed-val-wrap { display: flex; flex-direction: column; align-items: center; line-height: 1; gap: 4px; }
         .speed-val-wrap span.num { font-size: 4.5rem; font-weight: 900; color: #333; transition: 0.4s; }
-        [data-theme="dark"] .speed-val-wrap span.num { color: #fff; }
         .speed-val-wrap span.unit { font-size: 1.1rem; font-weight: 700; color: #777; transition: 0.4s; }
-        .status-badge-premium { background: rgba(94, 176, 99, 0.1); color: #5eb063; padding: 6px 18px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+        .status-badge-premium { background: rgba(94, 176, 99, 0.1); color: #5eb063; padding: 6px 18px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; margin-top: 5px; transition: 0.4s; }
 
-        /* INFO CARDS */
+        /* INFO CARDS (DAY MODE) */
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-content: start; transition: 0.4s; }
         @media (max-width: 400px) { .info-grid { grid-template-columns: 1fr; } }
         
-        .info-card { background: white; padding: 15px; border-radius: 12px; border: 1px solid #eee; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        [data-theme="dark"] .info-card { background: #1a1e27; border-color: #2a303c; }
-        
-        .ic-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: #f0f7ff; color: var(--primary-blue); flex-shrink: 0; }
-        [data-theme="dark"] .ic-icon { background: rgba(0,86,179,0.2); color: #74b9ff; }
-        
-        .ic-content h4 { margin: 0; font-size: 0.8rem; color: #777; font-weight: 500; }
-        .ic-content strong { font-size: 1.2rem; color: var(--primary-blue); display: block; margin: 2px 0; }
-        .ic-content p { margin: 0; font-size: 0.7rem; color: #888; }
+        .info-card { background: white; padding: 15px; border-radius: 12px; border: 1px solid #eee; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: 0.4s; }
+        .ic-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: #f0f7ff; color: var(--primary-blue); flex-shrink: 0; transition: 0.4s; }
+        .ic-content h4 { margin: 0; font-size: 0.8rem; color: #777; font-weight: 500; transition: 0.4s; }
+        .ic-content strong { font-size: 1.2rem; color: var(--primary-blue); display: block; margin: 2px 0; transition: 0.4s; }
+        .ic-content p { margin: 0; font-size: 0.7rem; color: #888; transition: 0.4s; }
 
-        /* TRIP ACTIONS & GPS */
-        .trip-actions { display: flex; flex-direction: column; background: white; padding: 20px; border-radius: 12px; margin-top: 20px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02); gap: 15px; }
-        [data-theme="dark"] .trip-actions { background: #1a1e27; border-color: #2a303c; }
-        
+        /* TRIP ACTIONS & GPS (DAY MODE) */
+        .trip-actions { display: flex; flex-direction: column; background: white; padding: 20px; border-radius: 12px; margin-top: 20px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02); gap: 15px; transition: 0.4s; }
         .trip-details-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; transition: 0.4s; }
         .action-detail { display: flex; align-items: center; gap: 12px; }
-        .action-detail i { font-size: 1.5rem; color: var(--primary-blue); }
-        .action-detail h4 { margin: 0; font-size: 0.8rem; color: #777; font-weight: 500; }
-        .action-detail p { margin: 2px 0 0 0; font-weight: bold; color: #333; font-size: 0.95rem; }
-        [data-theme="dark"] .action-detail p { color: #eee; }
+        .action-detail i { font-size: 1.5rem; color: var(--primary-blue); transition: 0.4s; }
+        .action-detail h4 { margin: 0; font-size: 0.8rem; color: #777; font-weight: 500; transition: 0.4s; }
+        .action-detail p { margin: 2px 0 0 0; font-weight: bold; color: #333; font-size: 0.95rem; transition: 0.4s; }
 
         .btn-action { width: 100%; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1.05rem; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
         .btn-start { background: #5eb063; box-shadow: 0 4px 15px rgba(94,176,99,0.3); }
         .btn-end { background: #d9534f; box-shadow: 0 4px 15px rgba(217,83,79,0.3); display: none; }
 
-        .safety-note { margin-top: 15px; background: rgba(243,156,18,0.1); padding: 12px 15px; border-radius: 8px; border: 1px solid rgba(243,156,18,0.3); font-size: 0.85rem; line-height: 1.4; color: #333; text-align: center; }
-        [data-theme="dark"] .safety-note { color: #ddd; }
+        .safety-note { margin-top: 15px; background: rgba(243,156,18,0.1); padding: 12px 15px; border-radius: 8px; border: 1px solid rgba(243,156,18,0.3); font-size: 0.85rem; line-height: 1.4; color: #333; text-align: center; transition: 0.4s; }
 
-        /* 🚨 ALERTS */
-        .danger-blink { animation: red-flash 1s infinite alternate; }
-        @keyframes red-flash { 0% { box-shadow: inset 0 0 0px rgba(217,83,79,0); } 100% { box-shadow: inset 0 0 30px rgba(217,83,79,0.8); border: 2px solid red; } }
+
+        /* ========================================================
+           🌑 GLOBAL FULL NIGHT MODE (Applies to whole screen)
+           ======================================================== */
+        body.global-night-mode { background: #000; color: #fff; }
+        body.global-night-mode .page-header { background: #111; border-bottom: 1px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+        body.global-night-mode .tracker-wrapper { background: #0a0a0a; border: 1px solid #222; box-shadow: 0 0 40px rgba(0,0,0,0.9); }
+        body.global-night-mode .tracker-header { border-color: #333; }
+        body.global-night-mode .tracker-header h2 { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        body.global-night-mode .controls-row { border-color: #333; }
+        body.global-night-mode .ctrl-btn { background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.1); }
+
+        /* 1. METER BOX NIGHT MODE (RED/WHITE CAR GLOW) */
+        body.global-night-mode .meter-box { background: #000 !important; border: 1px solid #222 !important; box-shadow: inset 0 0 60px rgba(0,0,0,1); }
+        body.global-night-mode .dial-bg { background: conic-gradient(from 240deg, #ff3b30 0 60deg, #ff4757 60deg 120deg, #e84118 120deg 180deg, #c23616 180deg 240deg, transparent 240deg); filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.8)); }
+        body.global-night-mode .tick::before { background: #fff; box-shadow: 0 0 8px #fff; }
+        body.global-night-mode .tick span { color: #fff; text-shadow: 0 0 12px rgba(255,255,255,0.9); }
+        body.global-night-mode .meter-needle { background: #fff; box-shadow: 0 0 15px #fff, 0 0 25px #fff; }
+        body.global-night-mode .meter-center { background: #111; border-color: #444; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        body.global-night-mode .speed-val-wrap span.num { color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.9); }
+        body.global-night-mode .speed-val-wrap span.unit { color: #ccc; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+        body.global-night-mode .status-badge-premium { background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.1); }
+
+        /* 2. SIDE DETAILS NIGHT MODE (GLOWING TEXT) */
+        body.global-night-mode .info-card, 
+        body.global-night-mode .trip-actions { background: #111; border: 1px solid #222; box-shadow: 0 5px 20px rgba(0,0,0,0.8); }
+        body.global-night-mode .ic-icon, body.global-night-mode .action-detail i { background: rgba(255,255,255,0.1); color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        body.global-night-mode .ic-content h4, body.global-night-mode .action-detail h4 { color: #aaa; }
+        body.global-night-mode .ic-content strong, body.global-night-mode .action-detail p { color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
+        body.global-night-mode .ic-content p { color: #777; }
+        body.global-night-mode .safety-note { background: rgba(217, 83, 79, 0.15); border-color: rgba(217, 83, 79, 0.4); color: #fff; box-shadow: 0 0 15px rgba(217,83,79,0.2); }
+
+
+        /* 🚨 PREMIUM RED WARNING POPUP 🚨 */
+        .danger-blink { animation: screen-red-flash 1s infinite alternate; }
+        @keyframes screen-red-flash { 0% { box-shadow: inset 0 0 0px rgba(217,83,79,0); } 100% { box-shadow: inset 0 0 40px rgba(217,83,79,0.8); border: 2px solid red; } }
         
-        .high-danger-blink { animation: fast-red-flash 0.3s infinite alternate; }
-        @keyframes fast-red-flash { 0% { background-color: rgba(217,83,79,0); box-shadow: inset 0 0 0px red; } 100% { background-color: rgba(217,83,79,0.15); box-shadow: inset 0 0 60px red; } }
+        .high-danger-blink { animation: screen-fast-red-flash 0.3s infinite alternate; }
+        @keyframes screen-fast-red-flash { 0% { background-color: rgba(217,83,79,0); box-shadow: inset 0 0 0px red; } 100% { background-color: rgba(217,83,79,0.15); box-shadow: inset 0 0 80px red; } }
 
-        .warning-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 2px solid #d9534f; border-radius: 16px; padding: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 50px rgba(217,83,79,0.5); z-index: 9999999; display: none; }
+        /* Popup Redesign */
+        .warning-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border: 3px solid #d9534f; border-radius: 20px; padding: 35px 25px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 15px 60px rgba(217,83,79,0.6); z-index: 9999999; display: none; }
+        body.global-night-mode .warning-popup { background: rgba(20, 5, 5, 0.95); border: 3px solid #ff4757; box-shadow: 0 15px 60px rgba(255, 71, 87, 0.6), inset 0 0 30px rgba(255,71,87,0.2); color: white; }
+        
+        .warn-icon-anim { font-size: 4.5rem; color: #d9534f; margin-bottom: 10px; animation: scalePulse 0.5s infinite alternate; filter: drop-shadow(0 0 10px rgba(217,83,79,0.5)); }
+        body.global-night-mode .warn-icon-anim { color: #ff4757; filter: drop-shadow(0 0 20px rgba(255,71,87,0.8)); }
+        @keyframes scalePulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+
     </style>
 </head>
 <body>
@@ -137,15 +150,15 @@
         <h2 class="header-title">Speed Tracking</h2>
     </header>
 
-    <!-- Speed Warning Popup -->
+    <!-- Premium Speed Warning Popup -->
     <div id="speedWarningPopup" class="warning-popup">
-        <div style="font-size: 3.5rem; color: #d9534f; margin-bottom: 10px; animation: scaleUp 0.5s infinite alternate;"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <h2 style="color: #d9534f; margin-bottom: 10px;">⚠ ALERT</h2>
-        <h3 style="margin-bottom: 15px;">Speed Limit Exceeded!</h3>
-        <p style="font-size: 1.2rem; margin-bottom: 5px;">Current Speed: <strong id="warnCurrentSpeed" style="color: #d9534f;">-- km/h</strong></p>
-        <p style="font-size: 0.95rem; color: #777; margin-bottom: 20px;">Max Allowed Speed: <strong>80 km/h</strong></p>
-        <p style="font-weight: bold; margin-bottom: 25px;">Please Reduce Your Speed Immediately.</p>
-        <button onclick="document.getElementById('speedWarningPopup').style.display='none'" class="btn-action btn-end" style="display:flex;">OK, I Will Drive Safe</button>
+        <div class="warn-icon-anim"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h2 style="color: #d9534f; margin-bottom: 10px; font-weight: 900; letter-spacing: 1px;">CRITICAL ALERT</h2>
+        <h3 style="margin-bottom: 20px; font-size: 1.3rem;">Speed Limit Exceeded!</h3>
+        <p style="font-size: 1.2rem; margin-bottom: 8px;">Current Speed: <strong id="warnCurrentSpeed" style="color: #d9534f; font-size: 1.4rem;">-- km/h</strong></p>
+        <p style="font-size: 0.95rem; color: #777; margin-bottom: 25px;">Max Allowed Speed: <strong>80 km/h</strong></p>
+        <p style="font-weight: bold; margin-bottom: 25px; font-size: 1.1rem;">Please Reduce Your Speed Immediately.</p>
+        <button onclick="document.getElementById('speedWarningPopup').style.display='none'" class="btn-action btn-end" style="display:flex; width:100%; box-shadow: 0 5px 20px rgba(217,83,79,0.5);">OK, I Will Drive Safe</button>
     </div>
 
     <main class="tracker-main">
@@ -159,12 +172,11 @@
 
             <div class="tracker-grid">
                 
-                <!-- 🔥 4K HD SPEEDOMETER (CAR MODE) 🔥 -->
+                <!-- 🔥 4K HD SPEEDOMETER 🔥 -->
                 <div class="meter-box" id="speedMeterBox">
                     <div class="analog-dial">
                         <div class="dial-bg"></div>
                         <div class="tick-container">
-                            <!-- 0 to 160 rotated properly without white boxes -->
                             <div class="tick" style="transform: rotate(-120deg);"><span style="transform: rotate(120deg);">0</span></div>
                             <div class="tick" style="transform: rotate(-105deg);"><span style="transform: rotate(105deg);">10</span></div>
                             <div class="tick" style="transform: rotate(-90deg);"><span style="transform: rotate(90deg);">20</span></div>
@@ -186,7 +198,6 @@
                         <div class="meter-needle" id="meterNeedle"></div>
                         <div class="meter-center"></div>
 
-                        <!-- Text Shifted Down safely -->
                         <div class="speed-readout">
                             <div class="speed-val-wrap">
                                 <span class="num" id="stCurrentSpeed">00</span>
@@ -197,7 +208,7 @@
                     </div>
                 </div>
 
-                <!-- INFO CARDS (TIME REMOVED) -->
+                <!-- SIDE DETAILS (GLOWS IN NIGHT MODE) -->
                 <div class="info-grid">
                     <div class="info-card">
                         <div class="ic-icon"><i class="fa-solid fa-trophy"></i></div>
@@ -234,7 +245,7 @@
                 </div>
             </div>
 
-            <!-- TRIP ACTIONS & GPS STATUS DOWN -->
+            <!-- TRIP ACTIONS & GPS -->
             <div class="trip-actions">
                 <div class="trip-details-row">
                     <div class="action-detail">
@@ -244,7 +255,6 @@
                             <p id="stTripStart">Not Started</p>
                         </div>
                     </div>
-                    <!-- GPS Shifted Here -->
                     <div class="action-detail">
                         <i id="stGpsDot" class="fa-solid fa-satellite-dish" style="color:#d9534f;"></i>
                         <div>
@@ -268,53 +278,43 @@
     </main>
 
     <script>
+        // DB Connections & Old Functions remain completely untouched!
         const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU'; 
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const userEmail = localStorage.getItem('hr_user_email');
 
         // ==========================================
-        // THEME, MUSIC & AUTO NIGHT DASHBOARD
+        // 🔥 GLOBAL NIGHT MODE & MUSIC SYNC 🔥
         // ==========================================
         document.addEventListener("DOMContentLoaded", function() {
-            // Global Theme Sync
-            if (localStorage.getItem('hr_global_theme') === 'dark') {
-                document.body.setAttribute('data-theme', 'dark');
-            } else if (localStorage.getItem('hr_global_theme') === 'light') {
-                document.body.removeAttribute('data-theme');
-            } else {
-                var hr = new Date().getHours();
-                if (hr >= 18 || hr < 6) document.body.setAttribute('data-theme', 'dark');
-            }
-
-            // Global Music Sync
+            // Restore Global Music if playing
             var bgMusic = document.getElementById('bgMusic');
             if (bgMusic && localStorage.getItem('hr_music_pref') !== 'muted') {
                 bgMusic.volume = 0.03;
                 bgMusic.play().catch(e => console.log('Music blocked by browser'));
             }
 
-            // Auto Night Dashboard Logic (6 PM to 6 AM)
+            // AUTO 6 PM to 6 AM Logic for FULL Screen Night Mode
             var currentHour = new Date().getHours();
             if (currentHour >= 18 || currentHour < 6) {
-                document.getElementById('speedMeterBox').classList.add('dash-night-mode');
+                document.body.classList.add('global-night-mode');
                 document.getElementById('btnLightToggle').innerHTML = '<i class="fa-solid fa-lightbulb"></i> Night On';
             }
         });
 
-        // Toggle Night Dash Manually
+        // Manual Night Mode Toggle
         function toggleNightDash() {
-            let box = document.getElementById('speedMeterBox');
             let btn = document.getElementById('btnLightToggle');
-            box.classList.toggle('dash-night-mode');
-            if(box.classList.contains('dash-night-mode')) {
+            document.body.classList.toggle('global-night-mode');
+            if(document.body.classList.contains('global-night-mode')) {
                 btn.innerHTML = '<i class="fa-solid fa-lightbulb"></i> Night On';
             } else {
                 btn.innerHTML = '<i class="fa-regular fa-lightbulb"></i> Light Off';
             }
         }
 
-        // Toggle Focus Mode (Hide/Unhide Details)
+        // Toggle Focus Mode (Hide/Unhide Details) - Screen stays black if Night Mode is ON
         function toggleFocusMode() {
             let wrap = document.getElementById('mainWrapper');
             let btn = document.getElementById('btnFocusToggle');
@@ -327,7 +327,7 @@
         }
 
         // ==========================================
-        // TRACKER LOGIC (NO TOTAL TIME)
+        // 🎵 TRACKER BEEP & LOGIC (Untouched & Safe)
         // ==========================================
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
@@ -364,7 +364,7 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
         }
 
-        // SMOOTH NEEDLE ANIMATION (Lerp Algorithm)
+        // SMOOTH NEEDLE ANIMATION
         let targetSpeedKmH = 0; let displaySpeedKmH = 0;
         function animateSpeedGauge() {
             if (Math.abs(targetSpeedKmH - displaySpeedKmH) > 0.05) {
