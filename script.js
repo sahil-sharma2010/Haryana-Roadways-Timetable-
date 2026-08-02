@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🎵 PREMIUM AUDIO BEEP SYSTEM (Web Audio API - No files needed)
+    // 🎵 PREMIUM AUDIO BEEP SYSTEM (Web Audio API)
     // =========================================================
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
@@ -539,11 +539,15 @@ document.addEventListener("DOMContentLoaded", async function() {
                             localStorage.setItem('hr_user_mobile', res.data.mobile);
                             if(res.data.highest_speed) {
                                 localStorage.setItem('hr_highest_speed', res.data.highest_speed);
-                                document.getElementById('stHighestSpeed').innerText = Math.round(res.data.highest_speed) + " km/h";
+                                let hsEle = document.getElementById('stHighestSpeed');
+                                if(hsEle) hsEle.innerText = Math.round(res.data.highest_speed) + " km/h";
                             }
                             if(dispName) dispName.innerText = res.data.name;
                             if(dispMob) dispMob.innerText = "+91 " + res.data.mobile;
                             if(dispEmail) dispEmail.innerText = res.data.email;
+                            
+                            if(typeof updatePhoneLimitUI === 'function') updatePhoneLimitUI(); 
+                            if(typeof updateEmailLimitUI === 'function') updateEmailLimitUI(); 
                         }
                     }
                 } catch(err) { }
@@ -600,6 +604,148 @@ document.addEventListener("DOMContentLoaded", async function() {
             }
         });
     });
+
+    // =========================================================
+    // PHONE & EMAIL UPDATES
+    // =========================================================
+    window.updatePhoneLimitUI = function() {
+        var limitData = JSON.parse(localStorage.getItem('hr_phone_update_history')) || [];
+        var thirtyDays = 30 * 24 * 60 * 60 * 1000;
+        var validData = limitData.filter(t => (Date.now() - t) < thirtyDays);
+        localStorage.setItem('hr_phone_update_history', JSON.stringify(validData));
+        var phoneLeft = 2 - validData.length;
+        var pt = document.getElementById('phoneLimitText');
+        if(pt) pt.innerHTML = phoneLeft <= 0 ? `(Limit Reached)` : `(Limit: 2 Edits / Month - ${phoneLeft} left)`;
+        var btnP = document.getElementById('btnSendPhoneOtp');
+        if (btnP) btnP.disabled = (phoneLeft <= 0);
+    }
+
+    window.updateEmailLimitUI = function() {
+        var limitData = JSON.parse(localStorage.getItem('hr_email_update_history')) || [];
+        var thirtyDays = 30 * 24 * 60 * 60 * 1000;
+        var validData = limitData.filter(t => (Date.now() - t) < thirtyDays);
+        localStorage.setItem('hr_email_update_history', JSON.stringify(validData));
+        var emailLeft = 2 - validData.length;
+        var et = document.getElementById('emailLimitText');
+        if(et) et.innerHTML = emailLeft <= 0 ? `(Limit Reached)` : `(Limit: 2 Edits / Month - ${emailLeft} left)`;
+        var btnE = document.getElementById('btnSendEmailOtp');
+        if (btnE) btnE.disabled = (emailLeft <= 0);
+    }
+
+    var btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
+    var btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
+    var phoneUpdateOTP = null;
+
+    if (btnSendPhoneOtp) {
+        btnSendPhoneOtp.addEventListener('click', async function() {
+            var currentMobile = localStorage.getItem('hr_user_mobile');
+            var currentEmail = localStorage.getItem('hr_user_email');
+            if (!currentMobile || !currentEmail || !db) { Swal.fire({title:'Error', text:'System not ready.', icon:'error', target: document.getElementById('settingsPage') || 'body'}); return; }
+            var oldPhone = document.getElementById('oldPhoneInput') ? document.getElementById('oldPhoneInput').value.trim() : '';
+            var newPhone = document.getElementById('updatePhoneInput') ? document.getElementById('updatePhoneInput').value.trim() : '';
+            
+            if (oldPhone !== currentMobile) return Swal.fire({title:'Error', text:'Old mobile mismatch.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
+            if (newPhone.length !== 10) return Swal.fire({title:'Invalid', text:'Enter valid 10-digit number.', icon:'warning', target: document.getElementById('settingsPage') || 'body'});
+            btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Checking...";
+            
+            var dup = await db.from('users').select('mobile').eq('mobile', newPhone).maybeSingle();
+            if (dup.data) { btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP"; return Swal.fire({title:'Exists', text:'New number already registered.', icon:'warning', target: document.getElementById('settingsPage') || 'body'}); }
+            phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
+            
+            if(typeof emailjs !== 'undefined') {
+                emailjs.send("service_ecofefq", "template_grujfl8", { to_email: currentEmail, user_name: localStorage.getItem('hr_user_name') || "User", otp: phoneUpdateOTP })
+                .then(() => {
+                    document.getElementById('phoneOtpBox').classList.remove('hidden');
+                    btnSendPhoneOtp.innerText = "Sent ✓";
+                    Swal.fire({title:'OTP Sent', text:`OTP sent to ${currentEmail}`, icon:'success', target: document.getElementById('settingsPage') || 'body'});
+                }).catch(e => {
+                    btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP";
+                    Swal.fire({title:'Error', text:'Failed to send Email.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
+                });
+            }
+        });
+    }
+
+    if (btnVerifyPhoneUpdate) {
+        btnVerifyPhoneUpdate.addEventListener('click', async function() {
+            var enteredOtp = document.getElementById('phoneOtpInput').value.trim();
+            var newPhone = document.getElementById('updatePhoneInput').value.trim();
+            var currentEmail = localStorage.getItem('hr_user_email');
+            if (enteredOtp === phoneUpdateOTP && db) {
+                btnVerifyPhoneUpdate.innerText = "Saving...";
+                var res = await db.from('users').update({ mobile: newPhone }).eq('email', currentEmail);
+                if (!res.error) {
+                    var limitData = JSON.parse(localStorage.getItem('hr_phone_update_history')) || [];
+                    limitData.push(Date.now()); localStorage.setItem('hr_phone_update_history', JSON.stringify(limitData));
+                    localStorage.setItem('hr_user_mobile', newPhone);
+                    document.getElementById('dispMobile').innerText = "+91 " + newPhone;
+                    Swal.fire({title:'Success', text:'Phone number changed!', icon:'success', target: document.getElementById('settingsPage') || 'body'});
+                    document.getElementById('phoneOtpBox').classList.add('hidden');
+                    updatePhoneLimitUI();
+                } else { Swal.fire('Error', res.error.message, 'error'); }
+                btnVerifyPhoneUpdate.innerText = "Verify & Save";
+            } else { Swal.fire({title:'Error', text:'Incorrect OTP', icon:'error', target: document.getElementById('settingsPage') || 'body'}); }
+        });
+    }
+
+    var btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
+    var btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
+    var emailUpdateOTP = null;
+
+    if (btnSendEmailOtp) {
+        btnSendEmailOtp.addEventListener('click', async function() {
+            var currentMobile = localStorage.getItem('hr_user_mobile');
+            var currentEmail = localStorage.getItem('hr_user_email');
+            if (!currentMobile || !currentEmail || !db) { Swal.fire({title:'Error', text:'System not ready.', icon:'error', target: document.getElementById('settingsPage') || 'body'}); return; }
+            var oldEmail = document.getElementById('oldEmailInput') ? document.getElementById('oldEmailInput').value.trim() : '';
+            var newEmail = document.getElementById('updateEmailInput') ? document.getElementById('updateEmailInput').value.trim() : '';
+            
+            if (oldEmail !== currentEmail) return Swal.fire({title:'Error', text:'Old email mismatch.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
+            if (!newEmail.includes('@')) return Swal.fire({title:'Invalid', text:'Enter a valid new email address.', icon:'warning', target: document.getElementById('settingsPage') || 'body'});
+            btnSendEmailOtp.disabled = true; btnSendEmailOtp.innerText = "Checking...";
+            
+            var dup = await db.from('users').select('email').eq('email', newEmail).maybeSingle();
+            if (dup.data) { btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP"; return Swal.fire({title:'Exists', text:'New email already registered.', icon:'warning', target: document.getElementById('settingsPage') || 'body'}); }
+            emailUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
+            
+            if(typeof emailjs !== 'undefined') {
+                emailjs.send("service_ecofefq", "template_grujfl8", { to_email: newEmail, user_name: localStorage.getItem('hr_user_name') || "User", otp: emailUpdateOTP })
+                .then(() => {
+                    var emailBox = document.getElementById('emailOtpBox');
+                    if(emailBox) emailBox.classList.remove('hidden');
+                    btnSendEmailOtp.innerText = "Sent ✓";
+                    Swal.fire({title:'OTP Sent', text:`OTP sent to ${newEmail} to verify`, icon:'success', target: document.getElementById('settingsPage') || 'body'});
+                }).catch(e => {
+                    btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP";
+                    Swal.fire({title:'Error', text:'Failed to send Email.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
+                });
+            }
+        });
+    }
+
+    if (btnVerifyEmailUpdate) {
+        btnVerifyEmailUpdate.addEventListener('click', async function() {
+            var enteredOtp = document.getElementById('emailOtpInput').value.trim();
+            var newEmail = document.getElementById('updateEmailInput').value.trim();
+            var currentMobile = localStorage.getItem('hr_user_mobile');
+            if (enteredOtp === emailUpdateOTP && db) {
+                btnVerifyEmailUpdate.innerText = "Saving...";
+                var res = await db.from('users').update({ email: newEmail }).eq('mobile', currentMobile);
+                if (!res.error) {
+                    var limitData = JSON.parse(localStorage.getItem('hr_email_update_history')) || [];
+                    limitData.push(Date.now()); localStorage.setItem('hr_email_update_history', JSON.stringify(limitData));
+                    localStorage.setItem('hr_user_email', newEmail);
+                    var dispEmail = document.getElementById('dispEmail');
+                    if(dispEmail) dispEmail.innerText = newEmail;
+                    Swal.fire({title:'Success', text:'Email Address changed!', icon:'success', target: document.getElementById('settingsPage') || 'body'});
+                    var eBox = document.getElementById('emailOtpBox');
+                    if(eBox) eBox.classList.add('hidden');
+                    updateEmailLimitUI();
+                } else { Swal.fire('Error', res.error.message, 'error'); }
+                btnVerifyEmailUpdate.innerText = "Verify & Save";
+            } else { Swal.fire({title:'Error', text:'Incorrect OTP', icon:'error', target: document.getElementById('settingsPage') || 'body'}); }
+        });
+    }
 
     // =========================================================
     // SEARCH & TIMETABLE LOGIC
@@ -705,7 +851,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     // =========================================================
-    // 🗺️ FREE ROUTE MAP LOGIC (LEAFLET, ZOOM, HARDWARE BACK FIXED)
+    // 🗺️ FREE ROUTE MAP LOGIC
     // =========================================================
     var lMap = null;
     var lRoutingControl = null;
@@ -937,27 +1083,27 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     function manageAlerts(speed) {
-        // High Alert (>= 100)
+        // High Alert (>= 100) -> Fast Beep + Fast Blink
         if (speed >= 100) {
             if (alertLevel !== 2) {
                 alertLevel = 2;
                 document.body.classList.remove('danger-blink');
                 document.body.classList.add('high-danger-blink');
-                warnPopup.style.display = 'block';
+                if(warnPopup) warnPopup.style.display = 'block';
                 clearInterval(beepIntervalId);
-                beepIntervalId = setInterval(() => playAlertBeep('high'), 500); // Fast Beep
+                beepIntervalId = setInterval(() => playAlertBeep('high'), 500); 
             }
         } 
-        // Normal Alert (>= 76 & < 100)
-        else if (speed > 75) {
+        // Normal Alert (>= 80 & < 100) -> Low Beep + Normal Blink
+        else if (speed > 80) {
             if (alertLevel !== 1) {
                 alertLevel = 1;
                 document.body.classList.remove('high-danger-blink');
                 document.body.classList.add('danger-blink');
-                warnPopup.style.display = 'block';
+                if(warnPopup) warnPopup.style.display = 'block';
                 clearInterval(beepIntervalId);
-                playAlertBeep('low'); // Beep once immediately
-                beepIntervalId = setInterval(() => playAlertBeep('low'), 5000); // Beep every 5 seconds
+                playAlertBeep('low'); 
+                beepIntervalId = setInterval(() => playAlertBeep('low'), 5000); 
             }
         } 
         // Safe Speed
@@ -965,7 +1111,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             if (alertLevel !== 0) {
                 alertLevel = 0;
                 document.body.classList.remove('danger-blink', 'high-danger-blink');
-                warnPopup.style.display = 'none';
+                if(warnPopup) warnPopup.style.display = 'none';
                 clearInterval(beepIntervalId);
             }
         }
@@ -975,7 +1121,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
     }
 
-    // 🏎️ PREMIUM SMOOTH SPEED ANIMATION
+    // 🏎️ PREMIUM 4K NEEDLE ANIMATION
     let targetSpeedKmH = 0;
     let displaySpeedKmH = 0;
     
@@ -990,8 +1136,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                 stCurrentSpeed.innerText = speedStr;
             }
 
-            // Move Needle (0-160 km/h maps to -90 to +90 degrees)
-            let angle = -90 + (Math.min(displaySpeedKmH, 160) / 160) * 180;
+            // Move Needle (-120deg to +120deg mapped to 0-160 km/h)
+            let angle = -120 + (Math.min(displaySpeedKmH, 160) / 160) * 240;
             if (meterNeedle) {
                 meterNeedle.style.transform = `rotate(${angle}deg)`;
             }
@@ -1002,9 +1148,9 @@ document.addEventListener("DOMContentLoaded", async function() {
             let mainStatColor = '#5eb063';
             
             if (roundedSpeed === 0) { color = '#777'; statText = '<i class="fa-solid fa-circle-stop"></i> Stopped'; mainStat = 'Stopped'; }
-            else if (roundedSpeed > 0 && roundedSpeed <= 50) { color = '#5eb063'; statText = '<i class="fa-solid fa-circle"></i> Slow / Normal'; mainStat = 'Safe'; }
-            else if (roundedSpeed > 50 && roundedSpeed <= 75) { color = '#f39c12'; statText = '<i class="fa-solid fa-circle"></i> Fast'; mainStat = 'Fast'; mainStatColor = '#f39c12'; }
-            else if (roundedSpeed > 75) { color = '#d9534f'; statText = '<i class="fa-solid fa-circle-exclamation"></i> OVER SPEED'; mainStat = 'DANGER'; mainStatColor = '#d9534f'; }
+            else if (roundedSpeed > 0 && roundedSpeed <= 60) { color = '#5eb063'; statText = '<i class="fa-solid fa-circle"></i> Safe'; mainStat = 'Safe'; }
+            else if (roundedSpeed > 60 && roundedSpeed <= 80) { color = '#f39c12'; statText = '<i class="fa-solid fa-circle"></i> Fast'; mainStat = 'Fast'; mainStatColor = '#f39c12'; }
+            else if (roundedSpeed > 80) { color = '#d9534f'; statText = '<i class="fa-solid fa-circle-exclamation"></i> OVER SPEED'; mainStat = 'DANGER'; mainStatColor = '#d9534f'; }
 
             if (stSpeedStatusBadge && stSpeedStatusBadge.innerHTML !== statText) {
                 stSpeedStatusBadge.innerHTML = statText;
@@ -1031,10 +1177,9 @@ document.addEventListener("DOMContentLoaded", async function() {
             totalSpeedDistKm += dist;
             if(stDistance) stDistance.innerText = totalSpeedDistKm.toFixed(2) + ' km';
             
-            // Calculate Average Speed
             if (tripStartTime) {
                 let hoursElapsed = (Date.now() - tripStartTime) / (1000 * 60 * 60);
-                if (hoursElapsed > 0.01) { // Prevent infinity
+                if (hoursElapsed > 0.01) { 
                     let avg = totalSpeedDistKm / hoursElapsed;
                     if (stAvgSpeed) stAvgSpeed.innerText = Math.round(avg) + " km/h";
                 }
@@ -1044,8 +1189,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         lastSpeedLat = crd.latitude; 
         lastSpeedLon = crd.longitude;
         
-        // Reverse Geocoding every few distance (Debounce)
-        if (Math.random() < 0.1) { // 10% chance to update location to save API calls
+        if (Math.random() < 0.1) { 
             getLocName(crd.latitude, crd.longitude).then(name => {
                 if(stCurrentLoc) stCurrentLoc.innerText = "Near " + name + ", India";
             });
@@ -1056,7 +1200,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         
         targetSpeedKmH = speed; 
         
-        // Highest Speed Logic
         if (speed > highestSpeedAchieved) {
             highestSpeedAchieved = speed;
             localStorage.setItem('hr_highest_speed', highestSpeedAchieved);
@@ -1066,7 +1209,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             let dateStr = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
             if(stHighestDate) stHighestDate.innerHTML = `Achieved on ${dateStr}<br><span style="color:#5eb063;font-weight:bold;font-size:0.7rem;">Personal Best</span>`;
             
-            // Supabase Silent Update
             if (db && userEmail) {
                 db.from('users').update({ highest_speed: highestSpeedAchieved }).eq('email', userEmail).then(()=>{});
             }
@@ -1101,7 +1243,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(endBtn) endBtn.style.display = 'block';
         if(stGpsText) { stGpsText.innerText = "Connecting..."; stGpsDot.style.color = "#f39c12"; }
         
-        // Timer Logic
         tripTimerInt = setInterval(() => {
             let diff = Math.floor((Date.now() - tripStartTime) / 1000);
             let h = Math.floor(diff / 3600).toString().padStart(2, '0');
@@ -1125,34 +1266,32 @@ document.addEventListener("DOMContentLoaded", async function() {
         alertLevel = 0;
         clearInterval(beepIntervalId);
         document.body.classList.remove('danger-blink', 'high-danger-blink');
-        warnPopup.style.display = 'none';
+        if(warnPopup) warnPopup.style.display = 'none';
         
         if(stGpsText) { stGpsText.innerText = "Trip Ended"; stGpsDot.style.color = "#d9534f"; }
         if(startBtn) startBtn.style.display = 'block';
         if(endBtn) endBtn.style.display = 'none';
         
-        // Save Trip Data to DB
         if (db && userEmail) {
+            let timeVal = stTime ? stTime.innerText : '00:00:00';
             db.from('users').update({ 
                 last_trip_distance: totalSpeedDistKm,
-                last_trip_time: stTime.innerText,
+                last_trip_time: timeVal,
                 last_trip_date: new Date().toISOString()
             }).eq('email', userEmail).then(()=>{});
             
-            // Insert Trip History
             db.from('trip_history').insert([{
                 user_email: userEmail,
                 max_speed: highestSpeedAchieved,
                 distance: totalSpeedDistKm,
-                duration: stTime.innerText
+                duration: timeVal
             }]).then(()=>{});
         }
 
         Swal.fire({
             title: 'Trip Ended',
-            html: `Total Distance: <strong>${totalSpeedDistKm.toFixed(2)} km</strong><br>Time: <strong>${stTime.innerText}</strong>`,
-            icon: 'success',
-            target: document.getElementById('settingsPage') || 'body'
+            html: `Total Distance: <strong>${totalSpeedDistKm.toFixed(2)} km</strong><br>Time: <strong>${stTime ? stTime.innerText : '00:00:00'}</strong>`,
+            icon: 'success'
         });
     }
 
