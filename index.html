@@ -10,7 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
-    <!-- 🗺️ FREE OPEN-SOURCE MAP LIBRARIES -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
@@ -18,11 +17,9 @@
     
     <link rel="stylesheet" href="style.css">
     <style>
-        /* MOBILE RESPONSIVE FIXES */
         html, body { max-width: 100vw !important; overflow-x: hidden !important; width: 100%; transition: background-color 0.3s ease; }
         .container { max-width: 100vw; box-sizing: border-box; overflow-x: hidden; }
 
-        /* FOCUS & TAP UI FIXES */
         button, a, .theme-switch, .theme-switch-wrapper, .setting-nav-item, .city-btn, .t-btn, .btn-logout, input, select {
             -webkit-tap-highlight-color: transparent; outline: none; box-shadow: none;
         }
@@ -48,7 +45,6 @@
         .btn-track-route { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.85rem; }
         .btn-track-route:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4); }
         
-        /* MAP INFO CARD STYLES */
         .map-info-item { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; margin-bottom: 6px; color: #444; }
         [data-theme="dark"] .map-info-item { color: #ddd; }
         #mapInfoCard { transition: opacity 0.3s ease, transform 0.3s ease; }
@@ -57,8 +53,7 @@
         .modal-contact-block { margin-top: 25px; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); font-size: 0.9rem; }
         [data-theme="dark"] .modal-contact-block { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.05); }
 
-        /* MAP BUTTONS */
-        .map-floating-btn { width: 48px; height: 48px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.05); background: white; color: var(--primary-blue); font-size: 1.35rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; transition: 0.2s; -webkit-tap-highlight-color: transparent; outline: none; z-index: 9999; }
+        .map-floating-btn { width: 48px; height: 48px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.05); background: white; color: var(--primary-blue); font-size: 1.35rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; transition: 0.2s; z-index: 9999; }
         .map-floating-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
         .leaflet-control-zoom { margin-bottom: 25px !important; margin-left: 15px !important; border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important; border-radius: 8px !important; overflow: hidden; z-index: 9998 !important; }
         .leaflet-control-zoom a { color: var(--primary-blue) !important; font-weight: bold !important; width: 42px !important; height: 42px !important; line-height: 42px !important; font-size: 1.2rem !important; }
@@ -67,81 +62,16 @@
 
         .footer-links-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; }
         @media (max-width: 600px) { .footer-links-container { flex-direction: column; gap: 12px; } .link-separator { display: none; } .footer-link { background: rgba(255,255,255,0.1) !important; padding: 10px 20px !important; border-radius: 20px !important; width: 80%; text-align: center; } }
-
-        /* 🔥 NEW PREMIUM SPEED TRACKER UI 🔥 */
-        .speed-tracker-wrapper { background: #f8f9fa; border-radius: 16px; padding: 20px; border: 1px solid #eee; }
-        [data-theme="dark"] .speed-tracker-wrapper { background: #1e232d; border-color: #2a303c; }
-        
-        .tracker-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
-        [data-theme="dark"] .tracker-header { border-color: #2a303c; }
-        .gps-badge { background: white; padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 1px solid #eee; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        [data-theme="dark"] .gps-badge { background: #2a303c; border-color: #333; color: #ddd; }
-        
-        .tracker-main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .tracker-main-grid { grid-template-columns: 1fr; } }
-        
-        /* Analog Meter */
-        .meter-card { background: white; border-radius: 16px; padding: 25px 15px; text-align: center; border: 1px solid #eee; box-shadow: 0 5px 20px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; }
-        .meter-card:hover { transform: scale(1.01); }
-        [data-theme="dark"] .meter-card { background: #1a1e27; border-color: #2a303c; }
-        
-        .analog-meter { position: relative; width: 280px; height: 150px; overflow: hidden; margin-bottom: 10px; }
-        .meter-arc { width: 280px; height: 280px; border-radius: 50%; border: 25px solid transparent; border-top-color: #e0e0e0; border-right-color: #e0e0e0; transform: rotate(-45deg); box-sizing: border-box; position: absolute; top: 0; left: 0; }
-        .meter-arc-color { width: 280px; height: 280px; border-radius: 50%; box-sizing: border-box; position: absolute; top: 0; left: 0; border: 25px solid transparent; background: conic-gradient(from 270deg, #5eb063 0 45deg, #f39c12 45deg 75deg, #d9534f 75deg 180deg, transparent 180deg 360deg); -webkit-mask: radial-gradient(transparent 110px, black 115px); mask: radial-gradient(transparent 110px, black 115px); }
-        
-        .meter-needle { width: 6px; height: 110px; background: var(--primary-blue); position: absolute; bottom: 0; left: calc(50% - 3px); transform-origin: bottom center; transform: rotate(-90deg); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 3px 3px 0 0; z-index: 2; }
-        .meter-center { width: 24px; height: 24px; background: var(--primary-blue); border-radius: 50%; position: absolute; bottom: -12px; left: calc(50% - 12px); z-index: 3; border: 4px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
-        .meter-labels { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
-        .meter-label { position: absolute; font-size: 0.8rem; font-weight: bold; color: #777; }
-        
-        .meter-value-container { margin-top: -20px; z-index: 10; position: relative; background: white; border-radius: 50%; width: 120px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; }
-        [data-theme="dark"] .meter-value-container { background: #1a1e27; }
-        
-        .st-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .st-info-card { background: white; padding: 15px; border-radius: 12px; border: 1px solid #eee; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        [data-theme="dark"] .st-info-card { background: #1a1e27; border-color: #2a303c; }
-        .st-icon-wrap { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: #f0f7ff; color: var(--primary-blue); }
-        [data-theme="dark"] .st-icon-wrap { background: rgba(0,86,179,0.2); color: #74b9ff; }
-        .st-card-content h4 { margin: 0; font-size: 0.8rem; color: #777; font-weight: 500; }
-        .st-card-content strong { font-size: 1.3rem; color: var(--primary-blue); display: block; margin: 2px 0; }
-        .st-card-content p { margin: 0; font-size: 0.75rem; color: #888; }
-
-        .tracker-footer { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 12px; margin-top: 20px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 15px; }
-        [data-theme="dark"] .tracker-footer { background: #1a1e27; border-color: #2a303c; }
-        
-        /* Warning Overlay */
-        .danger-blink { animation: red-flash 1s infinite alternate; }
-        @keyframes red-flash { 0% { box-shadow: inset 0 0 0px rgba(217, 83, 79, 0); } 100% { box-shadow: inset 0 0 30px rgba(217, 83, 79, 0.8); border: 2px solid red; } }
-        
-        .high-danger-blink { animation: fast-red-flash 0.5s infinite alternate; }
-        @keyframes fast-red-flash { 0% { background-color: rgba(217, 83, 79, 0); box-shadow: inset 0 0 0px red; } 100% { background-color: rgba(217, 83, 79, 0.1); box-shadow: inset 0 0 50px red; } }
-
-        .warning-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 2px solid #d9534f; border-radius: 16px; padding: 25px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(217, 83, 79, 0.4); z-index: 9999999; display: none; }
-        [data-theme="dark"] .warning-popup { background: rgba(30, 35, 45, 0.95); }
     </style>
 </head>
 <body>
 
-    <!-- 🎵 HIDDEN AUDIO ELEMENT -->
     <audio id="bgMusic" loop autoplay preload="auto">
         <source src="assets/music/winner.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- ⚠ RED WARNING POPUP -->
-    <div id="speedWarningPopup" class="warning-popup">
-        <div style="font-size: 3rem; color: #d9534f; margin-bottom: 10px; animation: scaleUp 0.5s infinite alternate;"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <h2 style="color: #d9534f; margin-bottom: 10px;">⚠ ALERT</h2>
-        <h3 style="margin-bottom: 15px;">Speed Limit Exceeded!</h3>
-        <p style="font-size: 1.1rem; margin-bottom: 5px;">Current Speed: <strong id="warnCurrentSpeed" style="color: #d9534f;">-- km/h</strong></p>
-        <p style="font-size: 0.9rem; color: #777; margin-bottom: 20px;">Maximum Allowed Speed: <strong id="warnMaxSpeed">75 km/h</strong></p>
-        <p style="font-weight: bold; margin-bottom: 20px;">Please Reduce Your Speed Immediately.</p>
-        <button onclick="document.getElementById('speedWarningPopup').style.display='none'" style="background: #d9534f; color: white; border: none; padding: 10px 30px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; width: 100%;">OK, I Will Drive Safe</button>
-    </div>
-
-    <!-- 🗺️ FULL PAGE ROUTE MAP -->
+    <!-- ROUTE MAP -->
     <div id="routeMapPage" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f1f3f5; z-index: 9999999; flex-direction: column;">
-        
         <div style="position: absolute; top: 25px; left: 15px; z-index: 9999; display: flex; flex-direction: column; gap: 15px;">
             <button id="btnBackFromMap" class="map-floating-btn" style="background: #d9534f; color: white; border:none;" title="Close Map"><i class="fa-solid fa-xmark"></i></button>
             <button id="btnShowMapInfo" class="map-floating-btn" style="display:none; background: var(--primary-blue); color: white; border:none;" title="Show Info"><i class="fa-solid fa-circle-info"></i></button>
@@ -156,24 +86,17 @@
 
         <div id="mapInfoCard" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999; border: 1px solid rgba(0,0,0,0.05);">
             <button id="btnCloseMapInfo" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: #888; transition: 0.2s;"><i class="fa-solid fa-xmark"></i></button>
-            
             <h3 id="mapRouteTitle" style="color: var(--primary-blue); margin-bottom: 10px; font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 8px; padding-right: 20px;">Hisar &rarr; Delhi</h3>
-            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="map-info-item"><i class="fa-regular fa-clock" style="color:var(--primary-blue);"></i> <span id="mapDepTime">--</span></div>
                 <div class="map-info-item"><i class="fa-solid fa-bus" style="color:var(--primary-blue);"></i> <span id="mapBusType">--</span></div>
                 <div class="map-info-item"><i class="fa-solid fa-id-badge" style="color:var(--primary-blue);"></i> <span id="mapOp">--</span></div>
                 <div class="map-info-item"><i class="fa-solid fa-road" style="color:var(--primary-blue);"></i> <span id="mapEstDist">Calculating...</span></div>
             </div>
-            
             <div class="map-info-item" style="margin-top:10px; font-weight:bold;"><i class="fa-solid fa-hourglass-half" style="color:#f39c12;"></i> Est. Travel Time: <span id="mapEstTime" style="margin-left:5px;">Calculating...</span></div>
-            
             <div class="map-info-item" style="margin-top:10px; align-items:flex-start;">
                 <i class="fa-solid fa-map-pin" style="color:#d9534f; margin-top:4px;"></i> 
-                <div>
-                    <strong style="font-size:0.85rem; color:#888;">VIA STOPS</strong><br>
-                    <span id="mapViaStops" style="font-size:0.9rem;">--</span>
-                </div>
+                <div><strong style="font-size:0.85rem; color:#888;">VIA STOPS</strong><br><span id="mapViaStops" style="font-size:0.9rem;">--</span></div>
             </div>
         </div>
     </div>
@@ -193,7 +116,6 @@
         </div>
     </header>
 
-    <!-- Scrolling Live Alert Marquee -->
     <div class="marquee-wrapper">
         <div class="marquee-content" id="marqueeText">
             <span style="color: #000; font-weight: bold;">🚍 Loading live bus schedules...</span>
@@ -290,7 +212,9 @@
                     <button class="setting-nav-item active" data-tab="tab-theme"><i class="fa-solid fa-circle-half-stroke"></i> Theme</button>
                     <button class="setting-nav-item" data-tab="tab-routes"><i class="fa-solid fa-map-location-dot"></i> Routes</button>
                     <button class="setting-nav-item" data-tab="tab-details"><i class="fa-solid fa-id-card"></i> Details</button>
-                    <button class="setting-nav-item" data-tab="tab-tracker" id="openTrackerTabBtn">
+                    <button class="setting-nav-item" data-tab="tab-update"><i class="fa-solid fa-user-pen"></i> Update</button>
+                    <!-- 🔥 DIRECTS TO NEW PAGE INSTEAD OF TAB 🔥 -->
+                    <button class="setting-nav-item" onclick="window.location.href='speed-tracker.html'" style="grid-column: span 2;">
                         <i class="fa-solid fa-gauge-high" style="color:#f39c12"></i> Speed Tracker
                         <span style="font-size:10px; background:#f39c12; color:white; padding:2px 5px; border-radius:10px; margin-left:5px;">PRO</span>
                     </button>
@@ -306,7 +230,6 @@
                             <i class="fa-solid fa-moon" id="icon-moon" style="color: white; opacity: 0.5;"></i>
                         </div>
                     </div>
-                    
                     <div class="theme-switch-wrapper" id="music-toggle" style="margin-top: 15px;">
                         <span style="font-weight: 600;">Background Music: <strong id="musicStatusText">ON</strong></span>
                         <div class="theme-switch" style="background: var(--primary-blue); border-radius: 20px; padding: 6px 12px; display: flex; gap: 12px; cursor: pointer;">
@@ -338,133 +261,45 @@
                     </div>
                 </div>
 
-                <!-- 🔥 NEW PREMIUM DEVICE SPEED TRACKER UI 🔥 -->
-                <div id="tab-tracker" class="settings-tab-content slide-in-bottom">
-                    <div class="speed-tracker-wrapper">
-                        
-                        <div class="tracker-header">
-                            <div>
-                                <h2 style="margin:0; color:var(--primary-blue); display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-gauge-high"></i> Speed Tracker</h2>
-                                <p style="margin:5px 0 0 0; font-size:0.85rem; color:#777;">Track real-time speed, highest speed, distance and trip details.</p>
-                            </div>
-                            <div class="gps-badge">
-                                <span id="stGpsDot" style="color:#d9534f;"><i class="fa-solid fa-circle"></i></span> 
-                                <div style="display:flex; flex-direction:column; line-height:1.2;">
-                                    <span id="stGpsText" style="color:var(--primary-blue);">GPS Disconnected</span>
-                                    <span style="font-size:0.7rem; color:#888; font-weight:normal;">Waiting for start...</span>
-                                </div>
+                <!-- Update Tab -->
+                <div id="tab-update" class="settings-tab-content slide-in-bottom">
+                    <h3 style="color: var(--primary-blue); margin-bottom: 15px;">Update Profile Data</h3>
+                    <div class="update-block">
+                        <label><strong>Update Full Name</strong></label>
+                        <div class="flex-row" style="margin-top: 5px;">
+                            <input type="text" id="updateNameInput" class="custom-input" placeholder="New Full Name">
+                            <button id="btnUpdateName" class="btn-premium-blue" style="padding: 8px 15px; border-radius: 6px;">Update</button>
+                        </div>
+                    </div>
+                    <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
+                    <div class="update-block">
+                        <label><strong>Update Phone Number</strong> <span id="phoneLimitText" style="color:#d9534f; font-weight:bold;">(Limit: 2 Edits / Month)</span></label>
+                        <div class="flex-row" style="margin-top: 5px; flex-direction:column; align-items:stretch;">
+                            <input type="tel" id="oldPhoneInput" class="custom-input" placeholder="Enter Old Mobile Number" maxlength="10" style="margin-bottom:5px;">
+                            <div class="flex-row" style="width:100%;">
+                                <input type="tel" id="updatePhoneInput" class="custom-input" placeholder="Enter New Mobile Number" maxlength="10">
+                                <button id="btnSendPhoneOtp" class="btn-side">Send OTP</button>
                             </div>
                         </div>
-
-                        <div class="tracker-main-grid">
-                            
-                            <!-- Analog Speedometer Card -->
-                            <div class="meter-card" onclick="window.location.href='speed-details.html'">
-                                <div class="analog-meter">
-                                    <div class="meter-arc-color"></div>
-                                    
-                                    <!-- Labels -->
-                                    <div class="meter-labels">
-                                        <span class="meter-label" style="left: 10px; bottom: 10px;">0</span>
-                                        <span class="meter-label" style="left: 30px; top: 50px;">40</span>
-                                        <span class="meter-label" style="left: 125px; top: 15px;">80</span>
-                                        <span class="meter-label" style="right: 25px; top: 50px;">120</span>
-                                        <span class="meter-label" style="right: -5px; bottom: 10px;">160</span>
-                                    </div>
-                                    
-                                    <div class="meter-needle" id="meterNeedle"></div>
-                                    <div class="meter-center"></div>
-                                </div>
-                                
-                                <div class="meter-value-container">
-                                    <span id="stCurrentSpeed" style="font-size:3.5rem; font-weight:900; line-height:1; color:#333;">00</span>
-                                    <span style="font-size:1.1rem; font-weight:bold; color:#777;">km/h</span>
-                                    <span style="font-size:0.8rem; color:#888; margin-top:2px;">Current Speed</span>
-                                </div>
-                                
-                                <div style="margin-top: 15px; background: rgba(94, 176, 99, 0.1); padding: 5px 15px; border-radius: 20px; color: #5eb063; font-weight: bold; font-size: 0.85rem; display:flex; align-items:center; gap:5px;" id="stSpeedStatusBadge">
-                                    <i class="fa-solid fa-circle"></i> Normal Speed
-                                </div>
-                            </div>
-
-                            <!-- 6 Info Cards Grid -->
-                            <div class="st-card-grid">
-                                <div class="st-info-card">
-                                    <div class="st-icon-wrap"><i class="fa-solid fa-trophy"></i></div>
-                                    <div class="st-card-content">
-                                        <h4>Highest Speed</h4>
-                                        <strong id="stHighestSpeed">0 km/h</strong>
-                                        <p id="stHighestDate">Not recorded yet</p>
-                                    </div>
-                                </div>
-                                <div class="st-info-card">
-                                    <div class="st-icon-wrap"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                                    <div class="st-card-content">
-                                        <h4>Average Speed</h4>
-                                        <strong id="stAvgSpeed">0 km/h</strong>
-                                        <p>Since trip started</p>
-                                    </div>
-                                </div>
-                                <div class="st-info-card">
-                                    <div class="st-icon-wrap"><i class="fa-solid fa-road"></i></div>
-                                    <div class="st-card-content">
-                                        <h4>Total Distance</h4>
-                                        <strong id="stDistance">0.00 km</strong>
-                                        <p>Since trip started</p>
-                                    </div>
-                                </div>
-                                <div class="st-info-card">
-                                    <div class="st-icon-wrap"><i class="fa-regular fa-clock"></i></div>
-                                    <div class="st-card-content">
-                                        <h4>Total Time</h4>
-                                        <strong id="stTime">00:00:00</strong>
-                                        <p>Hours : Minutes : Seconds</p>
-                                    </div>
-                                </div>
-                                <div class="st-info-card">
-                                    <div class="st-icon-wrap"><i class="fa-solid fa-gauge"></i></div>
-                                    <div class="st-card-content">
-                                        <h4>Max Allowed Speed</h4>
-                                        <strong style="color: #d9534f;">75 km/h</strong>
-                                        <p>As per Haryana Roadways</p>
-                                    </div>
-                                </div>
-                                <div class="st-info-card">
-                                    <div class="st-icon-wrap"><i class="fa-solid fa-shield-halved"></i></div>
-                                    <div class="st-card-content">
-                                        <h4>Speed Status</h4>
-                                        <strong id="stTextStatus" style="color: #5eb063;">Safe</strong>
-                                        <p>You are within safe limits</p>
-                                    </div>
-                                </div>
+                        <div class="flex-row hidden" id="phoneOtpBox" style="margin-top: 10px;">
+                            <input type="text" id="phoneOtpInput" class="custom-input" placeholder="Enter OTP" maxlength="4">
+                            <button id="btnVerifyPhoneUpdate" class="btn-side btn-verify">Verify & Save</button>
+                        </div>
+                    </div>
+                    <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
+                    <div class="update-block">
+                        <label><strong>Update Email Address</strong> <span id="emailLimitText" style="color:#d9534f; font-weight:bold;">(Limit: 2 Edits / Month)</span></label>
+                        <div class="flex-row" style="margin-top: 5px; flex-direction:column; align-items:stretch;">
+                            <input type="email" id="oldEmailInput" class="custom-input" placeholder="Enter Old Email Address" style="margin-bottom:5px;">
+                            <div class="flex-row" style="width:100%;">
+                                <input type="email" id="updateEmailInput" class="custom-input" placeholder="Enter New Email Address">
+                                <button id="btnSendEmailOtp" class="btn-side">Send OTP</button>
                             </div>
                         </div>
-
-                        <!-- Trip Footer Bar -->
-                        <div class="tracker-footer">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <i class="fa-regular fa-calendar-check" style="font-size:1.5rem; color:var(--primary-blue);"></i>
-                                <div class="st-card-content">
-                                    <h4>Trip Started At</h4>
-                                    <p id="stTripStart" style="font-weight:bold; color:#333; font-size:0.9rem;">Not Started</p>
-                                </div>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <i class="fa-solid fa-location-dot" style="font-size:1.5rem; color:var(--primary-blue);"></i>
-                                <div class="st-card-content">
-                                    <h4>Current Location</h4>
-                                    <p id="stCurrentLoc" style="font-weight:bold; color:#333; font-size:0.9rem;">Fetching GPS...</p>
-                                </div>
-                            </div>
-                            <button id="btnStartTrip" style="background:#5eb063; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;"><i class="fa-solid fa-play"></i> Start Trip</button>
-                            <button id="btnEndTrip" style="background:#d9534f; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer; display:none;"><i class="fa-solid fa-stop"></i> End Trip</button>
+                        <div class="flex-row hidden" id="emailOtpBox" style="margin-top: 10px;">
+                            <input type="text" id="emailOtpInput" class="custom-input" placeholder="Enter OTP" maxlength="4">
+                            <button id="btnVerifyEmailUpdate" class="btn-side btn-verify">Verify & Save</button>
                         </div>
-                        
-                        <div style="margin-top:15px; background:rgba(243,156,18,0.1); padding:10px 15px; border-radius:8px; border:1px solid rgba(243,156,18,0.3); font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
-                            <span><i class="fa-solid fa-circle-exclamation" style="color:#f39c12;"></i> <strong>Note:</strong> Do not exceed the max allowed speed. Drive safe and follow traffic rules.</span>
-                            <span style="color:var(--primary-blue); font-weight:bold;"><i class="fa-solid fa-shield-heart"></i> Drive Safe, Reach Safe</span>
-                        </div>
-
                     </div>
                 </div>
 
@@ -515,7 +350,6 @@
                 <p>This website may use Local Storage or Session Storage to remember user preferences and improve functionality.</p>
                 <h2>Policy Updates</h2>
                 <p>This Privacy Policy may be updated periodically without prior notice. Continued use of this website indicates acceptance of the latest version.</p>
-                
                 <div class="modal-contact-block">
                     <strong><i class="fa-solid fa-envelope"></i> CONTACT INFORMATION</strong><br><br>
                     Haryana Roadways Timetable (Educational Project)<br>
@@ -540,34 +374,24 @@
                 <p><strong>Last Updated:</strong> July 2026</p>
                 <h2>Welcome to Haryana Roadways Timetable</h2>
                 <p>By accessing or using this website, you agree to the following Terms & Conditions.</p>
-                
                 <h3>1. Educational Purpose</h3>
                 <p>This website is an <strong>independent educational and software development project</strong> created for learning, portfolio presentation, research, and demonstration purposes only.</p>
-                
                 <h3>2. No Government Affiliation</h3>
                 <p>This website is <strong>NOT</strong> the official website of Haryana Roadways, the Government of Haryana, or any government authority.</p>
-                
                 <h3>3. Route & Timetable Information</h3>
                 <p>The routes, stops, departure times, bus types, operators, and related information available on this website are provided <strong>only for educational, informational, and demonstration purposes</strong>.</p>
-                
                 <h3>4. Limited Data</h3>
                 <p>Only a limited number of routes have been added to demonstrate the functionality of the project. This website does <strong>not</strong> represent the complete Haryana Roadways timetable or route network.</p>
-                
                 <h3>5. Travel Responsibility</h3>
                 <p>Users should always verify the latest route, departure time, fare, and other travel information through the official Haryana Roadways enquiry before planning any journey.</p>
-                
                 <h3>6. User Conduct</h3>
                 <p>Users agree not to misuse this website for unlawful, fraudulent, unauthorized, harmful, or malicious activities.</p>
-                
                 <h3>7. User Accounts</h3>
                 <p>Account registration may require administrator approval. Accounts may be approved, rejected, suspended, blocked, or removed if misuse or policy violations are detected.</p>
-                
                 <h3>8. Intellectual Property</h3>
                 <p>All trademarks, logos, organization names, and brand identities belong to their respective owners.</p>
-                
                 <h3>9. Updates</h3>
                 <p>These Terms & Conditions may be updated at any time without prior notice. Continued use of this website indicates acceptance of the latest version.</p>
-
                 <div class="modal-contact-block">
                     <strong><i class="fa-solid fa-envelope"></i> CONTACT INFORMATION</strong><br><br>
                     Haryana Roadways Timetable (Educational Project)<br>
@@ -592,17 +416,13 @@
                 <p><strong>Last Updated:</strong> July 2026</p>
                 <h2>Educational Project</h2>
                 <p>Haryana Roadways Timetable is an <strong>independent educational, research, and software development project</strong> created for learning, portfolio presentation, and demonstration purposes.</p>
-                
                 <h2>Not an Official Website</h2>
                 <p>This website is <strong>NOT affiliated with, authorized by, endorsed by, sponsored by, or operated by Haryana Roadways or the Government of Haryana.</strong></p>
-                
                 <h2>Demonstration Data</h2>
                 <p>The routes, departure times, operators, bus types, fares, and other information available on this website are provided only for educational demonstration.</p>
                 <p>The developer has manually added only selected routes required to demonstrate the functionality of this software project. This website <strong>does not contain the complete Haryana Roadways timetable database</strong>.</p>
-                
                 <h2>Accuracy</h2>
                 <p>Although every reasonable effort is made to keep information accurate, routes, timings, operators, bus availability, and related information may change without notice. Users should always verify travel information through official Haryana Roadways sources before travelling.</p>
-                
                 <h2>Limitation of Liability</h2>
                 <p>The website owner shall not be responsible for:</p>
                 <ul>
@@ -617,10 +437,8 @@
                     <li>Technical issues</li>
                     <li>Any direct or indirect damages resulting from the use of this website</li>
                 </ul>
-                
                 <h2>Acceptance</h2>
                 <p>By accessing or using this website, you acknowledge that you have read, understood, and accepted this Disclaimer.</p>
-
                 <div class="modal-contact-block">
                     <strong><i class="fa-solid fa-envelope"></i> CONTACT INFORMATION</strong><br><br>
                     Haryana Roadways Timetable (Educational Project)<br>
