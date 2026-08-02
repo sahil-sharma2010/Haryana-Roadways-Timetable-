@@ -287,6 +287,38 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
+    // 🎵 PREMIUM AUDIO BEEP SYSTEM (Web Audio API - No files needed)
+    // =========================================================
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    function playAlertBeep(intensity) {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        if (intensity === 'high') {
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.2);
+        } else {
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); 
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        }
+    }
+
+    // =========================================================
     // 🎵 PREMIUM BACKGROUND MUSIC SYSTEM
     // =========================================================
     const bgMusic = document.getElementById('bgMusic');
@@ -348,7 +380,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             setMusicUI(false);
         } else {
             setMusicUI(true);
-            
             let playPromise = bgMusic.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
@@ -395,17 +426,13 @@ document.addEventListener("DOMContentLoaded", async function() {
         var now = new Date();
         var depParts = departureStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
         if(!depParts) return -1;
-        
         var h = parseInt(depParts[1], 10);
         var m = parseInt(depParts[2], 10);
         var ampm = depParts[3].toUpperCase();
-        
         if (ampm === 'PM' && h < 12) h += 12;
         if (ampm === 'AM' && h === 12) h = 0;
-        
         var depTime = new Date();
         depTime.setHours(h, m, 0, 0);
-        
         var diffMs = depTime - now;
         return Math.floor(diffMs / 60000);
     }
@@ -413,25 +440,21 @@ document.addEventListener("DOMContentLoaded", async function() {
     function updateMarquee() {
         var marquee = document.getElementById('marqueeText');
         if(!marquee) return;
-        
         var upcomingBuses = busData.filter(function(b) {
             var mins = getMinutesToDeparture(b.departure);
             return mins >= 0 && mins <= 30; 
         });
-
         if(upcomingBuses.length > 0) {
             var alertText = upcomingBuses.map(function(b) {
                 var mins = getMinutesToDeparture(b.departure);
                 var timeText = mins <= 5 ? `<span style="color:#d9534f; font-weight:900;">IN ${mins} MINS!</span>` : `in ${mins} mins`;
                 return `🚍 ${b.from} to ${b.to} departing ${timeText} (${b.departure})`;
             }).join(' &nbsp; &nbsp; | &nbsp; &nbsp; ');
-            
             marquee.innerHTML = `<span style="color: #000; font-weight: bold; font-size: 1.05rem;">🚨 UPCOMING DEPARTURES: &nbsp; ${alertText} 🚨</span>`;
         } else {
             marquee.innerHTML = `<span style="color: #000; font-weight: bold; font-size: 1.05rem;">🚍 Welcome to Haryana Roadways Timetable | Plan your journey easily. All timings are subject to change.</span>`;
         }
     }
-    
     setInterval(updateMarquee, 30000); 
     updateMarquee(); 
 
@@ -514,11 +537,13 @@ document.addEventListener("DOMContentLoaded", async function() {
                             localStorage.setItem('hr_user_name', res.data.name);
                             localStorage.setItem('hr_user_email', res.data.email);
                             localStorage.setItem('hr_user_mobile', res.data.mobile);
+                            if(res.data.highest_speed) {
+                                localStorage.setItem('hr_highest_speed', res.data.highest_speed);
+                                document.getElementById('stHighestSpeed').innerText = Math.round(res.data.highest_speed) + " km/h";
+                            }
                             if(dispName) dispName.innerText = res.data.name;
                             if(dispMob) dispMob.innerText = "+91 " + res.data.mobile;
                             if(dispEmail) dispEmail.innerText = res.data.email;
-                            if(typeof updatePhoneLimitUI === 'function') updatePhoneLimitUI(); 
-                            if(typeof updateEmailLimitUI === 'function') updateEmailLimitUI(); 
                         }
                     }
                 } catch(err) { }
@@ -543,26 +568,8 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
     });
 
-    var themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', function() {
-            localStorage.setItem('theme_manually_changed', 'true');
-            if (document.body.getAttribute('data-theme') === 'dark') {
-                document.body.removeAttribute('data-theme');
-                document.getElementById('icon-sun').style.opacity = '1'; 
-                document.getElementById('icon-moon').style.opacity = '0.5';
-                document.getElementById('themeStatusText').innerText = "Light Mode";
-            } else {
-                document.body.setAttribute('data-theme', 'dark');
-                document.getElementById('icon-sun').style.opacity = '0.5'; 
-                document.getElementById('icon-moon').style.opacity = '1';
-                document.getElementById('themeStatusText').innerText = "Dark Mode";
-            }
-        });
-    }
-
     // =========================================================
-    // ROUTES TAB LOGIC
+    // ROUTES TAB LOGIC 
     // =========================================================
     var cityBtns = document.querySelectorAll('.city-btn');
     var routeDetailsContainer = document.getElementById('routeDetailsContainer');
@@ -593,148 +600,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             }
         });
     });
-
-    // =========================================================
-    // PHONE & EMAIL UPDATES
-    // =========================================================
-    window.updatePhoneLimitUI = function() {
-        var limitData = JSON.parse(localStorage.getItem('hr_phone_update_history')) || [];
-        var thirtyDays = 30 * 24 * 60 * 60 * 1000;
-        var validData = limitData.filter(t => (Date.now() - t) < thirtyDays);
-        localStorage.setItem('hr_phone_update_history', JSON.stringify(validData));
-        var phoneLeft = 2 - validData.length;
-        var pt = document.getElementById('phoneLimitText');
-        if(pt) pt.innerHTML = phoneLeft <= 0 ? `(Limit Reached)` : `(Limit: 2 Edits / Month - ${phoneLeft} left)`;
-        var btnP = document.getElementById('btnSendPhoneOtp');
-        if (btnP) btnP.disabled = (phoneLeft <= 0);
-    }
-
-    window.updateEmailLimitUI = function() {
-        var limitData = JSON.parse(localStorage.getItem('hr_email_update_history')) || [];
-        var thirtyDays = 30 * 24 * 60 * 60 * 1000;
-        var validData = limitData.filter(t => (Date.now() - t) < thirtyDays);
-        localStorage.setItem('hr_email_update_history', JSON.stringify(validData));
-        var emailLeft = 2 - validData.length;
-        var et = document.getElementById('emailLimitText');
-        if(et) et.innerHTML = emailLeft <= 0 ? `(Limit Reached)` : `(Limit: 2 Edits / Month - ${emailLeft} left)`;
-        var btnE = document.getElementById('btnSendEmailOtp');
-        if (btnE) btnE.disabled = (emailLeft <= 0);
-    }
-
-    var btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
-    var btnVerifyPhoneUpdate = document.getElementById('btnVerifyPhoneUpdate');
-    var phoneUpdateOTP = null;
-
-    if (btnSendPhoneOtp) {
-        btnSendPhoneOtp.addEventListener('click', async function() {
-            var currentMobile = localStorage.getItem('hr_user_mobile');
-            var currentEmail = localStorage.getItem('hr_user_email');
-            if (!currentMobile || !currentEmail || !db) { Swal.fire({title:'Error', text:'System not ready.', icon:'error', target: document.getElementById('settingsPage') || 'body'}); return; }
-            var oldPhone = document.getElementById('oldPhoneInput') ? document.getElementById('oldPhoneInput').value.trim() : '';
-            var newPhone = document.getElementById('updatePhoneInput') ? document.getElementById('updatePhoneInput').value.trim() : '';
-            
-            if (oldPhone !== currentMobile) return Swal.fire({title:'Error', text:'Old mobile mismatch.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
-            if (newPhone.length !== 10) return Swal.fire({title:'Invalid', text:'Enter valid 10-digit number.', icon:'warning', target: document.getElementById('settingsPage') || 'body'});
-            btnSendPhoneOtp.disabled = true; btnSendPhoneOtp.innerText = "Checking...";
-            
-            var dup = await db.from('users').select('mobile').eq('mobile', newPhone).maybeSingle();
-            if (dup.data) { btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP"; return Swal.fire({title:'Exists', text:'New number already registered.', icon:'warning', target: document.getElementById('settingsPage') || 'body'}); }
-            phoneUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
-            
-            if(typeof emailjs !== 'undefined') {
-                emailjs.send("service_ecofefq", "template_grujfl8", { to_email: currentEmail, user_name: localStorage.getItem('hr_user_name') || "User", otp: phoneUpdateOTP })
-                .then(() => {
-                    document.getElementById('phoneOtpBox').classList.remove('hidden');
-                    btnSendPhoneOtp.innerText = "Sent ✓";
-                    Swal.fire({title:'OTP Sent', text:`OTP sent to ${currentEmail}`, icon:'success', target: document.getElementById('settingsPage') || 'body'});
-                }).catch(e => {
-                    btnSendPhoneOtp.disabled = false; btnSendPhoneOtp.innerText = "Send OTP";
-                    Swal.fire({title:'Error', text:'Failed to send Email.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
-                });
-            }
-        });
-    }
-
-    if (btnVerifyPhoneUpdate) {
-        btnVerifyPhoneUpdate.addEventListener('click', async function() {
-            var enteredOtp = document.getElementById('phoneOtpInput').value.trim();
-            var newPhone = document.getElementById('updatePhoneInput').value.trim();
-            var currentEmail = localStorage.getItem('hr_user_email');
-            if (enteredOtp === phoneUpdateOTP && db) {
-                btnVerifyPhoneUpdate.innerText = "Saving...";
-                var res = await db.from('users').update({ mobile: newPhone }).eq('email', currentEmail);
-                if (!res.error) {
-                    var limitData = JSON.parse(localStorage.getItem('hr_phone_update_history')) || [];
-                    limitData.push(Date.now()); localStorage.setItem('hr_phone_update_history', JSON.stringify(limitData));
-                    localStorage.setItem('hr_user_mobile', newPhone);
-                    document.getElementById('dispMobile').innerText = "+91 " + newPhone;
-                    Swal.fire({title:'Success', text:'Phone number changed!', icon:'success', target: document.getElementById('settingsPage') || 'body'});
-                    document.getElementById('phoneOtpBox').classList.add('hidden');
-                    updatePhoneLimitUI();
-                } else { Swal.fire('Error', res.error.message, 'error'); }
-                btnVerifyPhoneUpdate.innerText = "Verify & Save";
-            } else { Swal.fire({title:'Error', text:'Incorrect OTP', icon:'error', target: document.getElementById('settingsPage') || 'body'}); }
-        });
-    }
-
-    var btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
-    var btnVerifyEmailUpdate = document.getElementById('btnVerifyEmailUpdate');
-    var emailUpdateOTP = null;
-
-    if (btnSendEmailOtp) {
-        btnSendEmailOtp.addEventListener('click', async function() {
-            var currentMobile = localStorage.getItem('hr_user_mobile');
-            var currentEmail = localStorage.getItem('hr_user_email');
-            if (!currentMobile || !currentEmail || !db) { Swal.fire({title:'Error', text:'System not ready.', icon:'error', target: document.getElementById('settingsPage') || 'body'}); return; }
-            var oldEmail = document.getElementById('oldEmailInput') ? document.getElementById('oldEmailInput').value.trim() : '';
-            var newEmail = document.getElementById('updateEmailInput') ? document.getElementById('updateEmailInput').value.trim() : '';
-            
-            if (oldEmail !== currentEmail) return Swal.fire({title:'Error', text:'Old email mismatch.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
-            if (!newEmail.includes('@')) return Swal.fire({title:'Invalid', text:'Enter a valid new email address.', icon:'warning', target: document.getElementById('settingsPage') || 'body'});
-            btnSendEmailOtp.disabled = true; btnSendEmailOtp.innerText = "Checking...";
-            
-            var dup = await db.from('users').select('email').eq('email', newEmail).maybeSingle();
-            if (dup.data) { btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP"; return Swal.fire({title:'Exists', text:'New email already registered.', icon:'warning', target: document.getElementById('settingsPage') || 'body'}); }
-            emailUpdateOTP = Math.floor(1000 + Math.random() * 9000).toString();
-            
-            if(typeof emailjs !== 'undefined') {
-                emailjs.send("service_ecofefq", "template_grujfl8", { to_email: newEmail, user_name: localStorage.getItem('hr_user_name') || "User", otp: emailUpdateOTP })
-                .then(() => {
-                    var emailBox = document.getElementById('emailOtpBox');
-                    if(emailBox) emailBox.classList.remove('hidden');
-                    btnSendEmailOtp.innerText = "Sent ✓";
-                    Swal.fire({title:'OTP Sent', text:`OTP sent to ${newEmail} to verify`, icon:'success', target: document.getElementById('settingsPage') || 'body'});
-                }).catch(e => {
-                    btnSendEmailOtp.disabled = false; btnSendEmailOtp.innerText = "Send OTP";
-                    Swal.fire({title:'Error', text:'Failed to send Email.', icon:'error', target: document.getElementById('settingsPage') || 'body'});
-                });
-            }
-        });
-    }
-
-    if (btnVerifyEmailUpdate) {
-        btnVerifyEmailUpdate.addEventListener('click', async function() {
-            var enteredOtp = document.getElementById('emailOtpInput').value.trim();
-            var newEmail = document.getElementById('updateEmailInput').value.trim();
-            var currentMobile = localStorage.getItem('hr_user_mobile');
-            if (enteredOtp === emailUpdateOTP && db) {
-                btnVerifyEmailUpdate.innerText = "Saving...";
-                var res = await db.from('users').update({ email: newEmail }).eq('mobile', currentMobile);
-                if (!res.error) {
-                    var limitData = JSON.parse(localStorage.getItem('hr_email_update_history')) || [];
-                    limitData.push(Date.now()); localStorage.setItem('hr_email_update_history', JSON.stringify(limitData));
-                    localStorage.setItem('hr_user_email', newEmail);
-                    var dispEmail = document.getElementById('dispEmail');
-                    if(dispEmail) dispEmail.innerText = newEmail;
-                    Swal.fire({title:'Success', text:'Email Address changed!', icon:'success', target: document.getElementById('settingsPage') || 'body'});
-                    var eBox = document.getElementById('emailOtpBox');
-                    if(eBox) eBox.classList.add('hidden');
-                    updateEmailLimitUI();
-                } else { Swal.fire('Error', res.error.message, 'error'); }
-                btnVerifyEmailUpdate.innerText = "Verify & Save";
-            } else { Swal.fire({title:'Error', text:'Incorrect OTP', icon:'error', target: document.getElementById('settingsPage') || 'body'}); }
-        });
-    }
 
     // =========================================================
     // SEARCH & TIMETABLE LOGIC
@@ -806,40 +671,34 @@ document.addEventListener("DOMContentLoaded", async function() {
     // BULLETPROOF FOOTER & MODAL LOGIC 
     // ==========================================
     document.body.addEventListener('click', function(e) {
-        
         if (e.target.closest('#openTncBtn')) {
             e.preventDefault(); 
             var modal = document.getElementById('tncModal');
             if(modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
             return;
         }
-        
         if (e.target.closest('#openPrivacyBtn')) {
             e.preventDefault(); 
             var pModal = document.getElementById('privacyModal');
             if(pModal) { pModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
             return;
         }
-        
         if (e.target.closest('#openDisclaimerBtn')) {
             e.preventDefault(); 
             var dModal = document.getElementById('disclaimerModal');
             if(dModal) { dModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
             return;
         }
-
         if (e.target.closest('#closeTncBtnTop') || e.target.closest('#closePrivacyBtnTop') || e.target.closest('#closeDisclaimerBtnTop') || e.target.closest('.btn-side')) {
             var modalClose = e.target.closest('.glass-modal-overlay');
             if(modalClose) { modalClose.classList.remove('active'); document.body.style.overflow = 'auto'; }
         }
-
         if (e.target.closest('#acceptTncBtn')) {
             var modalAcc = e.target.closest('.glass-modal-overlay');
             if(modalAcc) { modalAcc.classList.remove('active'); document.body.style.overflow = 'auto'; }
             var termsCheck = document.getElementById('termsCheck');
             if(termsCheck) termsCheck.checked = true;
         }
-
         if (e.target.classList.contains('glass-modal-overlay')) {
             e.target.classList.remove('active'); document.body.style.overflow = 'auto';
         }
@@ -883,16 +742,14 @@ document.addEventListener("DOMContentLoaded", async function() {
     async function getCoordinates(cityStr) {
         var cleanCity = cityStr.trim().toLowerCase();
         if (cityCoords[cleanCity]) return L.latLng(cityCoords[cleanCity][0], cityCoords[cleanCity][1]);
-        
         try {
             var response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityStr)}, India`);
             var data = await response.json();
             if (data && data.length > 0) return L.latLng(data[0].lat, data[0].lon);
-        } catch (e) { console.error("Geocoding failed for " + cityStr); }
+        } catch (e) { }
         return null;
     }
 
-    // 🔥 HANDLE HARDWARE BACK BUTTON TO CLOSE MAP
     window.addEventListener('popstate', function(e) {
         var mapPage = document.getElementById('routeMapPage');
         if (mapPage && mapPage.style.display === 'flex') {
@@ -905,7 +762,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         var mapPage = document.getElementById('routeMapPage');
         if(!mapPage) return;
         
-        // Push state so phone back button works
         history.pushState({ mapOpen: true }, null, "#routeMap");
 
         document.getElementById('mapRouteTitle').innerHTML = `${from} &rarr; ${to}`;
@@ -923,7 +779,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(btnShowInfo) btnShowInfo.style.display = 'none';
 
         if (!lMap) {
-            // Zoom Controls are now handled here (Bottom-Left)
             lMap = L.map('map', {zoomControl: false}).setView([29.1492, 75.7217], 8);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
@@ -974,17 +829,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                 var mins = Math.floor((totalTime % 3600) / 60);
                 document.getElementById('mapEstTime').innerText = (hrs > 0 ? hrs + " hr " : "") + mins + " min";
             });
-            
-            lRoutingControl.on('routingerror', function() {
-                document.getElementById('mapEstDist').innerText = 'N/A';
-                document.getElementById('mapEstTime').innerText = 'N/A';
-                Swal.fire('Route Error', 'Could not calculate the route. Network issue or invalid locations.', 'error');
-            });
-
-        } else {
-            Swal.fire('Error', 'Could not locate the route destinations.', 'warning');
-            document.getElementById('mapEstDist').innerText = 'N/A';
-            document.getElementById('mapEstTime').innerText = 'N/A';
         }
     };
 
@@ -994,7 +838,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             var mapPage = document.getElementById('routeMapPage');
             if(mapPage) mapPage.style.display = 'none';
             document.body.style.overflow = 'auto';
-            // Optional: go back in history to clean URL
             if(window.location.hash === '#routeMap') history.back();
         });
     }
@@ -1036,34 +879,45 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // =========================================================
-    // 🚍 DEVICE SPEED TRACKER LOGIC
+    // 🔥 PREMIUM DEVICE SPEED TRACKER (FULL LOGIC & ALERTS) 🔥
     // =========================================================
     var watchSpeedId = null;
-    var totalSpeedDist = 0;
+    var totalSpeedDistKm = 0;
     var lastSpeedLat = null;
     var lastSpeedLon = null;
-    var lastHeading = null;
+    
+    var tripActive = false;
+    var tripStartTime = null;
+    var tripTimerInt = null;
+    
+    var highestSpeedAchieved = parseFloat(localStorage.getItem('hr_highest_speed') || 0);
+    
+    var alertLevel = 0; 
+    var beepIntervalId = null;
 
-    var startBtn = document.getElementById('btnStartTracker');
-    var pauseBtn = document.getElementById('btnPauseTracker');
-    var stopBtn = document.getElementById('btnStopTracker');
+    var startBtn = document.getElementById('btnStartTrip');
+    var endBtn = document.getElementById('btnEndTrip');
     
-    var speedVal = document.getElementById('speedVal');
-    var speedGauge = document.getElementById('speedGauge');
-    var speedStatusBadge = document.getElementById('speedStatusBadge');
-    var gpsStatus = document.getElementById('gpsStatus');
-    var gpsDirection = document.getElementById('gpsDirection');
-    var gpsDistance = document.getElementById('gpsDistance');
-    var gpsTime = document.getElementById('gpsTime');
+    var stCurrentSpeed = document.getElementById('stCurrentSpeed');
+    var meterNeedle = document.getElementById('meterNeedle');
+    var stSpeedStatusBadge = document.getElementById('stSpeedStatusBadge');
     
-    setInterval(function() {
-        var d = new Date();
-        if(gpsTime) {
-            gpsTime.innerText = d.getHours().toString().padStart(2, '0') + ':' + 
-                                d.getMinutes().toString().padStart(2, '0') + ':' + 
-                                d.getSeconds().toString().padStart(2, '0');
-        }
-    }, 1000);
+    var stHighestSpeed = document.getElementById('stHighestSpeed');
+    var stHighestDate = document.getElementById('stHighestDate');
+    var stAvgSpeed = document.getElementById('stAvgSpeed');
+    var stDistance = document.getElementById('stDistance');
+    var stTime = document.getElementById('stTime');
+    var stTextStatus = document.getElementById('stTextStatus');
+    var stTripStart = document.getElementById('stTripStart');
+    var stCurrentLoc = document.getElementById('stCurrentLoc');
+    
+    var stGpsText = document.getElementById('stGpsText');
+    var stGpsDot = document.getElementById('stGpsDot');
+
+    var warnPopup = document.getElementById('speedWarningPopup');
+    var warnCurrentSpeed = document.getElementById('warnCurrentSpeed');
+
+    if(stHighestSpeed) stHighestSpeed.innerText = Math.round(highestSpeedAchieved) + " km/h";
 
     function calcDeviceDist(lat1, lon1, lat2, lon2) {
         var R = 6371; 
@@ -1074,23 +928,54 @@ document.addEventListener("DOMContentLoaded", async function() {
         return R * c; 
     }
 
-    function calcHeadingManual(lat1, lon1, lat2, lon2) {
-        var dLon = (lon2 - lon1) * Math.PI / 180;
-        var lat1Rad = lat1 * Math.PI / 180;
-        var lat2Rad = lat2 * Math.PI / 180;
-        var y = Math.sin(dLon) * Math.cos(lat2Rad);
-        var x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
-        var brng = Math.atan2(y, x) * 180 / Math.PI;
-        return (brng + 360) % 360;
+    async function getLocName(lat, lon) {
+        try {
+            var res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+            var data = await res.json();
+            return data.address.city || data.address.town || data.address.village || data.address.county || "Unknown Location";
+        } catch(e) { return "GPS Coordinates"; }
     }
 
-    function getDeviceDir(heading) {
-        if (heading === null || isNaN(heading)) return '--';
-        var val = Math.floor((heading / 22.5) + 0.5);
-        var arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-        return arr[(val % 16)];
+    function manageAlerts(speed) {
+        // High Alert (>= 100)
+        if (speed >= 100) {
+            if (alertLevel !== 2) {
+                alertLevel = 2;
+                document.body.classList.remove('danger-blink');
+                document.body.classList.add('high-danger-blink');
+                warnPopup.style.display = 'block';
+                clearInterval(beepIntervalId);
+                beepIntervalId = setInterval(() => playAlertBeep('high'), 500); // Fast Beep
+            }
+        } 
+        // Normal Alert (>= 76 & < 100)
+        else if (speed > 75) {
+            if (alertLevel !== 1) {
+                alertLevel = 1;
+                document.body.classList.remove('high-danger-blink');
+                document.body.classList.add('danger-blink');
+                warnPopup.style.display = 'block';
+                clearInterval(beepIntervalId);
+                playAlertBeep('low'); // Beep once immediately
+                beepIntervalId = setInterval(() => playAlertBeep('low'), 5000); // Beep every 5 seconds
+            }
+        } 
+        // Safe Speed
+        else {
+            if (alertLevel !== 0) {
+                alertLevel = 0;
+                document.body.classList.remove('danger-blink', 'high-danger-blink');
+                warnPopup.style.display = 'none';
+                clearInterval(beepIntervalId);
+            }
+        }
+        
+        if (alertLevel > 0 && warnCurrentSpeed) {
+            warnCurrentSpeed.innerText = Math.round(speed) + " km/h";
+        }
     }
 
+    // 🏎️ PREMIUM SMOOTH SPEED ANIMATION
     let targetSpeedKmH = 0;
     let displaySpeedKmH = 0;
     
@@ -1101,27 +986,34 @@ document.addEventListener("DOMContentLoaded", async function() {
             let roundedSpeed = Math.round(displaySpeedKmH);
             let speedStr = roundedSpeed < 10 ? '0' + roundedSpeed : roundedSpeed.toString();
             
-            if (speedVal && speedVal.innerText !== speedStr) {
-                speedVal.innerText = speedStr;
+            if (stCurrentSpeed && stCurrentSpeed.innerText !== speedStr) {
+                stCurrentSpeed.innerText = speedStr;
             }
 
-            let color = '#e0e0e0';
-            let statText = 'Idle';
+            // Move Needle (0-160 km/h maps to -90 to +90 degrees)
+            let angle = -90 + (Math.min(displaySpeedKmH, 160) / 160) * 180;
+            if (meterNeedle) {
+                meterNeedle.style.transform = `rotate(${angle}deg)`;
+            }
+
+            let color = '#5eb063';
+            let statText = '<i class="fa-solid fa-circle"></i> Normal Speed';
+            let mainStat = 'Safe';
+            let mainStatColor = '#5eb063';
             
-            if (roundedSpeed > 0 && roundedSpeed <= 20) { color = '#5eb063'; statText = 'Low Speed 🟢'; }
-            else if (roundedSpeed > 20 && roundedSpeed <= 50) { color = '#f39c12'; statText = 'Medium 🟡'; }
-            else if (roundedSpeed > 50 && roundedSpeed <= 80) { color = '#e67e22'; statText = 'High 🟠'; }
-            else if (roundedSpeed > 80) { color = '#d9534f'; statText = 'Very High 🔴'; }
+            if (roundedSpeed === 0) { color = '#777'; statText = '<i class="fa-solid fa-circle-stop"></i> Stopped'; mainStat = 'Stopped'; }
+            else if (roundedSpeed > 0 && roundedSpeed <= 50) { color = '#5eb063'; statText = '<i class="fa-solid fa-circle"></i> Slow / Normal'; mainStat = 'Safe'; }
+            else if (roundedSpeed > 50 && roundedSpeed <= 75) { color = '#f39c12'; statText = '<i class="fa-solid fa-circle"></i> Fast'; mainStat = 'Fast'; mainStatColor = '#f39c12'; }
+            else if (roundedSpeed > 75) { color = '#d9534f'; statText = '<i class="fa-solid fa-circle-exclamation"></i> OVER SPEED'; mainStat = 'DANGER'; mainStatColor = '#d9534f'; }
 
-            if (speedStatusBadge && speedStatusBadge.innerText !== statText) {
-                speedStatusBadge.style.background = color;
-                speedStatusBadge.style.color = 'white';
-                speedStatusBadge.innerText = statText;
+            if (stSpeedStatusBadge && stSpeedStatusBadge.innerHTML !== statText) {
+                stSpeedStatusBadge.innerHTML = statText;
+                stSpeedStatusBadge.style.color = color;
+                stSpeedStatusBadge.style.background = `rgba(${color === '#d9534f' ? '217,83,79' : (color === '#f39c12' ? '243,156,18' : '94,176,99')}, 0.1)`;
             }
-
-            if (speedGauge) {
-                let percentage = Math.min(displaySpeedKmH / 120 * 100, 100);
-                speedGauge.style.background = `conic-gradient(${color} ${percentage}%, transparent 0)`;
+            if (stTextStatus && stTextStatus.innerText !== mainStat) {
+                stTextStatus.innerText = mainStat;
+                stTextStatus.style.color = mainStatColor;
             }
         }
         requestAnimationFrame(animateSpeedGauge);
@@ -1129,56 +1021,95 @@ document.addEventListener("DOMContentLoaded", async function() {
     requestAnimationFrame(animateSpeedGauge);
 
     function deviceSuccess(pos) {
-        if(gpsStatus) { gpsStatus.innerText = "Connected"; gpsStatus.style.color = "#5eb063"; }
+        if(stGpsText) { stGpsText.innerText = "GPS Connected"; stGpsDot.style.color = "#5eb063"; }
         var crd = pos.coords;
         
         if (lastSpeedLat === crd.latitude && lastSpeedLon === crd.longitude) return;
 
-        let currentHeading = crd.heading;
-
         if (lastSpeedLat !== null && lastSpeedLon !== null) {
             let dist = calcDeviceDist(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
-            totalSpeedDist += dist;
-            if(gpsDistance) gpsDistance.innerText = totalSpeedDist.toFixed(2) + ' km';
-
-            if ((currentHeading === null || isNaN(currentHeading)) && dist > 0.001) {
-                currentHeading = calcHeadingManual(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
+            totalSpeedDistKm += dist;
+            if(stDistance) stDistance.innerText = totalSpeedDistKm.toFixed(2) + ' km';
+            
+            // Calculate Average Speed
+            if (tripStartTime) {
+                let hoursElapsed = (Date.now() - tripStartTime) / (1000 * 60 * 60);
+                if (hoursElapsed > 0.01) { // Prevent infinity
+                    let avg = totalSpeedDistKm / hoursElapsed;
+                    if (stAvgSpeed) stAvgSpeed.innerText = Math.round(avg) + " km/h";
+                }
             }
         }
         
         lastSpeedLat = crd.latitude; 
         lastSpeedLon = crd.longitude;
         
-        if (currentHeading !== null && !isNaN(currentHeading)) {
-            lastHeading = currentHeading;
-            if(gpsDirection) gpsDirection.innerText = getDeviceDir(currentHeading);
-        } else if (lastHeading !== null) {
-            if(gpsDirection) gpsDirection.innerText = getDeviceDir(lastHeading);
+        // Reverse Geocoding every few distance (Debounce)
+        if (Math.random() < 0.1) { // 10% chance to update location to save API calls
+            getLocName(crd.latitude, crd.longitude).then(name => {
+                if(stCurrentLoc) stCurrentLoc.innerText = "Near " + name + ", India";
+            });
         }
         
         var speed = crd.speed ? (crd.speed * 3.6) : 0; 
         if (speed < 2) speed = 0; 
         
         targetSpeedKmH = speed; 
+        
+        // Highest Speed Logic
+        if (speed > highestSpeedAchieved) {
+            highestSpeedAchieved = speed;
+            localStorage.setItem('hr_highest_speed', highestSpeedAchieved);
+            if(stHighestSpeed) stHighestSpeed.innerText = Math.round(highestSpeedAchieved) + " km/h";
+            
+            let d = new Date();
+            let dateStr = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+            if(stHighestDate) stHighestDate.innerHTML = `Achieved on ${dateStr}<br><span style="color:#5eb063;font-weight:bold;font-size:0.7rem;">Personal Best</span>`;
+            
+            // Supabase Silent Update
+            if (db && userEmail) {
+                db.from('users').update({ highest_speed: highestSpeedAchieved }).eq('email', userEmail).then(()=>{});
+            }
+        }
+
+        manageAlerts(speed);
     }
 
     function deviceError(err) {
         if (err.code === 1) { 
-            if(gpsStatus) { gpsStatus.innerText = "Permission Denied"; gpsStatus.style.color = "#d9534f"; }
+            if(stGpsText) { stGpsText.innerText = "Permission Denied"; stGpsDot.style.color = "#d9534f"; }
             Swal.fire({ title: 'Permission Denied', text: 'Please enable Location permission in your device settings.', icon: 'error', target: document.getElementById('settingsPage') || 'body' });
-            stopDeviceTracking();
+            stopTrip();
         } else { 
-            if(gpsStatus) { gpsStatus.innerText = "Searching GPS..."; gpsStatus.style.color = "#f39c12"; }
+            if(stGpsText) { stGpsText.innerText = "Searching GPS..."; stGpsDot.style.color = "#f39c12"; }
         }
     }
 
-    function startDeviceTracking() {
+    function startTrip() {
         if (!navigator.geolocation) { Swal.fire({title: 'Error', text: 'Geolocation is not supported', icon: 'error', target: document.getElementById('settingsPage') || 'body'}); return; }
-        if(gpsStatus) { gpsStatus.innerText = "Searching..."; gpsStatus.style.color = "#f39c12"; }
-        if(startBtn) startBtn.style.display = 'none';
-        if(pauseBtn) pauseBtn.style.display = 'flex';
-        if(stopBtn) stopBtn.style.display = 'flex';
         
+        tripActive = true;
+        tripStartTime = Date.now();
+        totalSpeedDistKm = 0;
+        
+        if(stTripStart) {
+            let d = new Date();
+            stTripStart.innerText = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) + ", " + d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+        }
+        
+        if(startBtn) startBtn.style.display = 'none';
+        if(endBtn) endBtn.style.display = 'block';
+        if(stGpsText) { stGpsText.innerText = "Connecting..."; stGpsDot.style.color = "#f39c12"; }
+        
+        // Timer Logic
+        tripTimerInt = setInterval(() => {
+            let diff = Math.floor((Date.now() - tripStartTime) / 1000);
+            let h = Math.floor(diff / 3600).toString().padStart(2, '0');
+            let m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+            let s = (diff % 60).toString().padStart(2, '0');
+            if(stTime) stTime.innerText = `${h}:${m}:${s}`;
+        }, 1000);
+
         watchSpeedId = navigator.geolocation.watchPosition(deviceSuccess, deviceError, { 
             enableHighAccuracy: true, 
             timeout: 10000, 
@@ -1186,28 +1117,46 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
     }
 
-    function stopDeviceTracking() {
+    function stopTrip() {
         if (watchSpeedId) navigator.geolocation.clearWatch(watchSpeedId);
-        lastSpeedLat = null; lastSpeedLon = null; totalSpeedDist = 0;
-        lastHeading = null;
+        clearInterval(tripTimerInt);
+        tripActive = false;
         targetSpeedKmH = 0; 
-        if(gpsDistance) gpsDistance.innerText = '0.00 km';
-        if(gpsDirection) gpsDirection.innerText = '--';
-        if(gpsStatus) { gpsStatus.innerText = "Stopped"; gpsStatus.style.color = "#d9534f"; }
-        if(startBtn) startBtn.style.display = 'flex';
-        if(pauseBtn) pauseBtn.style.display = 'none';
-        if(stopBtn) stopBtn.style.display = 'none';
+        alertLevel = 0;
+        clearInterval(beepIntervalId);
+        document.body.classList.remove('danger-blink', 'high-danger-blink');
+        warnPopup.style.display = 'none';
+        
+        if(stGpsText) { stGpsText.innerText = "Trip Ended"; stGpsDot.style.color = "#d9534f"; }
+        if(startBtn) startBtn.style.display = 'block';
+        if(endBtn) endBtn.style.display = 'none';
+        
+        // Save Trip Data to DB
+        if (db && userEmail) {
+            db.from('users').update({ 
+                last_trip_distance: totalSpeedDistKm,
+                last_trip_time: stTime.innerText,
+                last_trip_date: new Date().toISOString()
+            }).eq('email', userEmail).then(()=>{});
+            
+            // Insert Trip History
+            db.from('trip_history').insert([{
+                user_email: userEmail,
+                max_speed: highestSpeedAchieved,
+                distance: totalSpeedDistKm,
+                duration: stTime.innerText
+            }]).then(()=>{});
+        }
+
+        Swal.fire({
+            title: 'Trip Ended',
+            html: `Total Distance: <strong>${totalSpeedDistKm.toFixed(2)} km</strong><br>Time: <strong>${stTime.innerText}</strong>`,
+            icon: 'success',
+            target: document.getElementById('settingsPage') || 'body'
+        });
     }
 
-    function pauseDeviceTracking() {
-        if (watchSpeedId) navigator.geolocation.clearWatch(watchSpeedId);
-        if(gpsStatus) { gpsStatus.innerText = "Paused"; gpsStatus.style.color = "#f39c12"; }
-        if(startBtn) startBtn.style.display = 'flex';
-        if(pauseBtn) pauseBtn.style.display = 'none';
-    }
-
-    if(startBtn) startBtn.addEventListener('click', startDeviceTracking);
-    if(stopBtn) stopBtn.addEventListener('click', stopDeviceTracking);
-    if(pauseBtn) pauseBtn.addEventListener('click', pauseDeviceTracking);
+    if(startBtn) startBtn.addEventListener('click', startTrip);
+    if(endBtn) endBtn.addEventListener('click', stopTrip);
 
 });
