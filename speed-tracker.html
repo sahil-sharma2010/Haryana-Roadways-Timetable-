@@ -8,85 +8,93 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="style.css">
     <style>
-        body { background: #f1f3f5; font-family: 'Roboto', sans-serif; overflow-x: hidden; }
-        .page-header { background: var(--primary-blue); color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 999; }
-        .btn-back { background: transparent; color: white; border: none; font-size: 1.5rem; cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
+        :root { --primary-blue: #0056b3; }
+        body { background: #f1f3f5; font-family: 'Roboto', sans-serif; overflow-x: hidden; margin: 0; padding: 0; transition: 0.3s; }
         
-        .tracker-main { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
-        .tracker-wrapper { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        /* TAP HIGHLIGHT FIX */
+        button, a, input, select { -webkit-tap-highlight-color: transparent; outline: none; box-shadow: none; }
+
+        /* HEADER (Text Removed, Back Button to Settings) */
+        .page-header { background: var(--primary-blue); color: white; padding: 15px 20px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 999; }
+        .btn-back { background: transparent; color: white; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+
+        /* MAIN WRAPPER */
+        .tracker-main { max-width: 100vw; margin: 0 auto; padding: 20px 15px; box-sizing: border-box; }
+        .tracker-wrapper { background: white; border-radius: 16px; padding: 25px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         [data-theme="dark"] .tracker-wrapper { background: #1e232d; border: 1px solid #2a303c; }
 
-        .tracker-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px; }
+        /* TITLE */
+        .tracker-header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 25px; }
         [data-theme="dark"] .tracker-header { border-color: #2a303c; }
-        
-        .gps-badge { background: white; padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 1px solid #eee; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        [data-theme="dark"] .gps-badge { background: #2a303c; border-color: #333; color: #ddd; }
+        .tracker-header h2 { margin: 0; color: var(--primary-blue); font-size: 1.8rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .tracker-header p { margin: 8px 0 0 0; font-size: 0.95rem; color: #777; }
 
+        /* GRID LAYOUT */
         .tracker-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 25px; }
         @media (max-width: 850px) { .tracker-grid { grid-template-columns: 1fr; } }
 
         /* 🔥 4K HD REAL SPEEDOMETER 🔥 */
-        .meter-box { background: #fcfcfc; border: 1px solid #eee; border-radius: 16px; padding: 30px 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .meter-box { background: #fcfcfc; border: 1px solid #eee; border-radius: 16px; padding: 40px 15px 30px 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         [data-theme="dark"] .meter-box { background: #151921; border-color: #2a303c; }
 
-        .analog-dial { position: relative; width: 320px; height: 160px; overflow: hidden; margin-bottom: 10px; }
+        /* Correct 160px Height so arc cuts perfectly */
+        .analog-dial { position: relative; width: 320px; height: 160px; overflow: hidden; }
         .dial-bg { width: 320px; height: 320px; border-radius: 50%; position: absolute; top: 0; left: 0; box-sizing: border-box; background: conic-gradient(from 270deg, #5eb063 0 45deg, #f39c12 45deg 75deg, #d9534f 75deg 180deg, transparent 180deg 360deg); -webkit-mask: radial-gradient(transparent 125px, black 130px); mask: radial-gradient(transparent 125px, black 130px); }
         
-        /* Ticks for 4K HD Bus look */
         .tick-container { position: absolute; width: 320px; height: 320px; top: 0; left: 0; border-radius: 50%; }
-        .tick { position: absolute; width: 20px; height: 320px; left: 150px; top: 0; text-align: center; font-size: 0.85rem; font-weight: 800; color: #555; }
-        [data-theme="dark"] .tick { color: #aaa; }
-        .tick span { display: inline-block; transform-origin: center; background: #fcfcfc; padding: 0 3px; border-radius: 3px; }
+        .tick { position: absolute; width: 30px; height: 320px; left: 145px; top: 0; text-align: center; font-size: 0.9rem; font-weight: 800; color: #333; }
+        [data-theme="dark"] .tick { color: #ccc; }
+        .tick span { display: inline-block; transform-origin: center; background: #fcfcfc; padding: 2px 4px; border-radius: 4px; }
         [data-theme="dark"] .tick span { background: #151921; }
 
-        .meter-needle { width: 8px; height: 130px; background: #2c3e50; position: absolute; bottom: 0; left: calc(50% - 4px); transform-origin: bottom center; transform: rotate(-90deg); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 4px 4px 0 0; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.3); }
+        /* Ultra Smooth Needle */
+        .meter-needle { width: 6px; height: 140px; background: #2c3e50; position: absolute; bottom: 0; left: calc(50% - 3px); transform-origin: bottom center; transform: rotate(-120deg); transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1); border-radius: 4px 4px 0 0; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.3); }
         [data-theme="dark"] .meter-needle { background: #ecf0f1; }
         .meter-center { width: 30px; height: 30px; background: #34495e; border-radius: 50%; position: absolute; bottom: -15px; left: calc(50% - 15px); z-index: 11; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        [data-theme="dark"] .meter-center { background: #bdc3c7; border-color: #2c3e50; }
 
-        /* Spacing Fix for Overlap */
-        .speed-readout { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: -10px; position: relative; z-index: 15; background: #fcfcfc; border-radius: 50%; width: 150px; padding-top: 10px; }
-        [data-theme="dark"] .speed-readout { background: #151921; }
-        .speed-val-wrap { display: flex; flex-direction: column; align-items: center; line-height: 1; gap: 4px; }
-        .speed-val-wrap span.num { font-size: 4rem; font-weight: 900; color: #333; }
+        /* PERFECT SPACING FOR NUMBERS */
+        .speed-readout { margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+        .speed-val-wrap { display: flex; flex-direction: column; align-items: center; line-height: 1; gap: 6px; }
+        .speed-val-wrap span.num { font-size: 4.5rem; font-weight: 900; color: #333; }
         [data-theme="dark"] .speed-val-wrap span.num { color: #fff; }
-        .speed-val-wrap span.unit { font-size: 1.2rem; font-weight: 700; color: #777; }
-        .speed-val-wrap span.label { font-size: 0.85rem; color: #999; }
-        .status-badge-premium { background: rgba(94, 176, 99, 0.1); color: #5eb063; padding: 6px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .speed-val-wrap span.unit { font-size: 1.3rem; font-weight: 700; color: #777; }
+        .speed-val-wrap span.label { font-size: 0.9rem; color: #999; margin-top: 5px; }
+        .status-badge-premium { background: rgba(94, 176, 99, 0.1); color: #5eb063; padding: 8px 20px; border-radius: 25px; font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 8px; margin-top: 5px; }
 
-        /* Information Cards */
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .info-card { background: white; padding: 18px; border-radius: 12px; border: 1px solid #eee; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: 0.2s; outline: none; }
-        .info-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.05); }
+        /* INFO CARDS (GPS Added, Time Removed) */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-content: start; }
+        @media (max-width: 400px) { .info-grid { grid-template-columns: 1fr; } }
+        
+        .info-card { background: white; padding: 20px 15px; border-radius: 12px; border: 1px solid #eee; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
         [data-theme="dark"] .info-card { background: #1a1e27; border-color: #2a303c; }
         
-        .ic-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: #f0f7ff; color: var(--primary-blue); flex-shrink: 0; }
+        .ic-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: #f0f7ff; color: var(--primary-blue); flex-shrink: 0; }
         [data-theme="dark"] .ic-icon { background: rgba(0,86,179,0.2); color: #74b9ff; }
         
         .ic-content h4 { margin: 0; font-size: 0.85rem; color: #777; font-weight: 500; }
-        .ic-content strong { font-size: 1.4rem; color: var(--primary-blue); display: block; margin: 3px 0; }
+        .ic-content strong { font-size: 1.4rem; color: var(--primary-blue); display: block; margin: 4px 0; }
         .ic-content p { margin: 0; font-size: 0.75rem; color: #888; }
 
-        /* Footer Trip Actions */
-        .trip-actions { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 12px; margin-top: 25px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 20px; }
+        /* FOOTER TRIP ACTIONS */
+        .trip-actions { display: flex; flex-direction: column; background: white; padding: 25px 20px; border-radius: 12px; margin-top: 25px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02); gap: 20px; }
         [data-theme="dark"] .trip-actions { background: #1a1e27; border-color: #2a303c; }
-        .action-detail { display: flex; align-items: center; gap: 12px; }
-        .action-detail i { font-size: 1.6rem; color: var(--primary-blue); }
-        .action-detail h4 { margin: 0; font-size: 0.8rem; color: #777; font-weight: 500; }
-        .action-detail p { margin: 2px 0 0 0; font-weight: bold; color: #333; font-size: 0.95rem; }
+        
+        .trip-details-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+        .action-detail { display: flex; align-items: center; gap: 15px; }
+        .action-detail i { font-size: 1.8rem; color: var(--primary-blue); }
+        .action-detail h4 { margin: 0; font-size: 0.85rem; color: #777; font-weight: 500; }
+        .action-detail p { margin: 4px 0 0 0; font-weight: bold; color: #333; font-size: 1rem; }
         [data-theme="dark"] .action-detail p { color: #eee; }
 
-        .btn-action { outline: none; -webkit-tap-highlight-color: transparent; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1.05rem; cursor: pointer; color: white; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-action { width: 100%; border: none; padding: 15px 25px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
         .btn-start { background: #5eb063; box-shadow: 0 4px 15px rgba(94,176,99,0.3); }
-        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(94,176,99,0.4); }
-        .btn-end { background: #d9534f; box-shadow: 0 4px 15px rgba(217,83,79,0.3); }
-        .btn-end:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(217,83,79,0.4); }
+        .btn-end { background: #d9534f; box-shadow: 0 4px 15px rgba(217,83,79,0.3); display: none; }
 
-        .safety-note { margin-top: 20px; background: rgba(243,156,18,0.1); padding: 15px 20px; border-radius: 8px; border: 1px solid rgba(243,156,18,0.3); font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        
-        /* 🚨 ALERT ANIMATIONS 🚨 */
+        .safety-note { margin-top: 25px; background: rgba(243,156,18,0.1); padding: 18px 20px; border-radius: 10px; border: 1px solid rgba(243,156,18,0.3); font-size: 0.95rem; line-height: 1.5; color: #333; }
+        [data-theme="dark"] .safety-note { color: #ddd; }
+
+        /* 🚨 ALERTS */
         .danger-blink { animation: red-flash 1s infinite alternate; }
         @keyframes red-flash { 0% { box-shadow: inset 0 0 0px rgba(217,83,79,0); } 100% { box-shadow: inset 0 0 30px rgba(217,83,79,0.8); border: 2px solid red; } }
         
@@ -94,14 +102,13 @@
         @keyframes fast-red-flash { 0% { background-color: rgba(217,83,79,0); box-shadow: inset 0 0 0px red; } 100% { background-color: rgba(217,83,79,0.15); box-shadow: inset 0 0 60px red; } }
 
         .warning-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 2px solid #d9534f; border-radius: 16px; padding: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 50px rgba(217,83,79,0.5); z-index: 9999999; display: none; }
-        [data-theme="dark"] .warning-popup { background: rgba(30,35,45,0.95); }
     </style>
 </head>
 <body>
 
+    <!-- Back to Settings Logic -->
     <header class="page-header">
-        <button onclick="window.location.href='index.html'" class="btn-back"><i class="fa-solid fa-arrow-left"></i></button>
-        <h2 style="margin: 0; font-size: 1.4rem;">HR Timetable</h2>
+        <button onclick="window.location.href='index.html#settings'" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Back</button>
     </header>
 
     <div id="speedWarningPopup" class="warning-popup">
@@ -111,23 +118,15 @@
         <p style="font-size: 1.2rem; margin-bottom: 5px;">Current Speed: <strong id="warnCurrentSpeed" style="color: #d9534f;">-- km/h</strong></p>
         <p style="font-size: 0.95rem; color: #777; margin-bottom: 20px;">Maximum Allowed Speed: <strong>80 km/h</strong></p>
         <p style="font-weight: bold; margin-bottom: 25px;">Please Reduce Your Speed Immediately.</p>
-        <button onclick="document.getElementById('speedWarningPopup').style.display='none'" class="btn-action btn-end" style="width: 100%; justify-content: center;">OK, I Will Drive Safe</button>
+        <button onclick="document.getElementById('speedWarningPopup').style.display='none'" class="btn-action btn-end" style="display:flex;">OK, I Will Drive Safe</button>
     </div>
 
     <main class="tracker-main">
         <div class="tracker-wrapper">
+            
             <div class="tracker-header">
-                <div>
-                    <h2 style="margin:0; color:var(--primary-blue); display:flex; align-items:center; gap:10px;"><i class="fa-solid fa-gauge-high"></i> Speed Tracker</h2>
-                    <p style="margin:5px 0 0 0; font-size:0.9rem; color:#777;">Track real-time speed, highest speed, distance and trip details.</p>
-                </div>
-                <div class="gps-badge">
-                    <span id="stGpsDot" style="color:#d9534f;"><i class="fa-solid fa-circle"></i></span> 
-                    <div style="display:flex; flex-direction:column; line-height:1.2;">
-                        <span id="stGpsText" style="color:var(--primary-blue);">GPS Disconnected</span>
-                        <span style="font-size:0.75rem; color:#888; font-weight:normal;">Waiting for start...</span>
-                    </div>
-                </div>
+                <h2><i class="fa-solid fa-gauge-high"></i> Speed Tracking</h2>
+                <p>Track real-time speed, highest speed, distance and trip details.</p>
             </div>
 
             <div class="tracker-grid">
@@ -136,8 +135,7 @@
                 <div class="meter-box">
                     <div class="analog-dial">
                         <div class="dial-bg"></div>
-                        
-                        <!-- Real Bus Ticks using exact math (0 to 160, 240 deg sweep) -->
+                        <!-- 4K Ticks (0 to 160) -->
                         <div class="tick-container">
                             <div class="tick" style="transform: rotate(-120deg);"><span style="transform: rotate(120deg);">0</span></div>
                             <div class="tick" style="transform: rotate(-105deg);"><span style="transform: rotate(105deg);">10</span></div>
@@ -157,7 +155,6 @@
                             <div class="tick" style="transform: rotate(105deg);"><span style="transform: rotate(-105deg);">150</span></div>
                             <div class="tick" style="transform: rotate(120deg);"><span style="transform: rotate(-120deg);">160</span></div>
                         </div>
-
                         <div class="meter-needle" id="meterNeedle"></div>
                         <div class="meter-center"></div>
                     </div>
@@ -174,6 +171,15 @@
 
                 <!-- INFO CARDS -->
                 <div class="info-grid">
+                    <!-- GPS Status Added Here -->
+                    <div class="info-card">
+                        <div class="ic-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+                        <div class="ic-content">
+                            <h4>GPS Status</h4>
+                            <strong id="stGpsText" style="color: #d9534f;">Disconnected</strong>
+                            <p id="stGpsSub">Waiting for start...</p>
+                        </div>
+                    </div>
                     <div class="info-card">
                         <div class="ic-icon"><i class="fa-solid fa-trophy"></i></div>
                         <div class="ic-content">
@@ -199,15 +205,6 @@
                         </div>
                     </div>
                     <div class="info-card">
-                        <div class="ic-icon"><i class="fa-regular fa-clock"></i></div>
-                        <div class="ic-content">
-                            <h4>Total Time</h4>
-                            <strong id="stTime">00:00:00</strong>
-                            <p>Hours : Minutes : Seconds</p>
-                        </div>
-                    </div>
-                    <!-- 80 KM/H LIMIT SET HERE -->
-                    <div class="info-card">
                         <div class="ic-icon"><i class="fa-solid fa-gauge"></i></div>
                         <div class="ic-content">
                             <h4>Max Allowed Speed</h4>
@@ -226,43 +223,208 @@
                 </div>
             </div>
 
+            <!-- TRIP ACTIONS -->
             <div class="trip-actions">
-                <div class="action-detail">
-                    <i class="fa-regular fa-calendar-check"></i>
-                    <div>
-                        <h4>Trip Started At</h4>
-                        <p id="stTripStart">Not Started</p>
+                <div class="trip-details-row">
+                    <div class="action-detail">
+                        <i class="fa-regular fa-calendar-check"></i>
+                        <div>
+                            <h4>Trip Started At</h4>
+                            <p id="stTripStart">Not Started</p>
+                        </div>
+                    </div>
+                    <div class="action-detail">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <div>
+                            <h4>Current Location</h4>
+                            <p id="stCurrentLoc">Fetching GPS...</p>
+                        </div>
                     </div>
                 </div>
-                <div class="action-detail">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <div>
-                        <h4>Current Location</h4>
-                        <p id="stCurrentLoc">Fetching GPS...</p>
-                    </div>
-                </div>
-                <div class="action-detail" style="display: none;" id="divNextStop">
-                    <i class="fa-solid fa-bus"></i>
-                    <div>
-                        <h4>Next Stop</h4>
-                        <p id="stNextStop">Auto Updating...</p>
-                    </div>
-                </div>
-                <div style="flex-grow: 1; display: flex; justify-content: flex-end;">
+                
+                <div style="margin-top: 10px;">
                     <button id="btnStartTrip" class="btn-action btn-start"><i class="fa-solid fa-play"></i> Start Trip</button>
-                    <button id="btnEndTrip" class="btn-action btn-end" style="display:none;"><i class="fa-solid fa-stop"></i> End Trip</button>
+                    <button id="btnEndTrip" class="btn-action btn-end"><i class="fa-solid fa-stop"></i> End Trip</button>
                 </div>
             </div>
 
             <div class="safety-note">
-                <span><i class="fa-solid fa-circle-exclamation" style="color:#f39c12;"></i> <strong>Note:</strong> Do not exceed the max allowed speed. Drive safe and follow traffic rules.</span>
-                <span style="color:var(--primary-blue); font-weight:bold;"><i class="fa-solid fa-shield-heart"></i> Drive Safe, Reach Safe</span>
+                <div><i class="fa-solid fa-circle-exclamation" style="color:#f39c12; margin-right:5px;"></i> <strong>Note:</strong> Do not exceed the maximum allowed speed. Drive safely and strictly follow all traffic rules.</div>
+                <div style="color:var(--primary-blue); font-weight:bold;"><i class="fa-solid fa-shield-heart"></i> Drive Safe, Reach Safe</div>
             </div>
 
         </div>
     </main>
 
-    <!-- Use the Exact Same JS file, it is smart enough to handle this page perfectly! -->
-    <script src="script.js"></script>
+    <!-- JS Logic -->
+    <script>
+        const SUPABASE_URL = 'https://wapxdmpwvhcsrnfiodjd.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_odtRBN3c0mV917RGbwCCKA_JuwKHVUU'; 
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const userEmail = localStorage.getItem('hr_user_email');
+
+        // BEEP LOGIC
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        function playAlertBeep(intensity) {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
+            
+            if (intensity === 'high') {
+                oscillator.type = 'square'; oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + 0.2);
+            } else {
+                oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); 
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        // TRACKER VARIABLES
+        var watchSpeedId = null;
+        var totalSpeedDistKm = 0;
+        var lastSpeedLat = null; var lastSpeedLon = null;
+        var tripStartTime = null;
+        var highestSpeedAchieved = parseFloat(localStorage.getItem('hr_highest_speed') || 0);
+        var alertLevel = 0; var beepIntervalId = null;
+
+        document.getElementById('stHighestSpeed').innerText = Math.round(highestSpeedAchieved) + " km/h";
+
+        function calcDeviceDist(lat1, lon1, lat2, lon2) {
+            var R = 6371; var dLat = (lat2-lat1)*Math.PI/180; var dLon = (lon2-lon1)*Math.PI/180;
+            var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        }
+
+        async function getLocName(lat, lon) {
+            try {
+                var res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                var data = await res.json();
+                return data.address.city || data.address.town || data.address.village || "Unknown Location";
+            } catch(e) { return "GPS Coordinates"; }
+        }
+
+        // SUPER SMOOTH NEEDLE ANIMATION (Lerp factor 0.04 for buttery smoothness)
+        let targetSpeedKmH = 0; let displaySpeedKmH = 0;
+        function animateSpeedGauge() {
+            if (Math.abs(targetSpeedKmH - displaySpeedKmH) > 0.05) {
+                displaySpeedKmH += (targetSpeedKmH - displaySpeedKmH) * 0.04; 
+                let roundedSpeed = Math.round(displaySpeedKmH);
+                let speedStr = roundedSpeed < 10 ? '0' + roundedSpeed : roundedSpeed.toString();
+                document.getElementById('stCurrentSpeed').innerText = speedStr;
+
+                let angle = -120 + (Math.min(displaySpeedKmH, 160) / 160) * 240;
+                document.getElementById('meterNeedle').style.transform = `rotate(${angle}deg)`;
+
+                let color = '#5eb063'; let statText = '<i class="fa-solid fa-circle"></i> Safe Speed'; let mainStat = 'Safe'; let mainStatColor = '#5eb063';
+                if (roundedSpeed === 0) { color = '#777'; statText = '<i class="fa-solid fa-circle-stop"></i> Stopped'; mainStat = 'Stopped'; }
+                else if (roundedSpeed > 60 && roundedSpeed <= 80) { color = '#f39c12'; statText = '<i class="fa-solid fa-circle"></i> Fast'; mainStat = 'Fast'; mainStatColor = '#f39c12'; }
+                else if (roundedSpeed > 80) { color = '#d9534f'; statText = '<i class="fa-solid fa-circle-exclamation"></i> OVER SPEED'; mainStat = 'DANGER'; mainStatColor = '#d9534f'; }
+
+                let badge = document.getElementById('stSpeedStatusBadge');
+                if(badge.innerHTML !== statText) {
+                    badge.innerHTML = statText; badge.style.color = color;
+                    badge.style.background = `rgba(${color === '#d9534f' ? '217,83,79' : (color === '#f39c12' ? '243,156,18' : '94,176,99')}, 0.1)`;
+                }
+                let stTxt = document.getElementById('stTextStatus');
+                if(stTxt.innerText !== mainStat) { stTxt.innerText = mainStat; stTxt.style.color = mainStatColor; }
+            }
+            requestAnimationFrame(animateSpeedGauge);
+        }
+        requestAnimationFrame(animateSpeedGauge);
+
+        function manageAlerts(speed) {
+            if (speed >= 100) {
+                if (alertLevel !== 2) {
+                    alertLevel = 2; document.body.classList.remove('danger-blink'); document.body.classList.add('high-danger-blink');
+                    document.getElementById('speedWarningPopup').style.display = 'block'; clearInterval(beepIntervalId);
+                    beepIntervalId = setInterval(() => playAlertBeep('high'), 500); 
+                }
+            } else if (speed > 80) {
+                if (alertLevel !== 1) {
+                    alertLevel = 1; document.body.classList.remove('high-danger-blink'); document.body.classList.add('danger-blink');
+                    document.getElementById('speedWarningPopup').style.display = 'block'; clearInterval(beepIntervalId);
+                    playAlertBeep('low'); beepIntervalId = setInterval(() => playAlertBeep('low'), 5000); 
+                }
+            } else {
+                if (alertLevel !== 0) {
+                    alertLevel = 0; document.body.classList.remove('danger-blink', 'high-danger-blink');
+                    document.getElementById('speedWarningPopup').style.display = 'none'; clearInterval(beepIntervalId);
+                }
+            }
+            if (alertLevel > 0) document.getElementById('warnCurrentSpeed').innerText = Math.round(speed) + " km/h";
+        }
+
+        function deviceSuccess(pos) {
+            let crd = pos.coords;
+            if (lastSpeedLat !== null && lastSpeedLon !== null) {
+                let dist = calcDeviceDist(lastSpeedLat, lastSpeedLon, crd.latitude, crd.longitude);
+                totalSpeedDistKm += dist;
+                document.getElementById('stDistance').innerText = totalSpeedDistKm.toFixed(2) + ' km';
+                if (tripStartTime) {
+                    let hoursElapsed = (Date.now() - tripStartTime) / (1000 * 60 * 60);
+                    if (hoursElapsed > 0.01) { document.getElementById('stAvgSpeed').innerText = Math.round(totalSpeedDistKm / hoursElapsed) + " km/h"; }
+                }
+            }
+            lastSpeedLat = crd.latitude; lastSpeedLon = crd.longitude;
+            
+            if (Math.random() < 0.1) { 
+                getLocName(crd.latitude, crd.longitude).then(name => document.getElementById('stCurrentLoc').innerText = "Near " + name + ", India");
+            }
+            
+            var speed = crd.speed ? (crd.speed * 3.6) : 0; 
+            if (speed < 2) speed = 0; 
+            targetSpeedKmH = speed; 
+            
+            if (speed > highestSpeedAchieved) {
+                highestSpeedAchieved = speed; localStorage.setItem('hr_highest_speed', highestSpeedAchieved);
+                document.getElementById('stHighestSpeed').innerText = Math.round(highestSpeedAchieved) + " km/h";
+                let d = new Date(); let dateStr = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+                document.getElementById('stHighestDate').innerHTML = `Achieved on ${dateStr}<br><span style="color:#5eb063;font-weight:bold;font-size:0.75rem;">Personal Best</span>`;
+                if (userEmail) db.from('users').update({ highest_speed: highestSpeedAchieved }).eq('email', userEmail).then(()=>{});
+            }
+            manageAlerts(speed);
+        }
+
+        function deviceError(err) {
+            if (err.code === 1) { 
+                document.getElementById('stGpsText').innerText = "Permission Denied"; document.getElementById('stGpsText').style.color = "#d9534f";
+                Swal.fire('Permission Denied', 'Please enable Location permission.', 'error');
+                stopTrip();
+            } else { 
+                document.getElementById('stGpsText').innerText = "Searching GPS..."; document.getElementById('stGpsSub').innerText = "Signal weak"; document.getElementById('stGpsText').style.color = "#f39c12";
+            }
+        }
+
+        function startTrip() {
+            if (!navigator.geolocation) return Swal.fire('Error', 'Geolocation is not supported', 'error');
+            tripStartTime = Date.now(); totalSpeedDistKm = 0;
+            let d = new Date(); document.getElementById('stTripStart').innerText = d.toLocaleDateString('en-GB') + ", " + d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+            document.getElementById('btnStartTrip').style.display = 'none'; document.getElementById('btnEndTrip').style.display = 'flex';
+            document.getElementById('stGpsText').innerText = "Connected"; document.getElementById('stGpsText').style.color = "#5eb063"; document.getElementById('stGpsSub').innerText = "Tracking active";
+            watchSpeedId = navigator.geolocation.watchPosition(deviceSuccess, deviceError, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        }
+
+        function stopTrip() {
+            if (watchSpeedId) navigator.geolocation.clearWatch(watchSpeedId);
+            targetSpeedKmH = 0; alertLevel = 0; clearInterval(beepIntervalId);
+            document.body.classList.remove('danger-blink', 'high-danger-blink'); document.getElementById('speedWarningPopup').style.display = 'none';
+            document.getElementById('stGpsText').innerText = "Disconnected"; document.getElementById('stGpsText').style.color = "#d9534f"; document.getElementById('stGpsSub').innerText = "Waiting for start...";
+            document.getElementById('btnStartTrip').style.display = 'flex'; document.getElementById('btnEndTrip').style.display = 'none';
+            
+            if (userEmail && totalSpeedDistKm > 0.1) {
+                db.from('users').update({ last_trip_distance: totalSpeedDistKm, last_trip_date: new Date().toISOString() }).eq('email', userEmail).then(()=>{});
+                db.from('trip_history').insert([{ user_email: userEmail, max_speed: highestSpeedAchieved, distance: totalSpeedDistKm }]).then(()=>{});
+            }
+            Swal.fire('Trip Ended', `Total Distance: <strong>${totalSpeedDistKm.toFixed(2)} km</strong>`, 'success');
+        }
+
+        document.getElementById('btnStartTrip').addEventListener('click', startTrip);
+        document.getElementById('btnEndTrip').addEventListener('click', stopTrip);
+    </script>
 </body>
 </html>
