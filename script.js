@@ -184,6 +184,8 @@ var busData = [
     { from: "Hisar", to: "Delhi", via: "Hansi", departure: "09:40 PM", busType: "Ordinary", arr: "HR" },
     { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:20 PM", busType: "Ordinary", arr: "HR" },
     { from: "Hisar", to: "Delhi", via: "Hansi", departure: "10:40 PM", busType: "Ordinary", arr: "HR" },
+
+    // --- EXTRACTED FROM NEW IMAGES (104917 to 105747) ---
     { from: "Hisar", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "05:10 AM", busType: "Ordinary", arr: "HR" },
     { from: "Hisar", to: "Gurugram", via: "Hansi, Meham, Beri, Jhajjar", departure: "06:00 AM", busType: "AC", arr: "HR" },
     { from: "Hisar", to: "Ballabgarh", via: "Hansi, Meham, Beri, Jhajjar", departure: "06:00 AM", busType: "AC", arr: "HR" },
@@ -267,6 +269,7 @@ var busData = [
     { from: "Sirsa", to: "Rohtak", via: "Hansi, Meham", departure: "01:01 PM", busType: "Ordinary", arr: "HR" },
     { from: "Sirsa", to: "Rohtak", via: "Hansi, Meham", departure: "01:05 PM", busType: "Ordinary", arr: "HR" }
 ];
+
 
 document.addEventListener("DOMContentLoaded", async function() {
     
