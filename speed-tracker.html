@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PRO Speed Tracker - HR</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background: #f1f3f5; font-family: 'Roboto', sans-serif; overflow-x: hidden; }
+        .page-header { background: var(--primary-blue); color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 999; }
+        .btn-back { background: transparent; color: white; border: none; font-size: 1.5rem; cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
+        
+        .tracker-main { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
+        .tracker-wrapper { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        [data-theme="dark"] .tracker-wrapper { background: #1e232d; border: 1px solid #2a303c; }
+
+        .tracker-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px; }
+        [data-theme="dark"] .tracker-header { border-color: #2a303c; }
+        
+        .gps-badge { background: white; padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 1px solid #eee; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        [data-theme="dark"] .gps-badge { background: #2a303c; border-color: #333; color: #ddd; }
+
+        .tracker-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 25px; }
+        @media (max-width: 850px) { .tracker-grid { grid-template-columns: 1fr; } }
+
+        /* 🔥 4K HD REAL SPEEDOMETER 🔥 */
+        .meter-box { background: #fcfcfc; border: 1px solid #eee; border-radius: 16px; padding: 30px 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        [data-theme="dark"] .meter-box { background: #151921; border-color: #2a303c; }
+
+        .analog-dial { position: relative; width: 320px; height: 160px; overflow: hidden; margin-bottom: 10px; }
+        .dial-bg { width: 320px; height: 320px; border-radius: 50%; position: absolute; top: 0; left: 0; box-sizing: border-box; background: conic-gradient(from 270deg, #5eb063 0 45deg, #f39c12 45deg 75deg, #d9534f 75deg 180deg, transparent 180deg 360deg); -webkit-mask: radial-gradient(transparent 125px, black 130px); mask: radial-gradient(transparent 125px, black 130px); }
+        
+        /* Ticks for 4K HD Bus look */
+        .tick-container { position: absolute; width: 320px; height: 320px; top: 0; left: 0; border-radius: 50%; }
+        .tick { position: absolute; width: 20px; height: 320px; left: 150px; top: 0; text-align: center; font-size: 0.85rem; font-weight: 800; color: #555; }
+        [data-theme="dark"] .tick { color: #aaa; }
+        .tick span { display: inline-block; transform-origin: center; background: #fcfcfc; padding: 0 3px; border-radius: 3px; }
+        [data-theme="dark"] .tick span { background: #151921; }
+
+        .meter-needle { width: 8px; height: 130px; background: #2c3e50; position: absolute; bottom: 0; left: calc(50% - 4px); transform-origin: bottom center; transform: rotate(-90deg); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 4px 4px 0 0; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.3); }
+        [data-theme="dark"] .meter-needle { background: #ecf0f1; }
+        .meter-center { width: 30px; height: 30px; background: #34495e; border-radius: 50%; position: absolute; bottom: -15px; left: calc(50% - 15px); z-index: 11; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        [data-theme="dark"] .meter-center { background: #bdc3c7; border-color: #2c3e50; }
+
+        /* Spacing Fix for Overlap */
+        .speed-readout { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: -10px; position: relative; z-index: 15; background: #fcfcfc; border-radius: 50%; width: 150px; padding-top: 10px; }
+        [data-theme="dark"] .speed-readout { background: #151921; }
+        .speed-val-wrap { display: flex; flex-direction: column; align-items: center; line-height: 1; gap: 4px; }
+        .speed-val-wrap span.num { font-size: 4rem; font-weight: 900; color: #333; }
+        [data-theme="dark"] .speed-val-wrap span.num { color: #fff; }
+        .speed-val-wrap span.unit { font-size: 1.2rem; font-weight: 700; color: #777; }
+        .speed-val-wrap span.label { font-size: 0.85rem; color: #999; }
+        .status-badge-premium { background: rgba(94, 176, 99, 0.1); color: #5eb063; padding: 6px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+
+        /* Information Cards */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .info-card { background: white; padding: 18px; border-radius: 12px; border: 1px solid #eee; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: 0.2s; outline: none; }
+        .info-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.05); }
+        [data-theme="dark"] .info-card { background: #1a1e27; border-color: #2a303c; }
+        
+        .ic-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: #f0f7ff; color: var(--primary-blue); flex-shrink: 0; }
+        [data-theme="dark"] .ic-icon { background: rgba(0,86,179,0.2); color: #74b9ff; }
+        
+        .ic-content h4 { margin: 0; font-size: 0.85rem; color: #777; font-weight: 500; }
+        .ic-content strong { font-size: 1.4rem; color: var(--primary-blue); display: block; margin: 3px 0; }
+        .ic-content p { margin: 0; font-size: 0.75rem; color: #888; }
+
+        /* Footer Trip Actions */
+        .trip-actions { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 12px; margin-top: 25px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 20px; }
+        [data-theme="dark"] .trip-actions { background: #1a1e27; border-color: #2a303c; }
+        .action-detail { display: flex; align-items: center; gap: 12px; }
+        .action-detail i { font-size: 1.6rem; color: var(--primary-blue); }
+        .action-detail h4 { margin: 0; font-size: 0.8rem; color: #777; font-weight: 500; }
+        .action-detail p { margin: 2px 0 0 0; font-weight: bold; color: #333; font-size: 0.95rem; }
+        [data-theme="dark"] .action-detail p { color: #eee; }
+
+        .btn-action { outline: none; -webkit-tap-highlight-color: transparent; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1.05rem; cursor: pointer; color: white; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-start { background: #5eb063; box-shadow: 0 4px 15px rgba(94,176,99,0.3); }
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(94,176,99,0.4); }
+        .btn-end { background: #d9534f; box-shadow: 0 4px 15px rgba(217,83,79,0.3); }
+        .btn-end:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(217,83,79,0.4); }
+
+        .safety-note { margin-top: 20px; background: rgba(243,156,18,0.1); padding: 15px 20px; border-radius: 8px; border: 1px solid rgba(243,156,18,0.3); font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        
+        /* 🚨 ALERT ANIMATIONS 🚨 */
+        .danger-blink { animation: red-flash 1s infinite alternate; }
+        @keyframes red-flash { 0% { box-shadow: inset 0 0 0px rgba(217,83,79,0); } 100% { box-shadow: inset 0 0 30px rgba(217,83,79,0.8); border: 2px solid red; } }
+        
+        .high-danger-blink { animation: fast-red-flash 0.3s infinite alternate; }
+        @keyframes fast-red-flash { 0% { background-color: rgba(217,83,79,0); box-shadow: inset 0 0 0px red; } 100% { background-color: rgba(217,83,79,0.15); box-shadow: inset 0 0 60px red; } }
+
+        .warning-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 2px solid #d9534f; border-radius: 16px; padding: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 50px rgba(217,83,79,0.5); z-index: 9999999; display: none; }
+        [data-theme="dark"] .warning-popup { background: rgba(30,35,45,0.95); }
+    </style>
+</head>
+<body>
+
+    <header class="page-header">
+        <button onclick="window.location.href='index.html'" class="btn-back"><i class="fa-solid fa-arrow-left"></i></button>
+        <h2 style="margin: 0; font-size: 1.4rem;">HR Timetable</h2>
+    </header>
+
+    <div id="speedWarningPopup" class="warning-popup">
+        <div style="font-size: 3.5rem; color: #d9534f; margin-bottom: 10px; animation: scaleUp 0.5s infinite alternate;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h2 style="color: #d9534f; margin-bottom: 10px;">⚠ ALERT</h2>
+        <h3 style="margin-bottom: 15px;">Speed Limit Exceeded!</h3>
+        <p style="font-size: 1.2rem; margin-bottom: 5px;">Current Speed: <strong id="warnCurrentSpeed" style="color: #d9534f;">-- km/h</strong></p>
+        <p style="font-size: 0.95rem; color: #777; margin-bottom: 20px;">Maximum Allowed Speed: <strong>80 km/h</strong></p>
+        <p style="font-weight: bold; margin-bottom: 25px;">Please Reduce Your Speed Immediately.</p>
+        <button onclick="document.getElementById('speedWarningPopup').style.display='none'" class="btn-action btn-end" style="width: 100%; justify-content: center;">OK, I Will Drive Safe</button>
+    </div>
+
+    <main class="tracker-main">
+        <div class="tracker-wrapper">
+            <div class="tracker-header">
+                <div>
+                    <h2 style="margin:0; color:var(--primary-blue); display:flex; align-items:center; gap:10px;"><i class="fa-solid fa-gauge-high"></i> Speed Tracker</h2>
+                    <p style="margin:5px 0 0 0; font-size:0.9rem; color:#777;">Track real-time speed, highest speed, distance and trip details.</p>
+                </div>
+                <div class="gps-badge">
+                    <span id="stGpsDot" style="color:#d9534f;"><i class="fa-solid fa-circle"></i></span> 
+                    <div style="display:flex; flex-direction:column; line-height:1.2;">
+                        <span id="stGpsText" style="color:var(--primary-blue);">GPS Disconnected</span>
+                        <span style="font-size:0.75rem; color:#888; font-weight:normal;">Waiting for start...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tracker-grid">
+                
+                <!-- 🔥 4K HD SPEEDOMETER 🔥 -->
+                <div class="meter-box">
+                    <div class="analog-dial">
+                        <div class="dial-bg"></div>
+                        
+                        <!-- Real Bus Ticks using exact math (0 to 160, 240 deg sweep) -->
+                        <div class="tick-container">
+                            <div class="tick" style="transform: rotate(-120deg);"><span style="transform: rotate(120deg);">0</span></div>
+                            <div class="tick" style="transform: rotate(-105deg);"><span style="transform: rotate(105deg);">10</span></div>
+                            <div class="tick" style="transform: rotate(-90deg);"><span style="transform: rotate(90deg);">20</span></div>
+                            <div class="tick" style="transform: rotate(-75deg);"><span style="transform: rotate(75deg);">30</span></div>
+                            <div class="tick" style="transform: rotate(-60deg);"><span style="transform: rotate(60deg);">40</span></div>
+                            <div class="tick" style="transform: rotate(-45deg);"><span style="transform: rotate(45deg);">50</span></div>
+                            <div class="tick" style="transform: rotate(-30deg);"><span style="transform: rotate(30deg);">60</span></div>
+                            <div class="tick" style="transform: rotate(-15deg);"><span style="transform: rotate(15deg);">70</span></div>
+                            <div class="tick" style="transform: rotate(0deg);"><span style="transform: rotate(0deg);">80</span></div>
+                            <div class="tick" style="transform: rotate(15deg);"><span style="transform: rotate(-15deg);">90</span></div>
+                            <div class="tick" style="transform: rotate(30deg);"><span style="transform: rotate(-30deg);">100</span></div>
+                            <div class="tick" style="transform: rotate(45deg);"><span style="transform: rotate(-45deg);">110</span></div>
+                            <div class="tick" style="transform: rotate(60deg);"><span style="transform: rotate(-60deg);">120</span></div>
+                            <div class="tick" style="transform: rotate(75deg);"><span style="transform: rotate(-75deg);">130</span></div>
+                            <div class="tick" style="transform: rotate(90deg);"><span style="transform: rotate(-90deg);">140</span></div>
+                            <div class="tick" style="transform: rotate(105deg);"><span style="transform: rotate(-105deg);">150</span></div>
+                            <div class="tick" style="transform: rotate(120deg);"><span style="transform: rotate(-120deg);">160</span></div>
+                        </div>
+
+                        <div class="meter-needle" id="meterNeedle"></div>
+                        <div class="meter-center"></div>
+                    </div>
+                    
+                    <div class="speed-readout">
+                        <div class="speed-val-wrap">
+                            <span class="num" id="stCurrentSpeed">00</span>
+                            <span class="unit">km/h</span>
+                            <span class="label">Current Speed</span>
+                        </div>
+                        <div id="stSpeedStatusBadge" class="status-badge-premium"><i class="fa-solid fa-circle"></i> Normal Speed</div>
+                    </div>
+                </div>
+
+                <!-- INFO CARDS -->
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="ic-icon"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="ic-content">
+                            <h4>Highest Speed</h4>
+                            <strong id="stHighestSpeed">0 km/h</strong>
+                            <p id="stHighestDate">Not recorded yet</p>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="ic-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <div class="ic-content">
+                            <h4>Average Speed</h4>
+                            <strong id="stAvgSpeed">0 km/h</strong>
+                            <p>Since trip started</p>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="ic-icon"><i class="fa-solid fa-road"></i></div>
+                        <div class="ic-content">
+                            <h4>Total Distance</h4>
+                            <strong id="stDistance">0.00 km</strong>
+                            <p>Since trip started</p>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="ic-icon"><i class="fa-regular fa-clock"></i></div>
+                        <div class="ic-content">
+                            <h4>Total Time</h4>
+                            <strong id="stTime">00:00:00</strong>
+                            <p>Hours : Minutes : Seconds</p>
+                        </div>
+                    </div>
+                    <!-- 80 KM/H LIMIT SET HERE -->
+                    <div class="info-card">
+                        <div class="ic-icon"><i class="fa-solid fa-gauge"></i></div>
+                        <div class="ic-content">
+                            <h4>Max Allowed Speed</h4>
+                            <strong style="color: #d9534f;">80 km/h</strong>
+                            <p>As per Haryana Roadways</p>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="ic-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="ic-content">
+                            <h4>Speed Status</h4>
+                            <strong id="stTextStatus" style="color: #5eb063;">Safe</strong>
+                            <p>You are within safe limits</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trip-actions">
+                <div class="action-detail">
+                    <i class="fa-regular fa-calendar-check"></i>
+                    <div>
+                        <h4>Trip Started At</h4>
+                        <p id="stTripStart">Not Started</p>
+                    </div>
+                </div>
+                <div class="action-detail">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <h4>Current Location</h4>
+                        <p id="stCurrentLoc">Fetching GPS...</p>
+                    </div>
+                </div>
+                <div class="action-detail" style="display: none;" id="divNextStop">
+                    <i class="fa-solid fa-bus"></i>
+                    <div>
+                        <h4>Next Stop</h4>
+                        <p id="stNextStop">Auto Updating...</p>
+                    </div>
+                </div>
+                <div style="flex-grow: 1; display: flex; justify-content: flex-end;">
+                    <button id="btnStartTrip" class="btn-action btn-start"><i class="fa-solid fa-play"></i> Start Trip</button>
+                    <button id="btnEndTrip" class="btn-action btn-end" style="display:none;"><i class="fa-solid fa-stop"></i> End Trip</button>
+                </div>
+            </div>
+
+            <div class="safety-note">
+                <span><i class="fa-solid fa-circle-exclamation" style="color:#f39c12;"></i> <strong>Note:</strong> Do not exceed the max allowed speed. Drive safe and follow traffic rules.</span>
+                <span style="color:var(--primary-blue); font-weight:bold;"><i class="fa-solid fa-shield-heart"></i> Drive Safe, Reach Safe</span>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Use the Exact Same JS file, it is smart enough to handle this page perfectly! -->
+    <script src="script.js"></script>
+</body>
+</html>
