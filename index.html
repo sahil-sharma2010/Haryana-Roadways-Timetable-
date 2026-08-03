@@ -472,10 +472,10 @@
         </div>
     </div>
 
-    <!-- SETTINGS PAGE AUTO-OPEN LOGIC & THEME/MUSIC SYNC -->
+    <!-- 🔥 FIXED SETTINGS PAGE THEME/MUSIC LOGIC 🔥 -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Re-open settings if returned from Speed Tracker
+            // Re-open settings if returned from Speed Tracker (Unchanged)
             if(window.location.hash === '#settings') {
                 setTimeout(() => {
                     document.getElementById('settingsPage').classList.add('active');
@@ -484,17 +484,96 @@
                 }, 100);
             }
 
-            // Sync Theme for global use
-            var themeToggle = document.getElementById('theme-toggle');
-            if (themeToggle) {
-                themeToggle.addEventListener('click', function() {
-                    setTimeout(() => {
-                        if (document.body.getAttribute('data-theme') === 'dark') {
-                            localStorage.setItem('hr_global_theme', 'dark');
+            // === ELEMENTS ===
+            const body = document.body;
+            
+            // Theme Elements
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeStatusText = document.getElementById('themeStatusText');
+            const iconSun = document.getElementById('icon-sun');
+            const iconMoon = document.getElementById('icon-moon');
+
+            // Music Elements
+            const musicToggleBtn = document.getElementById('music-toggle');
+            const musicStatusText = document.getElementById('musicStatusText');
+            const iconMusicOn = document.getElementById('icon-music-on');
+            const iconMusicOff = document.getElementById('icon-music-off');
+            const bgMusic = document.getElementById('bgMusic');
+
+            // === 1. INITIALIZE THEME ON LOAD ===
+            if (localStorage.getItem('hr_global_theme') === 'dark') {
+                body.setAttribute('data-theme', 'dark');
+                if(themeStatusText) themeStatusText.innerText = "Dark Mode";
+                if(iconSun) iconSun.style.opacity = '0.5';
+                if(iconMoon) iconMoon.style.opacity = '1';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                if(themeStatusText) themeStatusText.innerText = "Light Mode";
+                if(iconSun) iconSun.style.opacity = '1';
+                if(iconMoon) iconMoon.style.opacity = '0.5';
+            }
+
+            // === 2. INITIALIZE MUSIC ON LOAD ===
+            if (localStorage.getItem('hr_music_pref') === 'muted') {
+                if(bgMusic) bgMusic.pause();
+                if(musicStatusText) musicStatusText.innerText = "OFF";
+                if(iconMusicOn) iconMusicOn.style.opacity = '0.5';
+                if(iconMusicOff) iconMusicOff.style.opacity = '1';
+            } else {
+                if(bgMusic) {
+                    bgMusic.volume = 0.03;
+                    let playPromise = bgMusic.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log("Autoplay blocked by browser. User must click first.");
+                        });
+                    }
+                }
+                if(musicStatusText) musicStatusText.innerText = "ON";
+                if(iconMusicOn) iconMusicOn.style.opacity = '1';
+                if(iconMusicOff) iconMusicOff.style.opacity = '0.5';
+            }
+
+            // === 3. MOBILE FRIENDLY THEME CLICK LOGIC ===
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); 
+                    if (body.getAttribute('data-theme') === 'dark') {
+                        body.setAttribute('data-theme', 'light');
+                        localStorage.setItem('hr_global_theme', 'light');
+                        if(themeStatusText) themeStatusText.innerText = "Light Mode";
+                        if(iconSun) iconSun.style.opacity = '1';
+                        if(iconMoon) iconMoon.style.opacity = '0.5';
+                    } else {
+                        body.setAttribute('data-theme', 'dark');
+                        localStorage.setItem('hr_global_theme', 'dark');
+                        if(themeStatusText) themeStatusText.innerText = "Dark Mode";
+                        if(iconSun) iconSun.style.opacity = '0.5';
+                        if(iconMoon) iconMoon.style.opacity = '1';
+                    }
+                });
+            }
+
+            // === 4. MOBILE FRIENDLY MUSIC CLICK LOGIC ===
+            if (musicToggleBtn) {
+                musicToggleBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (bgMusic) {
+                        if (bgMusic.paused) {
+                            bgMusic.volume = 0.03;
+                            bgMusic.play();
+                            localStorage.setItem('hr_music_pref', 'playing');
+                            if(musicStatusText) musicStatusText.innerText = "ON";
+                            if(iconMusicOn) iconMusicOn.style.opacity = '1';
+                            if(iconMusicOff) iconMusicOff.style.opacity = '0.5';
                         } else {
-                            localStorage.setItem('hr_global_theme', 'light');
+                            bgMusic.pause();
+                            localStorage.setItem('hr_music_pref', 'muted');
+                            if(musicStatusText) musicStatusText.innerText = "OFF";
+                            if(iconMusicOn) iconMusicOn.style.opacity = '0.5';
+                            if(iconMusicOff) iconMusicOff.style.opacity = '1';
                         }
-                    }, 50);
+                    }
                 });
             }
         });
