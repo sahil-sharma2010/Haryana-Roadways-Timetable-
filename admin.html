@@ -83,6 +83,20 @@
                 <button id="btnAdminLogout" class="btn-logout"><i class="fa-solid fa-power-off"></i> Logout</button>
             </div>
 
+            <!-- 🔥 NEW DATABASE STORAGE CHECKER CARD 🔥 -->
+            <div class="admin-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee; margin-bottom: 25px;">
+                <i class="fa-solid fa-database" style="color: #f39c12; font-size: 2.5rem; margin-bottom: 10px;"></i>
+                <h3 style="margin: 0; color: #333; font-size: 1.1rem;">Live Database Storage</h3>
+                <p id="dbStorageText" style="margin: 10px 0; font-size: 1.2rem; color: var(--primary-blue);">Loading...</p>
+                
+                <!-- Progress Bar -->
+                <div style="width: 100%; background: #e0e0e0; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px;">
+                    <div id="dbStorageBar" style="height: 100%; background: #5eb063; width: 0%; transition: width 0.8s ease, background 0.8s ease;"></div>
+                </div>
+                
+                <p style="font-size: 0.8rem; color: #888; margin-top: 8px;">Free Tier Limit: 500 MB</p>
+            </div>
+
             <div class="admin-grid">
                 <div class="admin-box" id="tabUsers" onclick="switchTab('Users')">
                     <i class="fa-solid fa-users"></i><br><strong>Manage Users</strong>
@@ -159,6 +173,7 @@
             dashboardScreen.style.display = 'flex';
             resetTimer();
             syncDatabase();
+            checkDatabaseStorage(); // Calling the new storage checker function
         }
 
         document.getElementById('btnAdminLogout').addEventListener('click', forceLogout);
@@ -185,6 +200,39 @@
 
         document.addEventListener('mousemove', () => { if(sessionStorage.getItem('hr_admin_active')==='true') resetTimer(); });
         document.addEventListener('keypress', () => { if(sessionStorage.getItem('hr_admin_active')==='true') resetTimer(); });
+
+        // 🔥 NEW FUNCTION TO CHECK DATABASE STORAGE 🔥
+        async function checkDatabaseStorage() {
+            if (typeof db !== 'undefined' && db) {
+                try {
+                    const { data, error } = await db.rpc('get_database_size');
+                    
+                    if (data !== null && !error) {
+                        let sizeInMB = (data / (1024 * 1024)).toFixed(2);
+                        let totalMB = 500; // Supabase Free Tier Limit
+                        let percentage = (sizeInMB / totalMB) * 100;
+                        
+                        document.getElementById('dbStorageText').innerHTML = `<strong>${sizeInMB} MB</strong> / 500 MB Used`;
+                        
+                        let bar = document.getElementById('dbStorageBar');
+                        bar.style.width = percentage + '%';
+                        
+                        // Change color based on usage percentage
+                        if (percentage > 80) {
+                            bar.style.background = '#d9534f'; // Red if > 80%
+                        } else if (percentage > 50) {
+                            bar.style.background = '#f39c12'; // Orange if > 50%
+                        } else {
+                            bar.style.background = '#5eb063'; // Green if safe
+                        }
+                    } else {
+                        document.getElementById('dbStorageText').innerText = "0.00 MB / 500 MB";
+                    }
+                } catch (err) {
+                    console.log("Storage check failed", err);
+                }
+            }
+        }
 
         async function syncDatabase() {
             Swal.fire({title: 'Syncing Database...', text: 'Fetching secure data', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
