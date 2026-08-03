@@ -284,21 +284,28 @@
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const userEmail = localStorage.getItem('hr_user_email');
 
-        // ==========================================
-        // 🔥 GLOBAL NIGHT MODE & MUSIC SYNC 🔥
-        // ==========================================
         document.addEventListener("DOMContentLoaded", function() {
             var bgMusic = document.getElementById('bgMusic');
             if (bgMusic && localStorage.getItem('hr_music_pref') !== 'muted') {
-                bgMusic.volume = 0.03;
-                bgMusic.play().catch(e => console.log('Music blocked by browser'));
+                bgMusic.volume = 0.03; bgMusic.play().catch(e => console.log('Music blocked'));
             }
 
-            // AUTO 6 PM to 6 AM Logic
             var currentHour = new Date().getHours();
             if (currentHour >= 18 || currentHour < 6) {
                 document.body.classList.add('global-night-mode');
                 document.getElementById('btnLightToggle').innerHTML = '<i class="fa-solid fa-lightbulb"></i> Night On';
+            }
+
+            // LOAD HIGHEST SPEED & DATE FROM LOCAL STORAGE
+            let storedHighest = localStorage.getItem('hr_highest_speed');
+            let storedDate = localStorage.getItem('hr_highest_speed_date');
+            
+            if (storedHighest) {
+                highestSpeedAchieved = parseFloat(storedHighest);
+                document.getElementById('stHighestSpeed').innerText = Math.round(highestSpeedAchieved) + " km/h";
+                if (storedDate) {
+                    document.getElementById('stHighestDate').innerHTML = `Achieved on ${storedDate}<br><span style="color:#5eb063;font-weight:bold;font-size:0.75rem;">Personal Best</span>`;
+                }
             }
         });
 
@@ -323,9 +330,6 @@
             }
         }
 
-        // ==========================================
-        // 🎵 TRACKER BEEP & LOGIC (100% UNTOUCHED)
-        // ==========================================
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
         function playAlertBeep(intensity) {
@@ -353,26 +357,21 @@
         var highestSpeedAchieved = parseFloat(localStorage.getItem('hr_highest_speed') || 0);
         var alertLevel = 0; var beepIntervalId = null;
 
-        document.getElementById('stHighestSpeed').innerText = Math.round(highestSpeedAchieved) + " km/h";
-
         function calcDeviceDist(lat1, lon1, lat2, lon2) {
             var R = 6371; var dLat = (lat2-lat1)*Math.PI/180; var dLon = (lon2-lon1)*Math.PI/180;
             var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
         }
 
-        // 🚀 ULTIMATE SMOOTHNESS LOGIC (HIGH PRECISION LERP) 🚀
+        // 🚀 ULTIMATE SMOOTHNESS LOGIC 🚀
         let targetSpeedKmH = 0; let displaySpeedKmH = 0;
         function animateSpeedGauge() {
             if (Math.abs(targetSpeedKmH - displaySpeedKmH) > 0.01) {
-                // 0.05 is the magic number for ultimate buttery smoothness
                 displaySpeedKmH += (targetSpeedKmH - displaySpeedKmH) * 0.05; 
-                
                 let roundedSpeed = Math.round(displaySpeedKmH);
                 let speedStr = roundedSpeed < 10 ? '0' + roundedSpeed : roundedSpeed.toString();
                 document.getElementById('stCurrentSpeed').innerText = speedStr;
 
-                // High precision decimal angle for zero jitter
                 let angle = -120 + (Math.min(displaySpeedKmH, 160) / 160) * 240;
                 document.getElementById('meterNeedle').style.transform = `rotate(${angle.toFixed(2)}deg)`;
 
@@ -431,12 +430,24 @@
             if (speed < 2) speed = 0; 
             targetSpeedKmH = speed; 
             
+            // 🔥 NAYA RECORD DATE KE SAATH REPLACE 🔥
             if (speed > highestSpeedAchieved) {
-                highestSpeedAchieved = speed; localStorage.setItem('hr_highest_speed', highestSpeedAchieved);
+                highestSpeedAchieved = speed; 
+                localStorage.setItem('hr_highest_speed', highestSpeedAchieved);
+                
+                let d = new Date(); 
+                let dateStr = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+                localStorage.setItem('hr_highest_speed_date', dateStr);
+                
                 document.getElementById('stHighestSpeed').innerText = Math.round(highestSpeedAchieved) + " km/h";
-                let d = new Date(); let dateStr = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
                 document.getElementById('stHighestDate').innerHTML = `Achieved on ${dateStr}<br><span style="color:#5eb063;font-weight:bold;font-size:0.75rem;">Personal Best</span>`;
-                if (userEmail) db.from('users').update({ highest_speed: highestSpeedAchieved }).eq('email', userEmail).then(()=>{});
+                
+                if (userEmail) {
+                    db.from('users').update({ 
+                        highest_speed: highestSpeedAchieved,
+                        highest_speed_date: dateStr 
+                    }).eq('email', userEmail).then(()=>{});
+                }
             }
             manageAlerts(speed);
         }
