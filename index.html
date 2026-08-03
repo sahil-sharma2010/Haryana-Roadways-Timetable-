@@ -43,6 +43,10 @@
         .marquee-content { display: inline-block; animation: marquee 75s linear infinite; padding-left: 100%; color: #000 !important; font-weight: bold; font-size: 1.05rem; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
+        /* 🔥 DARK THEME MARQUEE FIX 🔥 */
+        [data-theme="dark"] .marquee-wrapper { background: #0a0a0a !important; border-bottom: 1px solid #333 !important; }
+        [data-theme="dark"] .marquee-content, [data-theme="dark"] .marquee-content span { color: #fff !important; }
+
         .btn-track-route { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.85rem; }
         .btn-track-route:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4); }
         
