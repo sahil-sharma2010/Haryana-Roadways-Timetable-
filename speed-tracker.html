@@ -139,8 +139,8 @@
             max-width: 380px; 
             text-align: center;
             line-height: 1.3;
-            box-sizing: border-box; /* This keeps it inside the screen width */
-            white-space: normal; /* This allows text to break into two lines */
+            box-sizing: border-box; 
+            white-space: normal; 
         }
         .floating-alert.blink-active { animation: alert-fast-blink 0.4s infinite alternate; }
         @keyframes alert-fast-blink {
@@ -180,7 +180,6 @@
             <!-- CONTROLS ROW -->
             <div class="controls-row">
                 <button class="ctrl-btn" onclick="toggleNightDash()" id="btnLightToggle"><i class="fa-regular fa-lightbulb"></i> Auto Night</button>
-                <button class="ctrl-btn" onclick="testAlertToggle()" id="btnTestAlert" style="background: rgba(243,156,18,0.2); color: #f39c12;"><i class="fa-solid fa-bell"></i> Test Alert</button>
                 <button class="ctrl-btn" onclick="toggleFocusMode()" id="btnFocusToggle"><i class="fa-solid fa-eye-slash"></i> Hide Details</button>
             </div>
 
@@ -348,27 +347,9 @@
         // ==========================================
         const alertSound = document.getElementById('alertSound');
         let isAlerting = false;
-        let isTestingAlert = false;
-
-        function testAlertToggle() {
-            isTestingAlert = !isTestingAlert;
-            let btn = document.getElementById('btnTestAlert');
-            if(isTestingAlert) {
-                btn.innerHTML = '<i class="fa-solid fa-bell-slash"></i> Stop Test';
-                btn.style.background = '#d9534f';
-                btn.style.color = 'white';
-            } else {
-                btn.innerHTML = '<i class="fa-solid fa-bell"></i> Test Alert';
-                btn.style.background = 'rgba(243,156,18,0.2)';
-                btn.style.color = '#f39c12';
-            }
-            manageAlerts(targetSpeedKmH); // Re-trigger alert logic
-        }
 
         function manageAlerts(speed) {
-            let effectiveSpeed = isTestingAlert ? 85 : speed;
-
-            if (effectiveSpeed > 80) {
+            if (speed > 80) {
                 if (!isAlerting) {
                     isAlerting = true;
                     document.getElementById('speedWarningPopup').style.display = 'flex';
