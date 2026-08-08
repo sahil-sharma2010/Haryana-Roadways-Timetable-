@@ -116,14 +116,29 @@
         body.global-night-mode .ic-content p { color: #777; }
         body.global-night-mode .safety-note { background: rgba(217, 83, 79, 0.15); border-color: rgba(217, 83, 79, 0.4); color: #fff; box-shadow: 0 0 15px rgba(217,83,79,0.2); }
 
-        /* 🚨 NEW PREMIUM FLOATING SPEED ALERT 🚨 */
+        /* 🚨 FLOATING SPEED ALERT FIX FOR MOBILE 🚨 */
         .floating-alert {
-            position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
-            background: rgba(217, 83, 79, 0.95); color: white;
-            padding: 12px 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(217, 83, 79, 0.6);
-            z-index: 9999999; display: none; align-items: center; gap: 10px;
-            font-weight: 900; font-size: 1.05rem; border: 2px solid #ff4757;
-            white-space: nowrap; letter-spacing: 0.5px;
+            position: fixed; 
+            top: 75px; /* Shifted down slightly to clear header */
+            left: 50%; 
+            transform: translateX(-50%);
+            background: rgba(217, 83, 79, 0.95); 
+            color: white;
+            padding: 12px 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(217, 83, 79, 0.6);
+            z-index: 9999999; 
+            display: none; 
+            align-items: center; 
+            justify-content: center;
+            gap: 10px;
+            font-weight: 900; 
+            font-size: 0.9rem; 
+            border: 2px solid #ff4757;
+            width: 90%; 
+            max-width: 350px; 
+            text-align: center;
+            line-height: 1.4;
         }
         .floating-alert.blink-active { animation: alert-fast-blink 0.4s infinite alternate; }
         @keyframes alert-fast-blink {
@@ -140,7 +155,7 @@
         <source src="assets/music/winner.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- NEW Alert Sound (Seamless Loop) -->
+    <!-- Alert Sound (Seamless Loop) -->
     <audio id="alertSound" loop preload="auto">
         <source src="assets/music/alert.mp3" type="audio/mpeg">
     </audio>
@@ -151,7 +166,7 @@
         <h2 class="header-title">Speed Tracking</h2>
     </header>
 
-    <!-- 🚨 NEW FLOATING ALERT POPUP (Not Full Screen) 🚨 -->
+    <!-- 🚨 FLOATING ALERT POPUP 🚨 -->
     <div id="speedWarningPopup" class="floating-alert">
         <span>⚠️ HIGH SPEED DETECTED PLEASE REDUCE THE SPEED</span>
     </div>
@@ -162,7 +177,6 @@
             <!-- CONTROLS ROW -->
             <div class="controls-row">
                 <button class="ctrl-btn" onclick="toggleNightDash()" id="btnLightToggle"><i class="fa-regular fa-lightbulb"></i> Auto Night</button>
-                <!-- NAYA TEST ALERT BUTTON -->
                 <button class="ctrl-btn" onclick="testAlertToggle()" id="btnTestAlert" style="background: rgba(243,156,18,0.2); color: #f39c12;"><i class="fa-solid fa-bell"></i> Test Alert</button>
                 <button class="ctrl-btn" onclick="toggleFocusMode()" id="btnFocusToggle"><i class="fa-solid fa-eye-slash"></i> Hide Details</button>
             </div>
@@ -292,7 +306,6 @@
                 document.getElementById('btnLightToggle').innerHTML = '<i class="fa-solid fa-lightbulb"></i> Night On';
             }
             
-            // LOAD HIGHEST SPEED
             let storedHighest = localStorage.getItem('hr_highest_speed');
             let storedDate = localStorage.getItem('hr_highest_speed_date');
             
@@ -327,7 +340,7 @@
         }
 
         // ==========================================
-        // 🚨 NEW AUDIO & ALERT LOGIC (Floating & Blinking) 🚨
+        // 🚨 ALERT LOGIC (Floating & Blinking) 🚨
         // ==========================================
         const alertSound = document.getElementById('alertSound');
         let isAlerting = false;
@@ -381,11 +394,12 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
         }
 
-        // 🚀 ULTIMATE SMOOTHNESS LOGIC 🚀
+        // 🚀 ULTIMATE SMOOTHNESS LOGIC (Responsive Animation) 🚀
         let targetSpeedKmH = 0; let displaySpeedKmH = 0;
         function animateSpeedGauge() {
             if (Math.abs(targetSpeedKmH - displaySpeedKmH) > 0.01) {
-                displaySpeedKmH += (targetSpeedKmH - displaySpeedKmH) * 0.05; 
+                // Increased lerp factor to 0.15 for faster response from GPS
+                displaySpeedKmH += (targetSpeedKmH - displaySpeedKmH) * 0.15; 
                 let roundedSpeed = Math.round(displaySpeedKmH);
                 let speedStr = roundedSpeed < 10 ? '0' + roundedSpeed : roundedSpeed.toString();
                 document.getElementById('stCurrentSpeed').innerText = speedStr;
@@ -462,13 +476,18 @@
             let d = new Date(); document.getElementById('stTripStart').innerText = d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
             document.getElementById('btnStartTrip').style.display = 'none'; document.getElementById('btnEndTrip').style.display = 'flex';
             document.getElementById('stGpsText').innerText = "Connecting..."; document.getElementById('stGpsText').style.color = "#f39c12"; document.getElementById('stGpsDot').style.color = "#f39c12";
-            watchSpeedId = navigator.geolocation.watchPosition(deviceSuccess, deviceError, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+            
+            // Fast GPS response interval
+            watchSpeedId = navigator.geolocation.watchPosition(deviceSuccess, deviceError, { 
+                enableHighAccuracy: true, 
+                timeout: 5000, 
+                maximumAge: 0 
+            });
         }
 
         function stopTrip() {
             if (watchSpeedId) navigator.geolocation.clearWatch(watchSpeedId);
             targetSpeedKmH = 0;
-            // Stop alert when trip stops
             if(isAlerting) {
                 isAlerting = false;
                 document.getElementById('speedWarningPopup').style.display = 'none';
