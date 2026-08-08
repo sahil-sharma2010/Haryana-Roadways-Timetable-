@@ -25,8 +25,8 @@
         .tracker-wrapper { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.4s; }
 
         /* CONTROLS */
-        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; transition: 0.4s; }
-        .ctrl-btn { background: #f0f7ff; color: var(--primary-blue); border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; transition: 0.4s; gap: 10px; flex-wrap: wrap; }
+        .ctrl-btn { background: #f0f7ff; color: var(--primary-blue); border: none; padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; flex-grow: 1; justify-content: center; }
         .ctrl-btn:active { transform: scale(0.95); }
 
         /* GRID LAYOUT */
@@ -53,12 +53,11 @@
         .tick::before { content: ''; position: absolute; top: 0; left: 13px; width: 4px; height: 12px; background: #333; border-radius: 2px; transition: 0.4s; }
         .tick span { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; margin-top: 18px; font-size: 1.05rem; font-weight: 800; color: #333; background: transparent; transition: 0.4s; }
 
-        /* 🚀 ULTIMATE SMOOTH NEEDLE FIX: Removed CSS transform transition so JS can control it pixel-perfectly 🚀 */
         .meter-needle { 
             width: 6px; height: 135px; background: linear-gradient(to top, #c0392b, #ff4757); 
             position: absolute; top: 15px; left: 147px; transform-origin: bottom center; transform: rotate(-120deg); 
             transition: background 0.4s, box-shadow 0.4s; border-radius: 4px 4px 0 0; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.4); 
-            will-change: transform; /* Hardware acceleration */
+            will-change: transform; 
         }
         .meter-center { width: 36px; height: 36px; background: radial-gradient(circle, #34495e, #2c3e50); border-radius: 50%; position: absolute; top: 132px; left: 132px; z-index: 11; border: 3px solid #bdc3c7; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.4s; }
 
@@ -92,18 +91,13 @@
 
         .safety-note { margin-top: 15px; background: rgba(243,156,18,0.1); padding: 12px 15px; border-radius: 8px; border: 1px solid rgba(243,156,18,0.3); font-size: 0.85rem; line-height: 1.4; color: #333; text-align: center; transition: 0.4s; }
 
-        /* ========================================================
-           🌑 GLOBAL FULL NIGHT MODE (Applies to whole screen)
-           ======================================================== */
+        /* 🌑 GLOBAL FULL NIGHT MODE */
         body.global-night-mode { background: #000; color: #fff; }
         body.global-night-mode .page-header { background: #111; border-bottom: 1px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
         body.global-night-mode .tracker-wrapper { background: #0a0a0a; border: 1px solid #222; box-shadow: 0 0 40px rgba(0,0,0,0.9); }
-        body.global-night-mode .tracker-header { border-color: #333; }
-        body.global-night-mode .tracker-header h2 { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
         body.global-night-mode .controls-row { border-color: #333; }
         body.global-night-mode .ctrl-btn { background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.1); }
 
-        /* 1. METER BOX NIGHT MODE (RED/WHITE CAR GLOW) */
         body.global-night-mode .meter-box { background: #000 !important; border: 1px solid #222 !important; box-shadow: inset 0 0 60px rgba(0,0,0,1); }
         body.global-night-mode .dial-bg { background: conic-gradient(from 240deg, #ff3b30 0 60deg, #ff4757 60deg 120deg, #e84118 120deg 180deg, #c23616 180deg 240deg, transparent 240deg); filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.8)); }
         body.global-night-mode .tick::before { background: #fff; box-shadow: 0 0 8px #fff; }
@@ -114,7 +108,6 @@
         body.global-night-mode .speed-val-wrap span.unit { color: #ccc; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
         body.global-night-mode .status-badge-premium { background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.1); }
 
-        /* 2. SIDE DETAILS NIGHT MODE (GLOWING TEXT) */
         body.global-night-mode .info-card, 
         body.global-night-mode .trip-actions { background: #111; border: 1px solid #222; box-shadow: 0 5px 20px rgba(0,0,0,0.8); }
         body.global-night-mode .ic-icon, body.global-night-mode .action-detail i { background: rgba(255,255,255,0.1); color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
@@ -123,26 +116,33 @@
         body.global-night-mode .ic-content p { color: #777; }
         body.global-night-mode .safety-note { background: rgba(217, 83, 79, 0.15); border-color: rgba(217, 83, 79, 0.4); color: #fff; box-shadow: 0 0 15px rgba(217,83,79,0.2); }
 
-        /* 🚨 PREMIUM RED WARNING POPUP 🚨 */
-        .danger-blink { animation: screen-red-flash 1s infinite alternate; }
-        @keyframes screen-red-flash { 0% { box-shadow: inset 0 0 0px rgba(217,83,79,0); } 100% { box-shadow: inset 0 0 40px rgba(217,83,79,0.8); border: 2px solid red; } }
+        /* 🚨 NEW PREMIUM FLOATING SPEED ALERT 🚨 */
+        .floating-alert {
+            position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
+            background: rgba(217, 83, 79, 0.95); color: white;
+            padding: 12px 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(217, 83, 79, 0.6);
+            z-index: 9999999; display: none; align-items: center; gap: 10px;
+            font-weight: 900; font-size: 1.05rem; border: 2px solid #ff4757;
+            white-space: nowrap; letter-spacing: 0.5px;
+        }
+        .floating-alert.blink-active { animation: alert-fast-blink 0.4s infinite alternate; }
+        @keyframes alert-fast-blink {
+            0% { opacity: 1; box-shadow: 0 0 15px rgba(255, 71, 87, 0.8); }
+            100% { opacity: 0.8; box-shadow: 0 0 40px rgba(255, 71, 87, 1); background: #ff4757; }
+        }
         
-        .high-danger-blink { animation: screen-fast-red-flash 0.3s infinite alternate; }
-        @keyframes screen-fast-red-flash { 0% { background-color: rgba(217,83,79,0); box-shadow: inset 0 0 0px red; } 100% { background-color: rgba(217,83,79,0.15); box-shadow: inset 0 0 80px red; } }
-
-        .warning-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border: 3px solid #d9534f; border-radius: 20px; padding: 35px 25px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 15px 60px rgba(217,83,79,0.6); z-index: 9999999; display: none; }
-        body.global-night-mode .warning-popup { background: rgba(20, 5, 5, 0.95); border: 3px solid #ff4757; box-shadow: 0 15px 60px rgba(255, 71, 87, 0.6), inset 0 0 30px rgba(255,71,87,0.2); color: white; }
-        
-        .warn-icon-anim { font-size: 4.5rem; color: #d9534f; margin-bottom: 10px; animation: scalePulse 0.5s infinite alternate; filter: drop-shadow(0 0 10px rgba(217,83,79,0.5)); }
-        body.global-night-mode .warn-icon-anim { color: #ff4757; filter: drop-shadow(0 0 20px rgba(255,71,87,0.8)); }
-        @keyframes scalePulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
     </style>
 </head>
 <body>
 
-    <!-- Hidden Audio for Background Music Sync -->
+    <!-- Original Background Music -->
     <audio id="bgMusic" loop preload="auto">
         <source src="assets/music/winner.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- NEW Alert Sound (Seamless Loop) -->
+    <audio id="alertSound" loop preload="auto">
+        <source src="assets/music/alert.mp3" type="audio/mpeg">
     </audio>
 
     <!-- Header -->
@@ -151,15 +151,9 @@
         <h2 class="header-title">Speed Tracking</h2>
     </header>
 
-    <!-- Premium Speed Warning Popup -->
-    <div id="speedWarningPopup" class="warning-popup">
-        <div class="warn-icon-anim"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <h2 style="color: #d9534f; margin-bottom: 10px; font-weight: 900; letter-spacing: 1px;">CRITICAL ALERT</h2>
-        <h3 style="margin-bottom: 20px; font-size: 1.3rem;">Speed Limit Exceeded!</h3>
-        <p style="font-size: 1.2rem; margin-bottom: 8px;">Current Speed: <strong id="warnCurrentSpeed" style="color: #d9534f; font-size: 1.4rem;">-- km/h</strong></p>
-        <p style="font-size: 0.95rem; color: #777; margin-bottom: 25px;">Max Allowed Speed: <strong>80 km/h</strong></p>
-        <p style="font-weight: bold; margin-bottom: 25px; font-size: 1.1rem;">Please Reduce Your Speed Immediately.</p>
-        <button onclick="document.getElementById('speedWarningPopup').style.display='none'" class="btn-action btn-end" style="display:flex; width:100%; box-shadow: 0 5px 20px rgba(217,83,79,0.5);">OK, I Will Drive Safe</button>
+    <!-- 🚨 NEW FLOATING ALERT POPUP (Not Full Screen) 🚨 -->
+    <div id="speedWarningPopup" class="floating-alert">
+        <span>⚠️ HIGH SPEED DETECTED PLEASE REDUCE THE SPEED</span>
     </div>
 
     <main class="tracker-main">
@@ -168,6 +162,8 @@
             <!-- CONTROLS ROW -->
             <div class="controls-row">
                 <button class="ctrl-btn" onclick="toggleNightDash()" id="btnLightToggle"><i class="fa-regular fa-lightbulb"></i> Auto Night</button>
+                <!-- NAYA TEST ALERT BUTTON -->
+                <button class="ctrl-btn" onclick="testAlertToggle()" id="btnTestAlert" style="background: rgba(243,156,18,0.2); color: #f39c12;"><i class="fa-solid fa-bell"></i> Test Alert</button>
                 <button class="ctrl-btn" onclick="toggleFocusMode()" id="btnFocusToggle"><i class="fa-solid fa-eye-slash"></i> Hide Details</button>
             </div>
 
@@ -295,8 +291,8 @@
                 document.body.classList.add('global-night-mode');
                 document.getElementById('btnLightToggle').innerHTML = '<i class="fa-solid fa-lightbulb"></i> Night On';
             }
-
-            // LOAD HIGHEST SPEED & DATE FROM LOCAL STORAGE
+            
+            // LOAD HIGHEST SPEED
             let storedHighest = localStorage.getItem('hr_highest_speed');
             let storedDate = localStorage.getItem('hr_highest_speed_date');
             
@@ -330,23 +326,46 @@
             }
         }
 
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        let audioCtx;
-        function playAlertBeep(intensity) {
-            if (!audioCtx) audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
-            
-            if (intensity === 'high') {
-                oscillator.type = 'square'; oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + 0.2);
+        // ==========================================
+        // 🚨 NEW AUDIO & ALERT LOGIC (Floating & Blinking) 🚨
+        // ==========================================
+        const alertSound = document.getElementById('alertSound');
+        let isAlerting = false;
+        let isTestingAlert = false;
+
+        function testAlertToggle() {
+            isTestingAlert = !isTestingAlert;
+            let btn = document.getElementById('btnTestAlert');
+            if(isTestingAlert) {
+                btn.innerHTML = '<i class="fa-solid fa-bell-slash"></i> Stop Test';
+                btn.style.background = '#d9534f';
+                btn.style.color = 'white';
             } else {
-                oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); 
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + 0.5);
+                btn.innerHTML = '<i class="fa-solid fa-bell"></i> Test Alert';
+                btn.style.background = 'rgba(243,156,18,0.2)';
+                btn.style.color = '#f39c12';
+            }
+            manageAlerts(targetSpeedKmH); // Re-trigger alert logic
+        }
+
+        function manageAlerts(speed) {
+            let effectiveSpeed = isTestingAlert ? 85 : speed;
+
+            if (effectiveSpeed > 80) {
+                if (!isAlerting) {
+                    isAlerting = true;
+                    document.getElementById('speedWarningPopup').style.display = 'flex';
+                    document.getElementById('speedWarningPopup').classList.add('blink-active');
+                    alertSound.play().catch(e => console.log('Alert Audio play blocked'));
+                }
+            } else {
+                if (isAlerting) {
+                    isAlerting = false;
+                    document.getElementById('speedWarningPopup').style.display = 'none';
+                    document.getElementById('speedWarningPopup').classList.remove('blink-active');
+                    alertSound.pause();
+                    alertSound.currentTime = 0;
+                }
             }
         }
 
@@ -355,7 +374,6 @@
         var lastSpeedLat = null; var lastSpeedLon = null;
         var tripStartTime = null;
         var highestSpeedAchieved = parseFloat(localStorage.getItem('hr_highest_speed') || 0);
-        var alertLevel = 0; var beepIntervalId = null;
 
         function calcDeviceDist(lat1, lon1, lat2, lon2) {
             var R = 6371; var dLat = (lat2-lat1)*Math.PI/180; var dLon = (lon2-lon1)*Math.PI/180;
@@ -390,28 +408,6 @@
         }
         requestAnimationFrame(animateSpeedGauge);
 
-        function manageAlerts(speed) {
-            if (speed >= 100) {
-                if (alertLevel !== 2) {
-                    alertLevel = 2; document.body.classList.remove('danger-blink'); document.body.classList.add('high-danger-blink');
-                    document.getElementById('speedWarningPopup').style.display = 'block'; clearInterval(beepIntervalId);
-                    beepIntervalId = setInterval(() => playAlertBeep('high'), 500); 
-                }
-            } else if (speed > 80) {
-                if (alertLevel !== 1) {
-                    alertLevel = 1; document.body.classList.remove('high-danger-blink'); document.body.classList.add('danger-blink');
-                    document.getElementById('speedWarningPopup').style.display = 'block'; clearInterval(beepIntervalId);
-                    playAlertBeep('low'); beepIntervalId = setInterval(() => playAlertBeep('low'), 5000); 
-                }
-            } else {
-                if (alertLevel !== 0) {
-                    alertLevel = 0; document.body.classList.remove('danger-blink', 'high-danger-blink');
-                    document.getElementById('speedWarningPopup').style.display = 'none'; clearInterval(beepIntervalId);
-                }
-            }
-            if (alertLevel > 0) document.getElementById('warnCurrentSpeed').innerText = Math.round(speed) + " km/h";
-        }
-
         function deviceSuccess(pos) {
             document.getElementById('stGpsText').innerText = "Connected"; document.getElementById('stGpsText').style.color = "#5eb063"; document.getElementById('stGpsDot').style.color = "#5eb063";
             let crd = pos.coords;
@@ -430,7 +426,6 @@
             if (speed < 2) speed = 0; 
             targetSpeedKmH = speed; 
             
-            // 🔥 NAYA RECORD DATE KE SAATH REPLACE 🔥
             if (speed > highestSpeedAchieved) {
                 highestSpeedAchieved = speed; 
                 localStorage.setItem('hr_highest_speed', highestSpeedAchieved);
@@ -472,8 +467,14 @@
 
         function stopTrip() {
             if (watchSpeedId) navigator.geolocation.clearWatch(watchSpeedId);
-            targetSpeedKmH = 0; alertLevel = 0; clearInterval(beepIntervalId);
-            document.body.classList.remove('danger-blink', 'high-danger-blink'); document.getElementById('speedWarningPopup').style.display = 'none';
+            targetSpeedKmH = 0;
+            // Stop alert when trip stops
+            if(isAlerting) {
+                isAlerting = false;
+                document.getElementById('speedWarningPopup').style.display = 'none';
+                document.getElementById('speedWarningPopup').classList.remove('blink-active');
+                alertSound.pause(); alertSound.currentTime = 0;
+            }
             document.getElementById('stGpsText').innerText = "Disconnected"; document.getElementById('stGpsText').style.color = "#d9534f"; document.getElementById('stGpsDot').style.color = "#d9534f";
             document.getElementById('btnStartTrip').style.display = 'flex'; document.getElementById('btnEndTrip').style.display = 'none';
             
